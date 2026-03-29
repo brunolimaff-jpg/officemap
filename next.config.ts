@@ -27,6 +27,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        "ais-dev-qoqz5obygizrkynw7jit4z-54652613979.us-east1.run.app",
+        "ais-pre-qoqz5obygizrkynw7jit4z-54652613979.us-east1.run.app",
+        "localhost:3000"
+      ]
+    }
+  },
   webpack: (config, {dev}) => {
     // HMR is disabled in AI Studio via DISABLE_HMR env var.
     // Do not modifyâfile watching is disabled to prevent flickering during agent edits.

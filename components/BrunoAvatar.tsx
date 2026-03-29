@@ -1,12 +1,10 @@
-import Image from 'next/image';
-
-const brunoFigure = 'hr-893-45.hd-180-1.ch-210-110.lg-270-110.sh-290-110.fa-1201';
+import { AvatarSprite } from './AvatarSprite';
 
 export function BrunoAvatar() {
   return (
     <div
       className="relative flex flex-col items-center justify-center pointer-events-none transform-style-3d"
-      style={{ gridArea: '31 / 16 / 32 / 18', transformStyle: 'preserve-3d' }} // Center of reception
+      style={{ gridArea: '36 / 20 / 37 / 22', transformStyle: 'preserve-3d' }} // Center of reception
     >
       {/* VIP Rug */}
       <div 
@@ -44,16 +42,10 @@ export function BrunoAvatar() {
               transformStyle: 'preserve-3d' 
             }}
           >
-            {/* Habbo API Image */}
-            <Image
-              src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${brunoFigure}&size=m&direction=2&head_direction=2&gesture=sml`}
-              alt="Bruno"
-              width={64}
-              height={110}
-              className="object-contain drop-shadow-md"
-              style={{ imageRendering: 'pixelated' }}
-              unoptimized
-            />
+            {/* Local SVG Sprite */}
+            <div className="drop-shadow-md">
+              <AvatarSprite color="#3B82F6" role="CEO" />
+            </div>
 
             {/* Name Tag */}
             <div className="mt-[-8px] text-[9px] font-pixel text-white bg-black/60 px-2 py-0.5 rounded-[4px] border border-black/80 whitespace-nowrap z-10">

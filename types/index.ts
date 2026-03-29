@@ -13,7 +13,7 @@ export interface Specialist {
   gridArea: string; // CSS grid area for positioning
 }
 
-export type RoomId = 'reception' | 'strategy' | 'data' | 'product' | 'engineering';
+export type RoomId = 'reception' | 'strategy' | 'data' | 'product' | 'engineering' | 'board_room' | 'lounge';
 
 export interface Furniture {
   id: string;

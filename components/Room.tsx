@@ -8,8 +8,10 @@ interface RoomProps {
 }
 
 const roomColors: Record<string, { floor: string, wall1: string, wall2: string }> = {
+  board_room: { floor: '#1E1B4B', wall1: '#312E81', wall2: '#1E1B4B' }, // Deep indigo
   strategy: { floor: '#1E3A5F', wall1: '#2A4A75', wall2: '#152A45' },
   data: { floor: '#2D1B69', wall1: '#3F278C', wall2: '#1E1247' },
+  lounge: { floor: '#3F278C', wall1: '#4C1D95', wall2: '#2E1065' }, // Purple
   product: { floor: '#0D3B2E', wall1: '#145442', wall2: '#08241C' },
   engineering: { floor: '#3B1F0A', wall1: '#542D0F', wall2: '#241306' },
   reception: { floor: '#1E293B', wall1: '#2A3A52', wall2: '#131A26' },
@@ -59,7 +61,7 @@ export function Room({ room, isActive, children }: RoomProps) {
       <div 
         className="absolute top-0 left-0 h-full origin-left pointer-events-none transform-gpu"
         style={{
-          width: '160px',
+          width: '160px', // Wall height
           backgroundColor: colors.wall1,
           transform: 'rotateY(-90deg)',
           border: '1px solid rgba(255,255,255,0.1)',
@@ -84,7 +86,7 @@ export function Room({ room, isActive, children }: RoomProps) {
       <div 
         className="absolute top-0 left-0 w-full origin-top pointer-events-none transform-gpu"
         style={{
-          height: '160px',
+          height: '160px', // Wall height
           backgroundColor: colors.wall2,
           transform: 'rotateX(90deg)',
           border: '1px solid rgba(255,255,255,0.1)',

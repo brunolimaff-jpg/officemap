@@ -28,10 +28,10 @@ export function Office({ selectedSpecialists, onSpecialistClick, specialistStatu
       }}
     >
       <div 
-        className="relative m-auto w-[1000px] h-[1000px] flex-shrink-0 grid gap-0 transition-transform duration-500 shadow-2xl"
+        className="relative m-auto w-[1200px] h-[1200px] flex-shrink-0 grid gap-0 transition-transform duration-500 shadow-2xl"
         style={{
-          gridTemplateColumns: 'repeat(32, 1fr)',
-          gridTemplateRows: 'repeat(32, 1fr)',
+          gridTemplateColumns: 'repeat(40, 1fr)',
+          gridTemplateRows: 'repeat(40, 1fr)',
           transform: 'rotateX(60deg) rotateZ(-45deg)', // Habbo 2:1 isometric
           transformStyle: 'preserve-3d',
           backgroundColor: '#334155', // Corridor base color
@@ -64,14 +64,14 @@ export function Office({ selectedSpecialists, onSpecialistClick, specialistStatu
         />
         
         {/* Corridor Arrows */}
-        <div className="absolute top-[30%] left-[20%] text-slate-400 font-pixel text-[10px] pointer-events-none" style={{ transform: 'translateZ(1px) rotateZ(45deg) rotateX(-60deg)' }}>
-          ↑ STRATEGY
+        <div className="absolute top-[35%] left-[30%] text-slate-400 font-pixel text-[10px] pointer-events-none" style={{ transform: 'translateZ(1px) rotateZ(45deg) rotateX(-60deg)' }}>
+          ← STRATEGY
         </div>
-        <div className="absolute top-[30%] left-[70%] text-slate-400 font-pixel text-[10px] pointer-events-none" style={{ transform: 'translateZ(1px) rotateZ(45deg) rotateX(-60deg)' }}>
+        <div className="absolute top-[35%] left-[70%] text-slate-400 font-pixel text-[10px] pointer-events-none" style={{ transform: 'translateZ(1px) rotateZ(45deg) rotateX(-60deg)' }}>
           DATA →
         </div>
-        <div className="absolute top-[85%] left-[45%] text-slate-400 font-pixel text-[10px] pointer-events-none" style={{ transform: 'translateZ(1px) rotateZ(45deg) rotateX(-60deg)' }}>
-          ↓ RECEPTION (Furniture count: {furniture.length})
+        <div className="absolute top-[75%] left-[50%] text-slate-400 font-pixel text-[10px] pointer-events-none" style={{ transform: 'translateZ(1px) rotateZ(45deg) rotateX(-60deg) translateX(-50%)' }}>
+          ↓ RECEPTION
         </div>
 
         {rooms.map((room) => {

@@ -1,18 +1,7 @@
 import { Specialist, SpecialistStatus } from '@/types';
 import { cn } from '@/lib/utils';
 import { Check, MessageSquareMore } from 'lucide-react';
-import Image from 'next/image';
-
-const habboFigures: Record<string, string> = {
-  carlos: 'hr-115-42.hd-190-1.ch-210-66.lg-270-82.sh-290-91',
-  marcos: 'hr-893-31.hd-209-2.ch-250-64.lg-280-110.sh-300-64',
-  sophia: 'hr-515-45.hd-600-1.ch-630-73.lg-710-64.sh-730-62',
-  andre: 'hr-100-45.hd-208-8.ch-235-71.lg-3216-82.sh-295-62',
-  diego: 'hr-165-45.hd-180-3.ch-255-63.lg-281-110.sh-305-62',
-  raquel: 'hr-540-42.hd-600-2.ch-665-71.lg-720-82.sh-725-62',
-  helena: 'hr-831-49.hd-620-9.ch-660-86.lg-700-85.sh-735-68',
-  victor: 'hr-802-37.hd-600-3.ch-685-79.lg-720-76.sh-730-64',
-};
+import { AvatarSprite } from './AvatarSprite';
 
 interface SpecialistAvatarProps {
   specialist: Specialist;
@@ -103,16 +92,10 @@ export function SpecialistAvatar({ specialist, status, isSelected, onClick }: Sp
               {isSelected && <Check size={16} className="text-white bg-green-500 rounded-full p-0.5 mb-1 shadow-md" strokeWidth={3} />}
             </div>
 
-            {/* Habbo API Image */}
-            <Image
-              src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboFigures[specialist.id] || 'hr-115-42.hd-190-1.ch-210-66.lg-270-82.sh-290-91'}&size=m&direction=2&head_direction=2&gesture=sml`}
-              alt={specialist.name}
-              width={64}
-              height={110}
-              className="object-contain drop-shadow-md"
-              style={{ imageRendering: 'pixelated' }}
-              unoptimized
-            />
+            {/* Local SVG Sprite */}
+            <div className="drop-shadow-md">
+              <AvatarSprite color={specialist.color} role={specialist.role} />
+            </div>
 
             {/* Name Tag */}
             <div className="mt-[-8px] text-[9px] font-pixel text-white bg-black/60 px-2 py-0.5 rounded-[4px] border border-black/80 whitespace-nowrap z-10">
