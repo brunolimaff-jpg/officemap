@@ -3,7 +3,10 @@
 export const ISO_LAYER = {
   rug: 12,
   plant: 22,
+  bookshelf: 32,
+  divider: 33,
   desk: 34,
+  laptop: 35,
   whiteboard: 36,
   table: 38,
   sofa: 42,

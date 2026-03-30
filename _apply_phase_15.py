@@ -1,4 +1,109 @@
-import { Specialist, Furniture } from '@/types';
+﻿import os
+import re
+
+ROOT = r"C:\Users\bruno.ferreira\Desktop\NOVO APP\officemap"
+
+# 1. Update types/index.ts
+types_path = os.path.join(ROOT, "types", "index.ts")
+with open(types_path, "r", encoding="utf-8") as f:
+    t_data = f.read()
+t_data = re.sub(
+    r"'desk' \| 'chair'[^;]+",
+    r"'desk' | 'chair' | 'plant' | 'shelf' | 'monitor' | 'laptop' | 'coffee' | 'water_cooler' | 'whiteboard' | 'sofa' | 'table' | 'server_rack' | 'filing_cabinet' | 'divider' | 'rug' | 'bookshelf'",
+    t_data
+)
+with open(types_path, "w", encoding="utf-8") as f:
+    f.write(t_data)
+
+# 2. Update lib/isoDepth.ts
+iso_path = os.path.join(ROOT, "lib", "isoDepth.ts")
+with open(iso_path, "r", encoding="utf-8") as f:
+    i_data = f.read()
+i_data = i_data.replace("desk: 34", "bookshelf: 32,\n  divider: 33,\n  rug: 12,\n  desk: 34,\n  laptop: 35")
+with open(iso_path, "w", encoding="utf-8") as f:
+    f.write(i_data)
+
+# 3. Update components/IsoFurnitureFallback.tsx
+fb_path = os.path.join(ROOT, "components", "IsoFurnitureFallback.tsx")
+with open(fb_path, "r", encoding="utf-8") as f:
+    fb_data = f.read()
+
+new_cases = """
+    case 'rug':
+      return (
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} {...common}>
+          <polygon points={`${w/2},4 ${w-4},${h/2} ${w/2},${h-4} 4,${h/2}`} fill={color} stroke="#1e293b" strokeWidth="1" opacity={0.6} />
+          <polygon points={`${w/2},8 ${w-10},${h/2} ${w/2},${h-8} 10,${h/2}`} fill="#ffffff" opacity={0.05} />
+        </svg>
+      );
+    case 'divider':
+      return (
+        <svg width={w} height={h} viewBox="0 0 64 64" {...common}>
+          {/* Glass pane */}
+          <polygon points="32,16 64,32 64,52 32,36" fill="#38bdf8" opacity={0.25} stroke="#0ea5e9" strokeWidth="1" />
+          {/* Solid base */}
+          <polygon points="32,36 64,52 64,56 32,40" fill="#0f172a" />
+          <polygon points="32,36 32,40 0,24 0,20" fill="#1e293b" />
+          <polygon points="0,20 32,36 64,52 32,36" fill="#475569" stroke="#334155" strokeWidth="1" opacity={0.5} />
+        </svg>
+      );
+    case 'laptop':
+      return (
+        <svg width={w} height={h} viewBox="0 0 32 32" {...common}>
+          {/* Shadow */}
+          <ellipse cx="16" cy="24" rx="8" ry="3" fill="#000" opacity={0.2} />
+          {/* Screen */}
+          <polygon points="16,14 24,18 16,22 8,18" fill="#94a3b8" stroke="#475569" strokeWidth="0.5" />
+          <polygon points="8,18 16,10 20,12 12,20" fill="#0f172a" />
+          {/* Glow */}
+          <polygon points="10,17 16,11 19,12.5 13,18.5" fill="#38bdf8" opacity={0.6} />
+        </svg>
+      );
+    case 'bookshelf':
+      return (
+        <svg width={w} height={h} viewBox="0 0 48 80" {...common}>
+          <ellipse cx="24" cy="74" rx="14" ry="4" fill="#000" opacity={0.2} />
+          <polygon points="8,42 24,34 40,42 40,72 24,80 8,72" fill={wood} stroke={woodDark} strokeWidth="1" />
+          <polygon points="8,42 24,34 24,4 8,12" fill={wood} stroke={woodDark} strokeWidth="1" />
+          <polygon points="40,42 24,34 24,4 40,12" fill={woodDark} stroke={woodDark} strokeWidth="1" />
+          <polygon points="8,12 24,4 40,12 24,20" fill={woodLight} stroke={woodDark} strokeWidth="1" />
+          {/* Shelves */}
+          <line x1="8" y1="27" x2="24" y2="19" stroke={woodDark} strokeWidth="2" />
+          <line x1="8" y1="42" x2="24" y2="34" stroke={woodDark} strokeWidth="2" />
+          <line x1="8" y1="57" x2="24" y2="49" stroke={woodDark} strokeWidth="2" />
+          {/* Books */}
+          <rect x="12" y="32" width="3" height="8" fill="#ef4444" transform="skewY(-26.5)" />
+          <rect x="16" y="34" width="2" height="7" fill="#3b82f6" transform="skewY(-26.5)" />
+        </svg>
+      );
+"""
+if "case 'rug':" not in fb_data:
+    fb_data = fb_data.replace("switch (type) {", "switch (type) {\n" + new_cases)
+    with open(fb_path, "w", encoding="utf-8") as f:
+        f.write(fb_data)
+
+# 4. Update components/FurniSprite.tsx
+fs_path = os.path.join(ROOT, "components", "FurniSprite.tsx")
+with open(fs_path, "r", encoding="utf-8") as f:
+    fs_data = f.read()
+
+# Add new sizes
+if "divider:" not in fs_data:
+    fs_data = fs_data.replace("desk:       { w: 64, h: 64 },", "desk:       { w: 64, h: 64 },\n  divider:    { w: 64, h: 64 },\n  rug:        { w: 128, h: 64 },\n  laptop:     { w: 32, h: 32 },\n  bookshelf:  { w: 48, h: 80 },")
+
+# Offset laptop Y
+if "yOffset =" not in fs_data:
+    fs_data = fs_data.replace("const [idx, setIdx] = useState(0);", "const [idx, setIdx] = useState(0);\n  const yOffset = type === 'laptop' ? 24 : 0;")
+    fs_data = fs_data.replace("top={pos.y - h}", "top={pos.y - h - yOffset}")
+    fs_data = fs_data.replace("top: pos.y - h,", "top: pos.y - h - yOffset,")
+
+with open(fs_path, "w", encoding="utf-8") as f:
+    f.write(fs_data)
+
+
+# 5. Overwrite data/specialists.ts with the new complete layout
+spec_path = os.path.join(ROOT, "data", "specialists.ts")
+NEW_SPEC = r"""import { Specialist, Furniture } from '@/types';
 
 export const furniture: Furniture[] = [
   // ─── ALA ESQUERDA: Carlos, Marcos, Sophia, Andre ───
@@ -197,3 +302,8 @@ REGRAS INEGOCIÁVEIS:
 - Máximo 4 parágrafos por resposta, a menos que pedido diferente
 - Use markdown para estruturar: negrito para pontos críticos, listas quando houver múltiplos itens`;
 }
+"""
+with open(spec_path, "w", encoding="utf-8") as f:
+    f.write(NEW_SPEC)
+
+print("success")

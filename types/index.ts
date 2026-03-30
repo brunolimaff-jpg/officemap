@@ -13,7 +13,7 @@ export interface Specialist {
 
 export interface Furniture {
   id: string;
-  type: 'desk' | 'chair' | 'plant' | 'shelf' | 'monitor' | 'laptop' | 'coffee' | 'water_cooler' | 'whiteboard' | 'sofa' | 'table' | 'server_rack' | 'filing_cabinet';
+  type: 'desk' | 'chair' | 'plant' | 'shelf' | 'monitor' | 'laptop' | 'coffee' | 'water_cooler' | 'whiteboard' | 'sofa' | 'table' | 'server_rack' | 'filing_cabinet' | 'divider' | 'rug' | 'bookshelf';
   x: number;
   y: number;
   direction?: number;

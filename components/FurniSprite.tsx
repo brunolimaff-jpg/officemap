@@ -29,6 +29,10 @@ interface FurniSpriteProps {
 
 const SIZE: Record<string, { w: number; h: number }> = {
   desk:       { w: 64, h: 64 },
+  divider:    { w: 64, h: 64 },
+  rug:        { w: 128, h: 64 },
+  laptop:     { w: 32, h: 32 },
+  bookshelf:  { w: 48, h: 80 },
   chair:      { w: 48, h: 48 },
   chair2:     { w: 48, h: 48 },
   table:      { w: 80, h: 80 },
@@ -52,6 +56,7 @@ export default function FurniSprite({ type, pos, color, direction, tileX, tileY,
   }, [type, classname]);
 
   const [idx, setIdx] = useState(0);
+  const yOffset = type === 'laptop' ? 24 : 0;
 
   if (!classname || idx >= candidates.length) {
     return (
@@ -61,7 +66,7 @@ export default function FurniSprite({ type, pos, color, direction, tileX, tileY,
         w={w}
         h={h}
         left={pos.x - w / 2}
-        top={pos.y - h}
+        top={pos.y - h - yOffset}
         zIndex={zIndex}
       />
     );
@@ -78,7 +83,7 @@ export default function FurniSprite({ type, pos, color, direction, tileX, tileY,
       className="absolute pointer-events-none"
       style={{
         left: pos.x - w / 2,
-        top: pos.y - h,
+        top: pos.y - h - yOffset,
         zIndex,
         imageRendering: 'pixelated',
         transform: flip ? 'scaleX(-1)' : undefined,
