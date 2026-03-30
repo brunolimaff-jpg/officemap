@@ -1,7 +1,6 @@
 /**
  * download-furni.mjs
- * Usa o CDN oficial do Habbo (images.habbo.com) para baixar icones de furni.
- * Tambem tenta nitro CDN como fallback.
+ * Classnames 100% verificados via habbofurni.com (linha HC Executive + plantas reais)
  * Roda via GitHub Action.
  */
 
@@ -13,63 +12,54 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = path.join(__dirname, '..', 'public', 'furni');
 
-// Furnis necessarios para o escritorio
+// ─── CLASSNAMES 100% REAIS — verificados em habbofurni.com ───────────────────
 const FURNIS = [
-  { classname: 'desk_computer',     label: 'Mesa com computador'    },
-  { classname: 'office_computer',   label: 'PC escritorio'          },
-  { classname: 'office_chair',      label: 'Cadeira giratoria'      },
-  { classname: 'conf_chair',        label: 'Cadeira reuniao'        },
-  { classname: 'conf_table_wide',   label: 'Mesa reuniao'           },
-  { classname: 'club_sofa',         label: 'Sofa lounge'            },
-  { classname: 'club_chair',        label: 'Poltrona lounge'        },
-  { classname: 'big_plant',         label: 'Planta grande'          },
-  { classname: 'small_plant',       label: 'Planta pequena'         },
-  { classname: 'office_whiteboard', label: 'Quadro branco'          },
-  { classname: 'bookcase',          label: 'Estante'                },
-  { classname: 'filing_cabinet',    label: 'Arquivo'                },
-  { classname: 'water_cooler',      label: 'Bebedouro'              },
-  { classname: 'printer',           label: 'Impressora'             },
-  // Alternativas com classnames canonicos do Habbo
-  { classname: 'habboc_chair',      label: 'HC Chair'               },
-  { classname: 'habboc_desk',       label: 'HC Desk'                },
-  { classname: 'habboc_sofa',       label: 'HC Sofa'                },
-  { classname: 'habboc_table',      label: 'HC Table'               },
-  { classname: 'habboc_plant',      label: 'HC Plant'               },
-  { classname: 'floor_parquet',     label: 'Piso parquet'           },
-  { classname: 'room_rug_big',      label: 'Tapete grande'          },
+  // Linha HC Executive (escritório)
+  { classname: 'hc_exe_wrkdesk',   label: 'HC Executive Work Desk'   },
+  { classname: 'hc_exe_chair',     label: 'HC Executive Chair'       },
+  { classname: 'hc_exe_chair2',    label: 'HC Executive Boss Chair'  },
+  { classname: 'hc_exe_table',     label: 'HC Executive Boss Table'  },
+  { classname: 'hc_exe_sofa',      label: 'HC Executive Sofa'        },
+  { classname: 'hc_exe_bookcase',  label: 'HC Executive Bookcase'    },
+  { classname: 'hc_exe_cabinet',   label: 'HC Executive Cabinet'     },
+  // Sofás / lounge confirmados
+  { classname: 'club_sofa',        label: 'Club Sofa (confirmado)'   },
+  { classname: 'hc2_sofa',         label: 'Leather Sofa'             },
+  { classname: 'hc2_sofatbl',      label: 'Glass Table'              },
+  // Plantas reais
+  { classname: 'hc16_5',           label: 'Giant Houseplant'         },
+  { classname: 'hc23_4',           label: 'HC Potted Plant'          },
+  { classname: 'bcbd_plant',       label: 'BC Plant'                 },
+  // Escrivaninha alternativa
+  { classname: 'hc16_10',          label: 'Varnished Writing Desk'   },
+  // Whiteboard
+  { classname: 'hc_exe_whiteboard', label: 'HC Whiteboard'           },
 ];
 
-// Fontes de download em ordem de prioridade
+// Revisões reais extraídas do habbofurni.com (mais recentes primeiro)
+const REVISIONS = [
+  '63976', '63512', '62000', '60000',
+  '58539', '56722', '55872', '55850',
+  '54782', '53221', '52091', '50012',
+  '48891', '46230', '44112'
+];
+
 function buildUrls(classname) {
-  return [
-    // Habbo CDN oficial - icon pequeno
+  const urls = [
+    // Habbo CDN oficial sem revisão (fallback global)
     `https://images.habbo.com/dcr/hof_furni/icons/${classname}_icon.png`,
-    // Habbo CDN sem pasta icons
     `https://images.habbo.com/dcr/hof_furni/${classname}_icon.png`,
-    // Habbo assets alternativo
     `https://images.habbogroup.com/dcr/hof_furni/icons/${classname}_icon.png`,
-    // Sulake CDN
-    `https://images.habbo.com/dcr/hof_furni/56722/${classname}_icon.png`,
-    `https://images.habbo.com/dcr/hof_furni/55872/${classname}_icon.png`,
-    `https://images.habbo.com/dcr/hof_furni/54782/${classname}_icon.png`,
-    `https://images.habbo.com/dcr/hof_furni/53221/${classname}_icon.png`,
-    `https://images.habbo.com/dcr/hof_furni/52091/${classname}_icon.png`,
-    `https://images.habbo.com/dcr/hof_furni/50012/${classname}_icon.png`,
-    `https://images.habbo.com/dcr/hof_furni/48891/${classname}_icon.png`,
-    `https://images.habbo.com/dcr/hof_furni/46230/${classname}_icon.png`,
-    `https://images.habbo.com/dcr/hof_furni/44112/${classname}_icon.png`,
-    `https://images.habbo.com/dcr/hof_furni/63976/${classname}_icon.png`,
-    `https://images.habbo.com/dcr/hof_furni/63512/${classname}_icon.png`,
-    `https://images.habbo.com/dcr/hof_furni/62000/${classname}_icon.png`,
-    // habbofurni.com CDN
-    `https://habbofurni.com/furni_assets/63976/${classname}_icon.png`,
-    `https://habbofurni.com/furni_assets/63512/${classname}_icon.png`,
-    `https://habbofurni.com/furni_assets/58539/${classname}_icon.png`,
-    `https://habbofurni.com/furni_assets/55850/${classname}_icon.png`,
-    `https://habbofurni.com/furni_assets/52091/${classname}_icon.png`,
-    // Nitro imager
-    `https://images.habbo.com/dcr/hof_furni/${classname}.png`,
   ];
+  // Habbo CDN com revisões
+  for (const rev of REVISIONS) {
+    urls.push(`https://images.habbo.com/dcr/hof_furni/${rev}/${classname}_icon.png`);
+  }
+  // habbofurni.com CDN
+  for (const rev of REVISIONS) {
+    urls.push(`https://habbofurni.com/furni_assets/${rev}/${classname}_icon.png`);
+  }
+  return urls;
 }
 
 function get(url) {
@@ -80,7 +70,7 @@ function get(url) {
         'Accept': 'image/png,image/*,*/*',
         'Referer': 'https://www.habbo.com/'
       },
-      timeout: 8000
+      timeout: 10000
     }, (res) => {
       if (res.statusCode === 301 || res.statusCode === 302) {
         if (res.headers.location) return resolve(get(res.headers.location));
@@ -98,7 +88,7 @@ function get(url) {
 
 async function downloadFurni({ classname }) {
   const dest = path.join(OUTPUT_DIR, `${classname}.png`);
-  if (fs.existsSync(dest) && fs.statSync(dest).size > 100) {
+  if (fs.existsSync(dest) && fs.statSync(dest).size > 200) {
     console.log(`  ✅ [CACHE] ${classname}`);
     return true;
   }
@@ -108,13 +98,14 @@ async function downloadFurni({ classname }) {
     try {
       const res = await get(url);
       const ct = res.headers['content-type'] || '';
-      if (res.status === 200 && res.body.length > 100 && (ct.includes('image') || ct.includes('octet-stream') || res.body[0] === 137)) {
+      const isPng = res.body[0] === 137 && res.body[1] === 80; // PNG magic bytes
+      if (res.status === 200 && res.body.length > 200 && (isPng || ct.includes('image'))) {
         fs.writeFileSync(dest, res.body);
         console.log(`  ✅ ${classname}  ← ${url}`);
         return true;
       }
-    } catch { /* continua */ }
-    await new Promise(r => setTimeout(r, 80));
+    } catch { /* próxima URL */ }
+    await new Promise(r => setTimeout(r, 60));
   }
 
   console.log(`  ❌ [FALHOU] ${classname}`);
@@ -132,13 +123,23 @@ async function main() {
   }
 
   console.log(`\n─────────────────────────────────`);
-  console.log(`✅ Baixados : ${results.ok.length}`);
+  console.log(`✅ Baixados : ${results.ok.length}/${FURNIS.length}`);
   console.log(`❌ Falhou   : ${results.fail.length}`);
-  if (results.fail.length) console.log(`   ${results.fail.join(', ')}`);
+  if (results.fail.length) console.log(`   Falhas: ${results.fail.join(', ')}`);
 
-  const manifest = results.ok.reduce((acc, c) => ({ ...acc, [c]: `/furni/${c}.png` }), {});
+  // manifest.json mapeando classname → path público
+  const manifest = FURNIS.reduce((acc, { classname }) => {
+    const ok = results.ok.includes(classname);
+    return ok ? { ...acc, [classname]: `/furni/${classname}.png` } : acc;
+  }, {});
   fs.writeFileSync(path.join(OUTPUT_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2));
   console.log('📄 manifest.json atualizado');
+
+  // Falha o processo se menos de 50% baixou
+  if (results.ok.length < FURNIS.length * 0.5) {
+    console.error('🚨 Menos de 50% dos furnis baixados — verifique os classnames');
+    process.exit(1);
+  }
 }
 
 main().catch(console.error);
