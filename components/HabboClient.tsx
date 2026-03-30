@@ -28,9 +28,10 @@ export interface User {
 export { officeMap };
 
 const SPECIALIST_COLORS: Record<string, string> = {
-  carlos: '#EF4444', marcos: '#06B6D4', sophia: '#8B5CF6', andre: '#3B82F6',
-  diego: '#10B981', raquel: '#F59E0B', helena: '#EC4899', victor: '#F97316',
-  '1': '#4A90E2',
+  satya: '#0078D4', uncle_bob: '#DC2626', karpathy: '#7C3AED', rogati: '#059669',
+  osmani: '#F59E0B', whittaker: '#EF4444', dixon: '#06B6D4', dodds: '#EC4899',
+  rauch: '#171717', rodrigues: '#16A34A', kozyrkov: '#8B5CF6', cagan: '#F97316',
+  grove: '#64748B', '1': '#4A90E2',
 };
 
 const WALKABLE = new Set([1, 2, 3, 6, 7]);
@@ -43,7 +44,7 @@ export default function HabboClient() {
   const { sessions, currentSessionId, saveSession, updateCurrentSession, loadSession, startNewSession } = useChatHistory();
 
   const [users, setUsers] = useState<User[]>([
-    { id: '1', name: 'Bruno', x: 7, y: 17, direction: 2, figure: 'hr-115-42.hd-190-1.ch-210-66.lg-270-82.sh-290-91' },
+    { id: '1', name: 'Bruno', x: 14, y: 13, direction: 4, figure: 'hr-115-42.hd-190-1.ch-210-66.lg-270-82.sh-290-91' },
     ...specialists.map((s, i) => {
       const pos = specialistDeskPositions[s.id];
       return {
@@ -124,7 +125,7 @@ export default function HabboClient() {
     );
     setUsers(prev =>
       prev.map(u =>
-        u.id === '1' ? { ...u, x: 12, y: 13, direction: 0 } : u
+        u.id === '1' ? { ...u, x: 14, y: 10, direction: 0 } : u
       )
     );
     const newMessage: ChatMessage = {

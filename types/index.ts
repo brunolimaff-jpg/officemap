@@ -1,4 +1,17 @@
-export type SpecialistId = 'carlos' | 'sophia' | 'andre' | 'diego' | 'raquel' | 'marcos' | 'helena' | 'victor';
+export type SpecialistId =
+  | 'satya'
+  | 'uncle_bob'
+  | 'karpathy'
+  | 'rogati'
+  | 'osmani'
+  | 'whittaker'
+  | 'dixon'
+  | 'dodds'
+  | 'rauch'
+  | 'rodrigues'
+  | 'kozyrkov'
+  | 'cagan'
+  | 'grove';
 
 export type SpecialistStatus = 'available' | 'thinking' | 'responding';
 
@@ -9,10 +22,10 @@ export interface Specialist {
   specialty: string;
   tone: string;
   color: string;
+  realPerson: string;
 }
 
 export type FurnitureType =
-  // ─── Mobília existente ──────────────────────────────────────────────────────
   | 'desk'
   | 'chair'
   | 'plant'
@@ -36,17 +49,16 @@ export type FurnitureType =
   | 'coffee_table'
   | 'cabinet'
   | 'mug'
-  // ─── Novos tipos — ref: Habbo Corp escritório ────────────────────────────────
-  | 'glass_wall'      // parede de vidro divisória entre zonas
-  | 'sign'            // placa/letreiro na recepção
-  | 'monitor_dual'    // dual monitor nas workstations
-  | 'fridge'          // geladeira na copa
-  | 'coffee_machine'  // cafeteira profissional na copa
-  | 'microwave'       // micro-ondas na copa
-  | 'pool_table'      // mesa de sinuca/ping-pong no lounge
-  | 'ac_unit'         // ar-condicionado decorativo
-  | 'locker'          // armário de funcionário
-  | 'tv_screen';      // tela de TV com gráficos
+  | 'glass_wall'
+  | 'sign'
+  | 'monitor_dual'
+  | 'fridge'
+  | 'coffee_machine'
+  | 'microwave'
+  | 'pool_table'
+  | 'ac_unit'
+  | 'locker'
+  | 'tv_screen';
 
 export interface Furniture {
   id: string;
@@ -55,7 +67,7 @@ export interface Furniture {
   y: number;
   direction?: number;
   color?: string;
-  label?: string; // texto para sign, tv_screen, etc.
+  label?: string;
 }
 
 export interface Message {

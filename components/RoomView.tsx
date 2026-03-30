@@ -14,39 +14,39 @@ const TILE_W = 64;
 const TILE_H = 32;
 
 const getTileColors = (val: number, x: number, y: number) => {
-  // Checker muito sutil — quase imperceptivel como na referencia
+  // Checker visível — contraste alto como na referência Habbo
   const isLight = (x + y) % 2 === 0;
   switch (val) {
-    // Piso open space — cinza azulado claro
+    // Piso open space — cinza azulado, checker forte
     case 1: return isLight
-      ? { top: '#C2CDD8', left: '#8FA0AE', right: '#7088A0', h: 8, accent: 'rgba(255,255,255,0.08)' }
-      : { top: '#C8D4DE', left: '#96A8B6', right: '#7890A8', h: 8, accent: 'rgba(255,255,255,0.04)' };
-    // Corredor — cinza azulado medio
+      ? { top: '#B8C8D8', left: '#8098AE', right: '#6080A0', h: 8, accent: 'rgba(255,255,255,0.12)' }
+      : { top: '#D0DCE6', left: '#A0B4C4', right: '#80A0B8', h: 8, accent: 'rgba(255,255,255,0.04)' };
+    // Corredor — cinza azulado médio, checker forte
     case 2: return isLight
-      ? { top: '#8FA0B0', left: '#607080', right: '#485868', h: 8, accent: 'rgba(255,255,255,0.06)' }
-      : { top: '#96A8B8', left: '#687888', right: '#506070', h: 8, accent: 'rgba(255,255,255,0.03)' };
-    // Meeting room — azul petroleo
+      ? { top: '#7890A8', left: '#506878', right: '#384858', h: 8, accent: 'rgba(255,255,255,0.08)' }
+      : { top: '#90A8C0', left: '#688098', right: '#507080', h: 8, accent: 'rgba(255,255,255,0.03)' };
+    // Meeting room — azul petróleo profundo, checker sutil
     case 3: return isLight
-      ? { top: '#3A6080', left: '#224458', right: '#162E40', h: 8, accent: 'rgba(100,180,255,0.08)' }
-      : { top: '#406880', left: '#284C60', right: '#1A3448', h: 8, accent: 'rgba(100,180,255,0.04)' };
-    // Divisoria interna — muito sutil
-    case 4: return { top: '#C0CDD8', left: '#8898A8', right: '#687888', h: 14, accent: 'rgba(255,255,255,0.1)' };
+      ? { top: '#2A5070', left: '#183850', right: '#102838', h: 8, accent: 'rgba(80,160,255,0.10)' }
+      : { top: '#345A78', left: '#204260', right: '#143040', h: 8, accent: 'rgba(80,160,255,0.05)' };
+    // Divisória interna — parede real, alta
+    case 4: return { top: '#D8E0E8', left: '#98A8B8', right: '#788898', h: 48, accent: 'rgba(255,255,255,0.15)' };
     // Divider baixo
-    case 5: return { top: '#B8C8D8', left: '#8098AE', right: '#607888', h: 10, accent: 'rgba(255,255,255,0.08)' };
-    // Lounge — tom quente
+    case 5: return { top: '#B8C8D8', left: '#8098AE', right: '#607888', h: 12, accent: 'rgba(255,255,255,0.08)' };
+    // Lounge — tom quente madeira, checker visível
     case 6: return isLight
-      ? { top: '#B0A898', left: '#786E64', right: '#5C5450', h: 8, accent: 'rgba(255,220,180,0.08)' }
-      : { top: '#B8B0A0', left: '#80786E', right: '#645C58', h: 8, accent: 'rgba(255,220,180,0.04)' };
-    // Copa — concreto claro
+      ? { top: '#A09080', left: '#6E5E54', right: '#544840', h: 8, accent: 'rgba(255,200,150,0.12)' }
+      : { top: '#BEB0A0', left: '#887868', right: '#6C5C54', h: 8, accent: 'rgba(255,200,150,0.05)' };
+    // Copa — concreto claro diferenciado, checker
     case 7: return isLight
-      ? { top: '#A8B4BE', left: '#708090', right: '#58707E', h: 8, accent: 'rgba(255,255,255,0.08)' }
-      : { top: '#B0BCC6', left: '#788898', right: '#607886', h: 8, accent: 'rgba(255,255,255,0.04)' };
-    // Parede externa — branca, fina
-    case 8: return { top: '#E8EEF4', left: '#B8C8D8', right: '#98AEBE', h: 44, accent: 'rgba(255,255,255,0.2)' };
-    // Janela — branca com vidro azul
-    case 9: return { top: '#DDE8F0', left: '#90AABF', right: '#708898', h: 44, accent: 'rgba(160,210,255,0.3)' };
-    // Parede fundo — um pouco mais alta
-    case 10: return { top: '#EEF2F6', left: '#C0D0DC', right: '#A0B4C4', h: 56, accent: 'rgba(255,255,255,0.18)' };
+      ? { top: '#98B0C0', left: '#607888', right: '#486070', h: 8, accent: 'rgba(255,255,255,0.10)' }
+      : { top: '#B0C4D0', left: '#788A9A', right: '#607080', h: 8, accent: 'rgba(255,255,255,0.04)' };
+    // Parede externa — alta, branco sólido
+    case 8: return { top: '#E8EEF4', left: '#B0C4D4', right: '#90AABC', h: 80, accent: 'rgba(255,255,255,0.22)' };
+    // Janela — alta, vidro azul translúcido
+    case 9: return { top: '#D8E4EE', left: '#88A8C0', right: '#6888A0', h: 80, accent: 'rgba(140,200,255,0.35)' };
+    // Parede fundo — mais alta ainda
+    case 10: return { top: '#ECF0F6', left: '#B8CCD8', right: '#98B0C4', h: 96, accent: 'rgba(255,255,255,0.20)' };
     default: return null;
   }
 };
