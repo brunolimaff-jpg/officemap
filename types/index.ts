@@ -29,7 +29,12 @@ export type FurnitureType =
   | 'rug'
   | 'lamp'
   | 'bookshelf'
-  | 'trash';
+  | 'trash'
+  | 'computer'
+  | 'couch'
+  | 'coffee_table'
+  | 'cabinet'
+  | 'mug';
 
 export interface Furniture {
   id: string;
