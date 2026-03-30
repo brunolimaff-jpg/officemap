@@ -1,4 +1,9 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+﻿import os
+
+ROOT = r"C:\Users\bruno.ferreira\Desktop\NOVO APP\officemap"
+path = os.path.join(ROOT, "components", "RoomView.tsx")
+
+ROOM_VIEW = r"""import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { User } from './HabboClient';
 import { furniture } from '@/data/specialists';
 import { Furniture } from '@/types';
@@ -242,3 +247,9 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     </div>
   );
 }
+"""
+
+with open(path, "w", encoding="utf-8") as f:
+    f.write(ROOM_VIEW)
+
+print("done")
