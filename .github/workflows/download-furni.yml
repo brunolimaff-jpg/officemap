@@ -1,0 +1,33 @@
+name: Download Habbo Furni Sprites
+
+on:
+  workflow_dispatch: # Roda manualmente pelo GitHub
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Criar pasta /public/furni
+        run: mkdir -p public/furni
+
+      - name: Baixar sprites PNG do Habbo
+        run: node scripts/download-furni.mjs
+
+      - name: Commit dos PNGs baixados
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/furni/
+          git diff --staged --quiet || git commit -m "assets: sprites Habbo furni PNG baixados automaticamente"
+          git push
