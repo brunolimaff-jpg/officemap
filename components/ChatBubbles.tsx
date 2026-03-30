@@ -12,24 +12,24 @@ interface ActiveBubble extends ChatMessage {
 }
 
 // Cor de bubble única por userId — estilo Habbo
-const BUBBLE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  '1':      { bg: '#FFFDE7', text: '#1A1A1A', border: '#F59E0B' }, // Bruno — amarelo
-  carlos:   { bg: '#FEE2E2', text: '#1A1A1A', border: '#EF4444' },
-  marcos:   { bg: '#E0F2FE', text: '#1A1A1A', border: '#06B6D4' },
-  sophia:   { bg: '#EDE9FE', text: '#1A1A1A', border: '#8B5CF6' },
-  andre:    { bg: '#DBEAFE', text: '#1A1A1A', border: '#3B82F6' },
-  diego:    { bg: '#D1FAE5', text: '#1A1A1A', border: '#10B981' },
-  raquel:   { bg: '#FEF3C7', text: '#1A1A1A', border: '#F59E0B' },
-  helena:   { bg: '#FCE7F3', text: '#1A1A1A', border: '#EC4899' },
-  victor:   { bg: '#FFEDD5', text: '#1A1A1A', border: '#F97316' },
-  system:   { bg: '#1E293B', text: '#94A3B8', border: '#334155' },
+const BUBBLE_COLORS: Record<string, { bg: string; text: string; border: string; nameColor: string }> = {
+  '1':      { bg: '#FFFDE7', text: '#1A1A1A', border: '#F59E0B', nameColor: '#B45309' },
+  carlos:   { bg: '#FEE2E2', text: '#1A1A1A', border: '#EF4444', nameColor: '#B91C1C' },
+  marcos:   { bg: '#E0F2FE', text: '#1A1A1A', border: '#06B6D4', nameColor: '#0E7490' },
+  sophia:   { bg: '#EDE9FE', text: '#1A1A1A', border: '#8B5CF6', nameColor: '#6D28D9' },
+  andre:    { bg: '#DBEAFE', text: '#1A1A1A', border: '#3B82F6', nameColor: '#1D4ED8' },
+  diego:    { bg: '#D1FAE5', text: '#1A1A1A', border: '#10B981', nameColor: '#047857' },
+  raquel:   { bg: '#FEF3C7', text: '#1A1A1A', border: '#F59E0B', nameColor: '#B45309' },
+  helena:   { bg: '#FCE7F3', text: '#1A1A1A', border: '#EC4899', nameColor: '#BE185D' },
+  victor:   { bg: '#FFEDD5', text: '#1A1A1A', border: '#F97316', nameColor: '#C2410C' },
+  system:   { bg: '#1E293B', text: '#94A3B8', border: '#334155', nameColor: '#64748B' },
 };
 
-const DEFAULT_BUBBLE = { bg: '#FFFFFF', text: '#1A1A1A', border: '#CBD5E1' };
+const DEFAULT_BUBBLE = { bg: '#FFFFFF', text: '#1A1A1A', border: '#CBD5E1', nameColor: '#64748B' };
 
 const TILE_W = 64;
 const TILE_H = 32;
-const AVATAR_HEAD_OFFSET = 90; // px acima do tile para alcançar a cabeça
+const AVATAR_HEAD_OFFSET = 95;
 
 export default function ChatBubbles({ messages, users }: ChatBubblesProps) {
   const [activeBubbles, setActiveBubbles] = useState<ActiveBubble[]>([]);
@@ -37,6 +37,7 @@ export default function ChatBubbles({ messages, users }: ChatBubblesProps) {
   const [winH, setWinH] = useState(768);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     setWinW(window.innerWidth);
     setWinH(window.innerHeight);
     const onResize = () => { setWinW(window.innerWidth); setWinH(window.innerHeight); };
@@ -50,20 +51,19 @@ export default function ChatBubbles({ messages, users }: ChatBubblesProps) {
 
     setActiveBubbles(prev => {
       const updated = prev
-        .map(b => ({ ...b, yOffset: b.yOffset + 36, opacity: b.yOffset > 120 ? 0 : 1 }))
+        .map(b => ({ ...b, yOffset: b.yOffset + 38, opacity: b.yOffset > 130 ? 0 : b.yOffset > 90 ? 0.5 : 1 }))
         .filter(b => b.opacity > 0);
       return [...updated, { ...latestMsg, yOffset: 0, opacity: 1 }];
     });
 
     const timer = setTimeout(() => {
       setActiveBubbles(prev => prev.filter(b => b.id !== latestMsg.id));
-    }, 5000);
+    }, 5500);
     return () => clearTimeout(timer);
   }, [messages]);
 
-  // Calcula posição isométrica real do avatar
   const getAvatarScreenPos = (user: User) => {
-    const mapHeight = 24; // linhas do officeMap
+    const mapHeight = 24;
     const offsetX = winW / 2;
     const offsetY = winH / 2 - (mapHeight * TILE_H) / 2;
     return {
@@ -80,7 +80,6 @@ export default function ChatBubbles({ messages, users }: ChatBubblesProps) {
 
         const colors = BUBBLE_COLORS[bubble.userId] ?? DEFAULT_BUBBLE;
 
-        // Posição: se system, centraliza; senão, acima da cabeça do avatar
         let xPos = winW / 2;
         let yBase = winH - 200;
         if (user) {
@@ -89,50 +88,73 @@ export default function ChatBubbles({ messages, users }: ChatBubblesProps) {
           yBase = screenPos.y - AVATAR_HEAD_OFFSET - bubble.yOffset;
         }
 
-        // Trunca texto longo em 80 chars
-        const text = bubble.text.length > 80
-          ? bubble.text.slice(0, 77) + '...'
+        const text = bubble.text.length > 85
+          ? bubble.text.slice(0, 82) + '...'
           : bubble.text;
 
         return (
           <div
             key={bubble.id}
-            className="absolute flex flex-col items-center transition-all duration-500 ease-out"
+            className="absolute flex flex-col items-center"
             style={{
               left: xPos,
               top: yBase,
               transform: 'translateX(-50%)',
               opacity: bubble.opacity,
+              transition: 'top 0.4s ease-out, opacity 0.4s ease-out',
             }}
           >
-            {/* Bubble */}
+            {/* Bubble — estilo Habbo com sombra e borda dupla */}
             <div
-              className="rounded-lg px-3 py-1.5 text-xs font-pixel whitespace-normal max-w-[200px] text-center shadow-md"
               style={{
                 backgroundColor: colors.bg,
                 color: colors.text,
                 border: `2px solid ${colors.border}`,
+                borderRadius: '8px',
+                padding: '5px 10px 5px 10px',
+                maxWidth: '200px',
+                textAlign: 'center',
+                fontSize: '11px',
                 lineHeight: '1.4',
+                fontFamily: 'var(--font-pixel, monospace)',
+                boxShadow: `0 2px 0 rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)`,
+                whiteSpace: 'normal',
+                wordBreak: 'break-word',
               }}
             >
               {bubble.userId !== 'system' && (
-                <span className="font-bold block" style={{ color: colors.border }}>
+                <span
+                  className="block font-bold mb-0.5"
+                  style={{ color: colors.nameColor, fontSize: '10px', letterSpacing: '0.02em' }}
+                >
                   {user?.name}
                 </span>
               )}
               <span>{text}</span>
             </div>
-            {/* Seta para baixo */}
-            {bubble.yOffset === 0 && (
-              <div
-                className="w-0 h-0"
-                style={{
-                  borderLeft: '6px solid transparent',
-                  borderRight: '6px solid transparent',
-                  borderTop: `6px solid ${colors.border}`,
-                }}
-              />
-            )}
+
+            {/* Seta triangular — apontando para baixo (avatar) */}
+            <div
+              style={{
+                width: 0,
+                height: 0,
+                borderLeft: '7px solid transparent',
+                borderRight: '7px solid transparent',
+                borderTop: `7px solid ${colors.border}`,
+                marginTop: '-1px',
+              }}
+            />
+            {/* Seta interna (preenchimento) */}
+            <div
+              style={{
+                width: 0,
+                height: 0,
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+                borderTop: `5px solid ${colors.bg}`,
+                marginTop: '-11px',
+              }}
+            />
           </div>
         );
       })}
