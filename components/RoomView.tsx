@@ -37,9 +37,29 @@ const getTileColors = (val: number, x: number, y: number) => {
   }
 };
 
+// z-order completo — todos os tipos de mobília mapeados
+// Regra: rug=0 (chão), chair=1, trash=1, divider=1
+//        desk=2, sofa=2, couch=2, coffee_table=2
+//        plant=3, lamp=3, table=3, cabinet=3
+//        bookshelf=4, whiteboard=5
+//        computer=6 (acima do desk), mug=7 (acima de tudo na superfície)
 const FURNI_Z_BONUS: Record<string, number> = {
-  desk: 2, chair: 1, table: 3, sofa: 2, whiteboard: 5, plant: 3, divider: 1,
-  lamp: 3, rug: 0, bookshelf: 4, trash: 1,
+  rug:          0,
+  chair:        1,
+  trash:        1,
+  divider:      1,
+  desk:         2,
+  sofa:         2,
+  couch:        2,
+  coffee_table: 2,
+  plant:        3,
+  lamp:         3,
+  table:        3,
+  cabinet:      3,
+  bookshelf:    4,
+  whiteboard:   5,
+  computer:     6,
+  mug:          7,
 };
 
 // Habbo avatar walk frames
@@ -147,7 +167,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
       const pos = getScreenPos(x, y);
       const walkable = isWalkable(val);
 
-      // Marca de click no tile — cursor Habbo
       tiles.push(
         <div
           key={`tile-${x}-${y}`}
@@ -170,12 +189,10 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
               boxShadow: walkable ? 'inset 0 0 0 1px rgba(0,0,0,0.15)' : undefined,
             }}
           >
-            {/* Acento luminoso no canto superior do losango */}
             <div className="absolute inset-0" style={{
               clipPath: 'polygon(50% 0%, 75% 25%, 50% 50%, 25% 25%)',
               backgroundColor: colors.accent,
             }} />
-            {/* Hover highlight — estilo Habbo */}
             {walkable && (
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-75" style={{
                 clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
