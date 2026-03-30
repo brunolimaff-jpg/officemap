@@ -144,10 +144,10 @@ function CityscapeSVG() {
   );
 }
 
-// ═══ HABBO AVATAR — Pixel-grid system, autêntico Habbo ═══════════════════════
+// ═══ HABBO AVATAR — Authentic Pixel Art Base ═════════════════════════════════
 const AVATAR_TRAITS: Record<string, { hair: string; skin: string; shirt: string; pants: string; hairStyle: number }> = {
   satya:      { hair: '#1A1A2E', skin: '#C68642', shirt: '#0078D4', pants: '#1E293B', hairStyle: 0 },
-  uncle_bob:  { hair: '#8B8B8B', skin: '#F5C99A', shirt: '#DC2626', pants: '#1E293B', hairStyle: 1 },
+  uncle_bob:  { hair: '#D4D4D4', skin: '#F5C99A', shirt: '#DC2626', pants: '#1E293B', hairStyle: 1 },
   karpathy:   { hair: '#3B2506', skin: '#F5C99A', shirt: '#7C3AED', pants: '#334155', hairStyle: 0 },
   rogati:     { hair: '#2D1F14', skin: '#DEB887', shirt: '#059669', pants: '#1E293B', hairStyle: 2 },
   osmani:     { hair: '#1A1A2E', skin: '#C68642', shirt: '#F59E0B', pants: '#334155', hairStyle: 0 },
@@ -173,108 +173,74 @@ function shadeColor(hex: string, amount: number): string {
   } catch { return hex; }
 }
 
-// ─── Pixel-grid sprite definitions ──────────────────────────────────────────
-// 16 cols × 25 rows, each cell = 2px → 32×50 SVG
-// Color codes: 0=transparent, 1=hair, 2=hairDark, 3=skin, 4=skinDark,
-//   5=shirt, 6=shirtDark, 7=shirtLight(collar), 8=pants, 9=pantsDark,
-//  10=shoes, 11=shoeHighlight, 12=eyes, 13=eyeWhite, 14=mouth
-
-// Hair rows (top 5 rows) per style — they replace rows 0-4 of the base grid
-const HAIR_ROWS: Record<number, number[][]> = {
-  0: [ // Full modern hair
-    [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
-    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,0,0,1,2,3,3,3,3,3,3,2,1,0,0,0],
-    [0,0,0,1,3,3,3,3,3,3,3,3,1,0,0,0],
+// O = Outline (Black/Dark), S = Skin, s = Skin shadow, E = Eye White, B = Pupil
+// H = Hair, h = Hair shadow, C = Shirt, c = Shirt shadow, P = Pants, p = Pants shadow
+// K = Shoes, k = Shoe shadow
+const HABBO_ISO_SPRITES = {
+  front: [
+    "........OOOOO........",
+    "......OOHHHHHHOO.....",
+    ".....OHHHHHHHHHHO....",
+    "....OHHSHHSSHhHHO....",
+    "...OHHSSSSSssssHO....",
+    "...OHSESSSEBSSSHO....",
+    "...OHSSSSSSsssSNO....", // N = Nose shadow
+    "...OHSSSSSSssssOO....",
+    "....OSSSSSSssSO......",
+    ".....OSSSSSSOO.......",
+    "......OOssOOO........", // Neck
+    "....OOOCOOCOOOO......", // Collar
+    "...OCCCOOOCCCCCO.....", // Shoulders
+    "..OOcCOOCCcCCCCOOO...", // Upper Arms
+    ".OCccCOOCCCCCCccCO...",
+    ".OCccOCccCCCCcccCO...", // Forearms
+    ".OCccOcCcCcccCccCO...", 
+    ".OOOCOcCCcCccCcOOO...", // Hands / Waist
+    "...OSSOCCOCCcCOSSO...", 
+    "...OOO OCCCCOOO O....",
+    ".......OPPPPO........", // Pants
+    "......OPPPPPPO.......",
+    "......OPPPpPPO.......",
+    "......OPpPpPPO.......",
+    "......OPpPpPPO.......",
+    ".....OPpP O pPO......", // Separation
+    "...OOKKKK OKKKKOO....", // Shoes
+    "..OKkKKkK OOKkKkKO...",
+    "..OKkKKkK OKkKKkKO...",
+    "..OOOOOOO OOOOOOOO..."
   ],
-  1: [ // Short / receding
-    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
-    [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
-    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],
-    [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],
-  ],
-  2: [ // Long hair — shoulder-length
-    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-    [0,0,1,1,3,3,3,3,3,3,3,3,1,1,0,0],
-    [0,0,1,1,3,3,3,3,3,3,3,3,1,1,0,0],
-  ],
-};
-
-// Base front sprite (rows 5-24, shared across all hair styles)
-const FRONT_BODY: number[][] = [
-  [0,0,0,0,3,13,12,3,3,13,12,3,0,0,0,0], // 5  — eyes
-  [0,0,0,0,3,3,3,14,14,3,3,3,0,0,0,0],   // 6  — nose
-  [0,0,0,0,3,3,3,4,4,3,3,3,0,0,0,0],     // 7  — mouth
-  [0,0,0,0,0,3,4,3,3,4,3,0,0,0,0,0],     // 8  — chin
-  [0,0,0,0,0,0,4,4,4,4,0,0,0,0,0,0],     // 9  — neck
-  [0,0,0,0,5,5,5,7,7,5,5,5,0,0,0,0],     // 10 — collar
-  [0,0,0,5,5,5,5,7,7,5,5,5,5,0,0,0],     // 11 — shoulders
-  [0,0,3,5,5,5,5,5,5,5,5,5,5,3,0,0],     // 12 — upper arms + torso
-  [0,0,3,5,5,5,5,5,5,5,5,5,5,3,0,0],     // 13 — mid torso
-  [0,0,3,6,5,5,5,5,5,5,5,5,6,3,0,0],     // 14 — lower arms
-  [0,0,4,6,6,5,5,5,5,5,5,6,6,4,0,0],     // 15 — hands + belt
-  [0,0,0,0,6,6,6,6,6,6,6,6,0,0,0,0],     // 16 — belt
-  [0,0,0,0,8,8,8,8,8,8,8,8,0,0,0,0],     // 17 — pants top
-  [0,0,0,0,8,8,8,0,0,8,8,8,0,0,0,0],     // 18 — legs split
-  [0,0,0,0,8,8,8,0,0,8,8,8,0,0,0,0],     // 19 — legs
-  [0,0,0,0,8,8,9,0,0,9,8,8,0,0,0,0],     // 20 — lower legs
-  [0,0,0,0,9,9,9,0,0,9,9,9,0,0,0,0],     // 21 — ankles
-  [0,0,0,10,10,10,10,0,0,10,10,10,10,0,0,0],// 22 — shoes
-  [0,0,0,10,11,10,10,0,0,10,10,11,10,0,0,0],// 23 — soles
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],      // 24 — padding
-];
-
-// Back sprite body (no face details)
-const BACK_BODY: number[][] = [
-  [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],     // 5  — back of head
-  [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],     // 6
-  [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],     // 7
-  [0,0,0,0,0,3,4,3,3,4,3,0,0,0,0,0],     // 8  — neck base
-  [0,0,0,0,0,0,4,4,4,4,0,0,0,0,0,0],     // 9
-  [0,0,0,0,6,6,5,5,5,5,6,6,0,0,0,0],     // 10 — back collar
-  [0,0,0,6,6,5,5,5,5,5,5,6,6,0,0,0],     // 11
-  [0,0,3,6,5,5,5,5,5,5,5,5,6,3,0,0],     // 12
-  [0,0,3,6,5,5,5,5,5,5,5,5,6,3,0,0],     // 13
-  [0,0,3,6,5,5,5,5,5,5,5,5,6,3,0,0],     // 14
-  [0,0,4,6,6,5,5,5,5,5,5,6,6,4,0,0],     // 15
-  [0,0,0,0,6,6,6,6,6,6,6,6,0,0,0,0],     // 16
-  [0,0,0,0,8,8,8,8,8,8,8,8,0,0,0,0],     // 17
-  [0,0,0,0,8,8,8,0,0,8,8,8,0,0,0,0],     // 18
-  [0,0,0,0,8,8,8,0,0,8,8,8,0,0,0,0],     // 19
-  [0,0,0,0,8,8,9,0,0,9,8,8,0,0,0,0],     // 20
-  [0,0,0,0,9,9,9,0,0,9,9,9,0,0,0,0],     // 21
-  [0,0,0,10,10,10,10,0,0,10,10,10,10,0,0,0],// 22
-  [0,0,0,10,11,10,10,0,0,10,10,11,10,0,0,0],// 23
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],      // 24
-];
-
-// Back hair rows — hair covers back of head more
-const BACK_HAIR: Record<number, number[][]> = {
-  0: [
-    [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
-    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-  ],
-  1: [
-    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
-    [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
-    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],
-  ],
-  2: [
-    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
-    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-    [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-    [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-    [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-  ],
+  back: [
+    "........OOOOO........",
+    "......OOHHHHHHOO.....",
+    ".....OHHHHHHHHHHO....",
+    "....OHHHHHHHHHHHO....",
+    "...OHHHHHHHHHHhhHO...",
+    "...OHHHHHHHHHHhhOO...",
+    "...OHHHHHHHHHHhhOO...",
+    "...OHHHHHHHHHHhhOO...",
+    "....OHhhhhhHhhhO.....",
+    ".....OHhhhhhhOO......",
+    "......OOsSSOO........", 
+    "....OOOcOOCOOOO......", 
+    "...OCCCCOOCCCCCO.....", 
+    "..OOCcCOOcCcCCCOOO...", 
+    ".OCccCOOCCCCCCccCO...",
+    ".OCccOCcCcCCCcccCO...", 
+    ".OCccOcCcCcccCccCO...", 
+    ".OOOCOcCCcCccCcOOO...", 
+    "...OSSOCCOCCcCOSSO...", 
+    "...OOO OCCCCOOO O....",
+    ".......OPPPPO........", 
+    "......OPPPPPPO.......",
+    "......OPPPpPPO.......",
+    "......OPpPpPPO.......",
+    "......OPpPpPPO.......",
+    ".....OPpP O pPO......",
+    "...OOKKKK OKKKKOO....", 
+    "..OKkKKkK OOKkKkKO...",
+    "..OKkKKkK OKkKKkKO...",
+    "..OOOOOOO OOOOOOOO..."
+  ]
 };
 
 function HabboAvatar({ id, direction }: { id: string; direction: number }) {
@@ -282,34 +248,36 @@ function HabboAvatar({ id, direction }: { id: string; direction: number }) {
   const facingLeft = direction >= 5 && direction <= 7;
   const facingBack = direction === 0 || direction === 1 || direction === 7;
 
-  // Build color palette from traits
-  const P: Record<number, string> = {
-    1: t.hair, 2: shadeColor(t.hair, -20),
-    3: t.skin, 4: shadeColor(t.skin, -30),
-    5: t.shirt, 6: shadeColor(t.shirt, -35), 7: shadeColor(t.shirt, 45),
-    8: t.pants, 9: shadeColor(t.pants, -25),
-    10: '#111827', 11: '#2D3748',
-    12: '#1E293B', 13: '#E8E8E8', 14: shadeColor(t.skin, -15),
+  const P: Record<string, string> = {
+    '.': 'transparent', ' ': 'transparent',
+    'O': 'rgba(0,0,0,0.4)', // Isometric dark outline
+    'S': t.skin, 's': shadeColor(t.skin, -30), 'N': shadeColor(t.skin, -45),
+    'H': t.hair, 'h': shadeColor(t.hair, -25),
+    'C': t.shirt, 'c': shadeColor(t.shirt, -30),
+    'P': t.pants, 'p': shadeColor(t.pants, -25),
+    'K': '#1F2937', 'k': '#111827',
+    'E': '#FFFFFF', 'B': '#111827'
   };
 
-  // Assemble full grid: hair rows (0-4) + body rows (5-24) = 25 rows total
-  const hairRows = facingBack
-    ? (BACK_HAIR[t.hairStyle] ?? BACK_HAIR[0])
-    : (HAIR_ROWS[t.hairStyle] ?? HAIR_ROWS[0]);
-  const bodyRows = facingBack ? BACK_BODY : FRONT_BODY;
-  const grid = [...hairRows, ...bodyRows];
+  const sprite = facingBack ? HABBO_ISO_SPRITES.back : HABBO_ISO_SPRITES.front;
 
   return (
-    <svg width="32" height="50" viewBox="0 0 32 50" fill="none"
-      style={{ imageRendering: 'pixelated', display: 'block', transform: facingLeft ? 'scaleX(-1)' : undefined }}
-    >
-      {grid.map((row, ry) =>
-        row.map((cell, rx) => {
-          if (cell === 0) return null;
-          return <rect key={`${rx}-${ry}`} x={rx*2} y={ry*2} width={2} height={2} fill={P[cell] ?? '#FF00FF'} />;
-        })
-      )}
-    </svg>
+    <div style={{ position: 'relative', width: 34, height: 60, transform: facingLeft ? 'scaleX(-1)' : undefined }}>
+      {/* Sombrinha debaixo do avatar */}
+      <div style={{
+        position: 'absolute', bottom: -4, left: '50%', transform: 'translateX(-50%)',
+        width: 18, height: 8, background: 'rgba(0,0,0,0.3)', borderRadius: '50%',
+        filter: 'blur(2px)'
+      }} />
+      <svg width="42" height="60" viewBox="0 0 21 30" fill="none" style={{ imageRendering: 'pixelated', display: 'block' }}>
+        {sprite.map((row, ry) => 
+          row.split('').map((char, rx) => {
+            if (char === '.' || char === ' ') return null;
+            return <rect key={`${rx}-${ry}`} x={rx} y={ry} width={1} height={1} fill={P[char] || '#FF00FF'} />;
+          })
+        )}
+      </svg>
+    </div>
   );
 }
 
