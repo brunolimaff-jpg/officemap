@@ -3,6 +3,7 @@ import { User } from './HabboClient';
 import { furniture } from '@/data/specialists';
 import { Furniture } from '@/types';
 import FurniSprite from './FurniSprite';
+import { ISO_LAYER, isoZIndex, layerForFurnitureType } from '@/lib/isoDepth';
 
 interface RoomViewProps {
   users: User[];
@@ -19,7 +20,7 @@ const getTileColors = (val: number, x: number, y: number) => {
     case 1: return isLight
       ? { top: '#E2E8F0', left: '#CBD5E1', right: '#94A3B8', h: 8 }
       : { top: '#F1F5F9', left: '#E2E8F0', right: '#CBD5E1', h: 8 };
-    case 4: return { top: '#334155', left: '#1E293B', right: '#0F172A', h: 120 };
+    case 4: return { top: '#475569', left: '#334155', right: '#1e293b', h: 52 };
     default: return null;
   }
 };
@@ -141,6 +142,7 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
             direction={f.direction}
             tileX={f.x}
             tileY={f.y}
+            zIndex={isoZIndex(f.x, f.y, layerForFurnitureType(f.type))}
           />
         );
       })}
@@ -156,7 +158,7 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
               left: pos.x,
               top: pos.y - 16,
               transform: 'translate(-50%, -100%)',
-              zIndex: (user.x + user.y) * 10 + 5,
+              zIndex: isoZIndex(user.x, user.y, ISO_LAYER.avatar),
             }}
           >
             <div className="bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded mb-1 font-pixel tracking-wide">

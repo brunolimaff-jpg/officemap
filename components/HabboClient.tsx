@@ -134,7 +134,9 @@ export default function HabboClient() {
 
   return (
     <div className="w-full h-screen overflow-hidden bg-black relative font-sans select-none">
-      <RoomView users={users} map={officeMap} onTileClick={handleMoveUser} />
+      <div className="absolute inset-x-0 top-0 bottom-14 z-0">
+        <RoomView users={users} map={officeMap} onTileClick={handleMoveUser} />
+      </div>
       <ChatBubbles messages={messages} users={users} />
       {isHistoryOpen && (
         <HistoryWindow

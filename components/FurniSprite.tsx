@@ -1,7 +1,8 @@
-import React from 'react';
+'use client';
 
-// ─── Mapeamento classname → tipo de móvel ───────────────────────────────────
-// Prioridade: PNG do Habbo real. Fallback: SVG embutido.
+import React, { useMemo, useState } from 'react';
+import IsoFurnitureFallback from './IsoFurnitureFallback';
+
 const FURNI_MAP: Record<string, string> = {
   desk:       'hc_exe_wrkdesk',
   chair:      'hc_exe_chair',
@@ -12,6 +13,10 @@ const FURNI_MAP: Record<string, string> = {
   plant:      'hc16_5',
 };
 
+const PNG_OVERRIDE: Partial<Record<string, string>> = {
+  sofa: '/furni/club_sofa.png',
+};
+
 interface FurniSpriteProps {
   type: string;
   pos: { x: number; y: number };
@@ -19,9 +24,9 @@ interface FurniSpriteProps {
   direction?: number;
   tileX: number;
   tileY: number;
+  zIndex: number;
 }
 
-// Tamanho de exibição para cada tipo
 const SIZE: Record<string, { w: number; h: number }> = {
   desk:       { w: 64, h: 64 },
   chair:      { w: 48, h: 48 },
@@ -32,54 +37,41 @@ const SIZE: Record<string, { w: number; h: number }> = {
   plant:      { w: 48, h: 56 },
 };
 
-// ─── Fallback SVG minimalista (caso o PNG não carregue) ──────────────────────
-function FallbackSVG({ type, color = '#64748B', pos, zIndex, w, h }: {
-  type: string; color?: string; pos: { x: number; y: number };
-  zIndex: number; w: number; h: number;
-}) {
-  const label = type[0].toUpperCase();
-  return (
-    <svg
-      width={w} height={h}
-      viewBox={`0 0 ${w} ${h}`}
-      className="absolute pointer-events-none"
-      style={{ left: pos.x - w / 2, top: pos.y - h, zIndex, imageRendering: 'pixelated' }}
-    >
-      {/* Sombra */}
-      <ellipse cx={w/2} cy={h - 4} rx={w * 0.35} ry={6} fill="#000" opacity={0.15} />
-      {/* Corpo isométrico simples */}
-      <polygon
-        points={`${w*0.1},${h*0.5} ${w*0.5},${h*0.3} ${w*0.9},${h*0.5} ${w*0.5},${h*0.7}`}
-        fill={color}
-        stroke={`${color}88`}
-        strokeWidth="1"
-      />
-      {/* Label central */}
-      <text x={w/2} y={h*0.54} textAnchor="middle" dominantBaseline="middle"
-        fill="#fff" fontSize="10" fontWeight="bold" fontFamily="monospace">
-        {label}
-      </text>
-    </svg>
-  );
-}
-
-// ─── Componente principal ────────────────────────────────────────────────────
-export default function FurniSprite({ type, pos, color, direction, tileX, tileY }: FurniSpriteProps) {
-  const zIndex = Math.floor((tileX + tileY) * 10 + 2);
+export default function FurniSprite({ type, pos, color, direction, tileX, tileY, zIndex }: FurniSpriteProps) {
   const classname = FURNI_MAP[type];
   const size = SIZE[type] ?? { w: 64, h: 64 };
   const { w, h } = size;
-
-  // Flip horizontal para direções 0 e 2 (espelho)
   const flip = direction === 0 || direction === 2;
 
-  if (!classname) {
-    return <FallbackSVG type={type} color={color} pos={pos} zIndex={zIndex} w={w} h={h} />;
+  const candidates = useMemo(() => {
+    const list: string[] = [];
+    const o = PNG_OVERRIDE[type];
+    if (o) list.push(o);
+    if (classname) list.push(`/furni/${classname}.png`);
+    return list;
+  }, [type, classname]);
+
+  const [idx, setIdx] = useState(0);
+
+  if (!classname || idx >= candidates.length) {
+    return (
+      <IsoFurnitureFallback
+        type={type}
+        color={color}
+        w={w}
+        h={h}
+        left={pos.x - w / 2}
+        top={pos.y - h}
+        zIndex={zIndex}
+      />
+    );
   }
+
+  const src = candidates[idx];
 
   return (
     <img
-      src={`/furni/${classname}.png`}
+      src={src}
       alt={type}
       width={w}
       height={h}
@@ -94,22 +86,19 @@ export default function FurniSprite({ type, pos, color, direction, tileX, tileY 
           ? `sepia(1) saturate(3) hue-rotate(${hueFromHex(color)}deg) brightness(0.9)`
           : undefined,
       }}
-      onError={(e) => {
-        // Fallback: esconde a img e mostra nada (o tile aparece vazio)
-        (e.target as HTMLImageElement).style.display = 'none';
-      }}
+      onError={() => setIdx((i) => i + 1)}
     />
   );
 }
 
-// Converte cor hex para graus de hue-rotate (aproximado)
 function hueFromHex(hex: string): number {
   try {
     const h = hex.replace('#', '');
-    const r = parseInt(h.slice(0,2), 16) / 255;
-    const g = parseInt(h.slice(2,4), 16) / 255;
-    const b = parseInt(h.slice(4,6), 16) / 255;
-    const max = Math.max(r,g,b), min = Math.min(r,g,b);
+    const r = parseInt(h.slice(0, 2), 16) / 255;
+    const g = parseInt(h.slice(2, 4), 16) / 255;
+    const b = parseInt(h.slice(4, 6), 16) / 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
     let hue = 0;
     if (max !== min) {
       const d = max - min;
@@ -118,5 +107,7 @@ function hueFromHex(hex: string): number {
       else hue = ((r - g) / d + 4) / 6;
     }
     return Math.round(hue * 360);
-  } catch { return 0; }
+  } catch {
+    return 0;
+  }
 }
