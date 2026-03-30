@@ -11,9 +11,29 @@ export interface Specialist {
   color: string;
 }
 
+export type FurnitureType =
+  | 'desk'
+  | 'chair'
+  | 'plant'
+  | 'shelf'
+  | 'monitor'
+  | 'laptop'
+  | 'coffee'
+  | 'water_cooler'
+  | 'whiteboard'
+  | 'sofa'
+  | 'table'
+  | 'server_rack'
+  | 'filing_cabinet'
+  | 'divider'
+  | 'rug'
+  | 'lamp'
+  | 'bookshelf'
+  | 'trash';
+
 export interface Furniture {
   id: string;
-  type: 'desk' | 'chair' | 'plant' | 'shelf' | 'monitor' | 'laptop' | 'coffee' | 'water_cooler' | 'whiteboard' | 'sofa' | 'table' | 'server_rack' | 'filing_cabinet';
+  type: FurnitureType;
   x: number;
   y: number;
   direction?: number;
@@ -24,7 +44,7 @@ export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
-  specialistId?: SpecialistId; // For group chats to identify who is speaking
+  specialistId?: SpecialistId;
 }
 
 export interface ConvocationState {
