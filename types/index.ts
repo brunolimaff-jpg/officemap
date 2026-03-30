@@ -12,6 +12,7 @@ export interface Specialist {
 }
 
 export type FurnitureType =
+  // ─── Mobília existente ──────────────────────────────────────────────────────
   | 'desk'
   | 'chair'
   | 'plant'
@@ -34,7 +35,18 @@ export type FurnitureType =
   | 'couch'
   | 'coffee_table'
   | 'cabinet'
-  | 'mug';
+  | 'mug'
+  // ─── Novos tipos — ref: Habbo Corp escritório ────────────────────────────────
+  | 'glass_wall'      // parede de vidro divisória entre zonas
+  | 'sign'            // placa/letreiro na recepção
+  | 'monitor_dual'    // dual monitor nas workstations
+  | 'fridge'          // geladeira na copa
+  | 'coffee_machine'  // cafeteira profissional na copa
+  | 'microwave'       // micro-ondas na copa
+  | 'pool_table'      // mesa de sinuca/ping-pong no lounge
+  | 'ac_unit'         // ar-condicionado decorativo
+  | 'locker'          // armário de funcionário
+  | 'tv_screen';      // tela de TV com gráficos
 
 export interface Furniture {
   id: string;
@@ -43,6 +55,7 @@ export interface Furniture {
   y: number;
   direction?: number;
   color?: string;
+  label?: string; // texto para sign, tv_screen, etc.
 }
 
 export interface Message {

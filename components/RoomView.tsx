@@ -13,56 +13,70 @@ interface RoomViewProps {
 const TILE_W = 64;
 const TILE_H = 32;
 
-// Paleta Habbo original — losango cinza-azulado com borda dark
 const getTileColors = (val: number, x: number, y: number) => {
   const isLight = (x + y) % 2 === 0;
   switch (val) {
-    // Piso ala de trabalho — losango clássico Habbo
     case 1: return isLight
       ? { top: '#C8D4E0', left: '#8FA3B5', right: '#6E8BA0', h: 8, accent: 'rgba(255,255,255,0.12)' }
       : { top: '#D8E4EE', left: '#9FB3C5', right: '#7E9BB0', h: 8, accent: 'rgba(255,255,255,0.06)' };
-    // Corredor — tom mais escuro, bordas mais marcadas
     case 2: return isLight
       ? { top: '#9BAEBE', left: '#6B8090', right: '#4E6878', h: 8, accent: 'rgba(255,255,255,0.08)' }
       : { top: '#A8BAC8', left: '#7A8FA0', right: '#5E7888', h: 8, accent: 'rgba(255,255,255,0.04)' };
-    // Meeting Room — azul royal escuro premium
     case 3: return isLight
       ? { top: '#1A3550', left: '#102440', right: '#081830', h: 8, accent: 'rgba(74,158,255,0.1)' }
       : { top: '#1E3D5A', left: '#142A48', right: '#0C1E38', h: 8, accent: 'rgba(74,158,255,0.06)' };
-    // Parede externa — alta com textura
     case 4: return { top: '#2D3A4A', left: '#1A2535', right: '#0F1825', h: 72, accent: 'rgba(255,255,255,0.03)' };
-    // Meia-parede interna
     case 5: return { top: '#3D4E60', left: '#2A3A4C', right: '#1A2835', h: 40, accent: 'rgba(255,255,255,0.05)' };
+    // Piso de lounge — tom quente
+    case 6: return isLight
+      ? { top: '#B8A898', left: '#7A6E64', right: '#5E5450', h: 8, accent: 'rgba(255,220,180,0.1)' }
+      : { top: '#C4B4A4', left: '#887870', right: '#6A5E58', h: 8, accent: 'rgba(255,220,180,0.06)' };
+    // Piso de copa — concreto claro
+    case 7: return isLight
+      ? { top: '#A0AEB8', left: '#6A7A84', right: '#50626C', h: 8, accent: 'rgba(255,255,255,0.1)' }
+      : { top: '#ACBAC4', left: '#788490', right: '#5E7078', h: 8, accent: 'rgba(255,255,255,0.05)' };
     default: return null;
   }
 };
 
-// z-order completo — todos os tipos de mobília mapeados
-// Regra: rug=0 (chão), chair=1, trash=1, divider=1
-//        desk=2, sofa=2, couch=2, coffee_table=2
-//        plant=3, lamp=3, table=3, cabinet=3
-//        bookshelf=4, whiteboard=5
-//        computer=6 (acima do desk), mug=7 (acima de tudo na superfície)
+// z-order hierárquico completo — todos os 33 tipos mapeados
+// Camada 0 — chão:        rug
+// Camada 1 — base:        chair, trash, divider, locker
+// Camada 2 — superfície:  desk, sofa, couch, coffee_table, pool_table
+// Camada 3 — objetos:     plant, lamp, table, cabinet, fridge, coffee_machine, microwave, ac_unit
+// Camada 4 — estantes:    bookshelf
+// Camada 5 — paredes:     whiteboard, glass_wall, sign, tv_screen
+// Camada 6 — sobre mesa:  computer, monitor_dual
+// Camada 7 — props topo:  mug
 const FURNI_Z_BONUS: Record<string, number> = {
-  rug:          0,
-  chair:        1,
-  trash:        1,
-  divider:      1,
-  desk:         2,
-  sofa:         2,
-  couch:        2,
-  coffee_table: 2,
-  plant:        3,
-  lamp:         3,
-  table:        3,
-  cabinet:      3,
-  bookshelf:    4,
-  whiteboard:   5,
-  computer:     6,
-  mug:          7,
+  rug:            0,
+  chair:          1,
+  trash:          1,
+  divider:        1,
+  locker:         1,
+  desk:           2,
+  sofa:           2,
+  couch:          2,
+  coffee_table:   2,
+  pool_table:     2,
+  plant:          3,
+  lamp:           3,
+  table:          3,
+  cabinet:        3,
+  fridge:         3,
+  coffee_machine: 3,
+  microwave:      3,
+  ac_unit:        3,
+  bookshelf:      4,
+  whiteboard:     5,
+  glass_wall:     5,
+  sign:           5,
+  tv_screen:      5,
+  computer:       6,
+  monitor_dual:   6,
+  mug:            7,
 };
 
-// Habbo avatar walk frames
 const WALK_FRAMES = [0, 1, 2, 3];
 
 export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
@@ -85,7 +99,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Walk animation: 4-frame loop durante movimento
   useEffect(() => {
     users.forEach(u => {
       const prev = prevPositions.current[u.id];
@@ -99,7 +112,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
             setWalkFrames(prev => ({ ...prev, [u.id]: WALK_FRAMES[frame] }));
           }, 160);
         }
-        // Para o loop após 640ms (4 frames)
         setTimeout(() => {
           if (walkTimers.current[u.id]) {
             clearInterval(walkTimers.current[u.id]);
@@ -154,9 +166,8 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const handleTouchEnd = () => setIsDragging(false);
   const handleTileClick = (x: number, y: number) => { if (!dragMoved) onTileClick(x, y); };
 
-  const isWalkable = (val: number) => val === 1 || val === 2 || val === 3;
+  const isWalkable = (val: number) => val === 1 || val === 2 || val === 3 || val === 6 || val === 7;
 
-  // ── Tiles ──────────────────────────────────────────────────────────
   const tiles = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -180,7 +191,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
             zIndex: (x + y) * 10,
           }}
         >
-          {/* Face superior — losango com borda Habbo */}
           <div
             className="absolute w-full h-[32px] top-0 left-0"
             style={{
@@ -200,7 +210,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
               }} />
             )}
           </div>
-          {/* Face esquerda */}
           {colors.h > 0 && (
             <div
               className="absolute w-[32px] left-0"
@@ -213,7 +222,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
               }}
             />
           )}
-          {/* Face direita */}
           {colors.h > 0 && (
             <div
               className="absolute w-[32px] left-[32px]"
@@ -241,7 +249,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Fundo estrelado Habbo */}
         <div className="absolute inset-0" style={{
           backgroundImage: [
             'radial-gradient(1.5px 1.5px at 15% 25%, rgba(255,255,255,0.8), transparent)',
@@ -255,10 +262,8 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
           ].join(', '),
         }} />
 
-        {/* Tiles do chão */}
         {tiles}
 
-        {/* Móveis */}
         {furniture.map((f: Furniture) => {
           const pos = getScreenPos(f.x, f.y);
           const bonus = FURNI_Z_BONUS[f.type] ?? 2;
@@ -272,11 +277,11 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
               tileX={f.x}
               tileY={f.y}
               zBonus={bonus}
+              label={f.label}
             />
           );
         })}
 
-        {/* Avatares */}
         {users.map(user => {
           const pos = getScreenPos(user.x, user.y);
           const frame = walkFrames[user.id] ?? 0;
@@ -292,7 +297,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                 zIndex: (user.x + user.y) * 10 + 6,
               }}
             >
-              {/* Nametag estilo Habbo — fundo azul com borda */}
               <div
                 className="mb-1 px-2 py-0.5 font-pixel text-[9px] font-bold text-white whitespace-nowrap"
                 style={{
@@ -307,7 +311,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                 {user.name}
               </div>
 
-              {/* Avatar Habbo com fallback SVG */}
               <img
                 src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${user.figure}&size=m&direction=${user.direction}&head_direction=${user.direction}&crr=0&gesture=sml&frame=${frame}`}
                 alt={user.name}
@@ -330,7 +333,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                 }}
               />
 
-              {/* Sombra no chão — oval Habbo */}
               <div className="w-8 h-2.5 -mt-0.5" style={{
                 background: 'radial-gradient(ellipse, rgba(0,0,0,0.35) 0%, transparent 70%)',
                 borderRadius: '100%',
