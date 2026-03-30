@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import RoomView from './RoomView';
 import BottomBar from './BottomBar';
 import ChatBubbles from './ChatBubbles';
@@ -27,6 +27,16 @@ export interface User {
 
 export { officeMap };
 
+// Cores dos especialistas para barra de presença
+const SPECIALIST_COLORS: Record<string, string> = {
+  carlos: '#EF4444', marcos: '#06B6D4', sophia: '#8B5CF6', andre: '#3B82F6',
+  diego: '#10B981', raquel: '#F59E0B', helena: '#EC4899', victor: '#F97316',
+  '1': '#4A90E2',
+};
+
+// Tiles transitáveis: 1=piso, 2=corredor, 3=meeting
+const WALKABLE = new Set([1, 2, 3]);
+
 export default function HabboClient() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isConvocationOpen, setIsConvocationOpen] = useState(false);
@@ -35,7 +45,7 @@ export default function HabboClient() {
   const { sessions, currentSessionId, saveSession, updateCurrentSession, loadSession, startNewSession } = useChatHistory();
 
   const [users, setUsers] = useState<User[]>([
-    // Bruno — posição inicial próxima à recepção
+    // Bruno — posição inicial na recepção
     { id: '1', name: 'Bruno', x: 7, y: 17, direction: 2, figure: 'hr-115-42.hd-190-1.ch-210-66.lg-270-82.sh-290-91' },
     // Especialistas — cada um no próprio desk
     ...specialists.map((s, i) => {
@@ -50,6 +60,13 @@ export default function HabboClient() {
       };
     }),
   ]);
+
+  // Lista de presentes na sala para a barra de presença
+  const presentUsers = users.map(u => ({
+    id: u.id,
+    name: u.name,
+    color: SPECIALIST_COLORS[u.id] ?? '#64748B',
+  }));
 
   const handleSendMessage = (text: string) => {
     const newMessage: ChatMessage = {
@@ -69,22 +86,20 @@ export default function HabboClient() {
 
   const handleMoveUser = (x: number, y: number) => {
     const tileType = officeMap[y]?.[x];
-    if (tileType !== 1) return;
+    if (!WALKABLE.has(tileType)) return;
     setUsers(prev =>
       prev.map(u => {
-        if (u.id === '1') {
-          let dir = u.direction;
-          if (x > u.x && y === u.y) dir = 2;
-          else if (x < u.x && y === u.y) dir = 6;
-          else if (y > u.y && x === u.x) dir = 4;
-          else if (y < u.y && x === u.x) dir = 0;
-          else if (x > u.x && y > u.y) dir = 3;
-          else if (x > u.x && y < u.y) dir = 1;
-          else if (x < u.x && y > u.y) dir = 5;
-          else if (x < u.x && y < u.y) dir = 7;
-          return { ...u, x, y, direction: dir };
-        }
-        return u;
+        if (u.id !== '1') return u;
+        let dir = u.direction;
+        if (x > u.x && y === u.y) dir = 2;
+        else if (x < u.x && y === u.y) dir = 6;
+        else if (y > u.y && x === u.x) dir = 4;
+        else if (y < u.y && x === u.x) dir = 0;
+        else if (x > u.x && y > u.y) dir = 3;
+        else if (x > u.x && y < u.y) dir = 1;
+        else if (x < u.x && y > u.y) dir = 5;
+        else if (x < u.x && y < u.y) dir = 7;
+        return { ...u, x, y, direction: dir };
       })
     );
   };
@@ -102,25 +117,22 @@ export default function HabboClient() {
   };
 
   const handleSummon = (selectedIds: string[]) => {
+    // Move especialistas convocados para ao redor da mesa
     setUsers(prev =>
       prev.map(u => {
         const index = selectedIds.indexOf(u.id);
         if (index !== -1) {
-          // Usa as 8 posições ao redor da mesa — sem colisão
           const pos = meetingPositions[index % meetingPositions.length];
           return { ...u, x: pos.x, y: pos.y, direction: pos.dir };
         }
         return u;
       })
     );
-    // Bruno vai para a cabeceira da mesa
+    // Bruno vai para a cabeceira
     setUsers(prev =>
-      prev.map(u => {
-        if (u.id === '1') {
-          return { ...u, x: 11, y: 11, direction: 0 };
-        }
-        return u;
-      })
+      prev.map(u =>
+        u.id === '1' ? { ...u, x: 12, y: 13, direction: 0 } : u
+      )
     );
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -162,6 +174,7 @@ export default function HabboClient() {
         onToggleHistory={() => setIsHistoryOpen(!isHistoryOpen)}
         onToggleConvocation={() => setIsConvocationOpen(!isConvocationOpen)}
         onToggleChatLog={() => setIsChatLogOpen(!isChatLogOpen)}
+        presentUsers={presentUsers}
       />
     </div>
   );
