@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "rm -rf .next .next-build dist out && cross-env NODE_ENV=production next build && rm -rf dist && mv out dist",
+    "build": "next build",
     "lint": "eslint .",
     "clean": "rm -rf dist .next out"
   },
