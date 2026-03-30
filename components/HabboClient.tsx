@@ -27,15 +27,13 @@ export interface User {
 
 export { officeMap };
 
-// Cores dos especialistas para barra de presença
 const SPECIALIST_COLORS: Record<string, string> = {
   carlos: '#EF4444', marcos: '#06B6D4', sophia: '#8B5CF6', andre: '#3B82F6',
   diego: '#10B981', raquel: '#F59E0B', helena: '#EC4899', victor: '#F97316',
   '1': '#4A90E2',
 };
 
-// Tiles transitáveis: 1=piso, 2=corredor, 3=meeting
-const WALKABLE = new Set([1, 2, 3]);
+const WALKABLE = new Set([1, 2, 3, 6, 7]);
 
 export default function HabboClient() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -45,9 +43,7 @@ export default function HabboClient() {
   const { sessions, currentSessionId, saveSession, updateCurrentSession, loadSession, startNewSession } = useChatHistory();
 
   const [users, setUsers] = useState<User[]>([
-    // Bruno — posição inicial na recepção
     { id: '1', name: 'Bruno', x: 7, y: 17, direction: 2, figure: 'hr-115-42.hd-190-1.ch-210-66.lg-270-82.sh-290-91' },
-    // Especialistas — cada um no próprio desk
     ...specialists.map((s, i) => {
       const pos = specialistDeskPositions[s.id];
       return {
@@ -61,7 +57,6 @@ export default function HabboClient() {
     }),
   ]);
 
-  // Lista de presentes na sala para a barra de presença
   const presentUsers = users.map(u => ({
     id: u.id,
     name: u.name,
@@ -117,7 +112,6 @@ export default function HabboClient() {
   };
 
   const handleSummon = (selectedIds: string[]) => {
-    // Move especialistas convocados para ao redor da mesa
     setUsers(prev =>
       prev.map(u => {
         const index = selectedIds.indexOf(u.id);
@@ -128,7 +122,6 @@ export default function HabboClient() {
         return u;
       })
     );
-    // Bruno vai para a cabeceira
     setUsers(prev =>
       prev.map(u =>
         u.id === '1' ? { ...u, x: 12, y: 13, direction: 0 } : u
@@ -145,7 +138,15 @@ export default function HabboClient() {
   };
 
   return (
+    // Frame TV preto ao redor do room — estilo Habbo
     <div className="w-full h-screen overflow-hidden bg-black relative font-sans select-none">
+      {/* Borda interna tipo frame de TV */}
+      <div
+        className="absolute inset-0 pointer-events-none z-40"
+        style={{
+          boxShadow: 'inset 0 0 0 4px #111, inset 0 0 0 6px #222, inset 0 0 24px rgba(0,0,0,0.7)',
+        }}
+      />
       <RoomView users={users} map={officeMap} onTileClick={handleMoveUser} />
       <ChatBubbles messages={messages} users={users} />
       {isHistoryOpen && (
