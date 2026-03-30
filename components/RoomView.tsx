@@ -144,7 +144,7 @@ function CityscapeSVG() {
   );
 }
 
-// ═══ HABBO AVATAR — Pixel art local, sem API externa ═══════════════════════
+// ═══ HABBO AVATAR — Pixel-grid system, autêntico Habbo ═══════════════════════
 const AVATAR_TRAITS: Record<string, { hair: string; skin: string; shirt: string; pants: string; hairStyle: number }> = {
   satya:      { hair: '#1A1A2E', skin: '#C68642', shirt: '#0078D4', pants: '#1E293B', hairStyle: 0 },
   uncle_bob:  { hair: '#8B8B8B', skin: '#F5C99A', shirt: '#DC2626', pants: '#1E293B', hairStyle: 1 },
@@ -173,75 +173,142 @@ function shadeColor(hex: string, amount: number): string {
   } catch { return hex; }
 }
 
+// ─── Pixel-grid sprite definitions ──────────────────────────────────────────
+// 16 cols × 25 rows, each cell = 2px → 32×50 SVG
+// Color codes: 0=transparent, 1=hair, 2=hairDark, 3=skin, 4=skinDark,
+//   5=shirt, 6=shirtDark, 7=shirtLight(collar), 8=pants, 9=pantsDark,
+//  10=shoes, 11=shoeHighlight, 12=eyes, 13=eyeWhite, 14=mouth
+
+// Hair rows (top 5 rows) per style — they replace rows 0-4 of the base grid
+const HAIR_ROWS: Record<number, number[][]> = {
+  0: [ // Full modern hair
+    [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,0,0,1,2,3,3,3,3,3,3,2,1,0,0,0],
+    [0,0,0,1,3,3,3,3,3,3,3,3,1,0,0,0],
+  ],
+  1: [ // Short / receding
+    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+    [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
+    [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],
+    [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],
+  ],
+  2: [ // Long hair — shoulder-length
+    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+    [0,0,1,1,3,3,3,3,3,3,3,3,1,1,0,0],
+    [0,0,1,1,3,3,3,3,3,3,3,3,1,1,0,0],
+  ],
+};
+
+// Base front sprite (rows 5-24, shared across all hair styles)
+const FRONT_BODY: number[][] = [
+  [0,0,0,0,3,13,12,3,3,13,12,3,0,0,0,0], // 5  — eyes
+  [0,0,0,0,3,3,3,14,14,3,3,3,0,0,0,0],   // 6  — nose
+  [0,0,0,0,3,3,3,4,4,3,3,3,0,0,0,0],     // 7  — mouth
+  [0,0,0,0,0,3,4,3,3,4,3,0,0,0,0,0],     // 8  — chin
+  [0,0,0,0,0,0,4,4,4,4,0,0,0,0,0,0],     // 9  — neck
+  [0,0,0,0,5,5,5,7,7,5,5,5,0,0,0,0],     // 10 — collar
+  [0,0,0,5,5,5,5,7,7,5,5,5,5,0,0,0],     // 11 — shoulders
+  [0,0,3,5,5,5,5,5,5,5,5,5,5,3,0,0],     // 12 — upper arms + torso
+  [0,0,3,5,5,5,5,5,5,5,5,5,5,3,0,0],     // 13 — mid torso
+  [0,0,3,6,5,5,5,5,5,5,5,5,6,3,0,0],     // 14 — lower arms
+  [0,0,4,6,6,5,5,5,5,5,5,6,6,4,0,0],     // 15 — hands + belt
+  [0,0,0,0,6,6,6,6,6,6,6,6,0,0,0,0],     // 16 — belt
+  [0,0,0,0,8,8,8,8,8,8,8,8,0,0,0,0],     // 17 — pants top
+  [0,0,0,0,8,8,8,0,0,8,8,8,0,0,0,0],     // 18 — legs split
+  [0,0,0,0,8,8,8,0,0,8,8,8,0,0,0,0],     // 19 — legs
+  [0,0,0,0,8,8,9,0,0,9,8,8,0,0,0,0],     // 20 — lower legs
+  [0,0,0,0,9,9,9,0,0,9,9,9,0,0,0,0],     // 21 — ankles
+  [0,0,0,10,10,10,10,0,0,10,10,10,10,0,0,0],// 22 — shoes
+  [0,0,0,10,11,10,10,0,0,10,10,11,10,0,0,0],// 23 — soles
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],      // 24 — padding
+];
+
+// Back sprite body (no face details)
+const BACK_BODY: number[][] = [
+  [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],     // 5  — back of head
+  [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],     // 6
+  [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],     // 7
+  [0,0,0,0,0,3,4,3,3,4,3,0,0,0,0,0],     // 8  — neck base
+  [0,0,0,0,0,0,4,4,4,4,0,0,0,0,0,0],     // 9
+  [0,0,0,0,6,6,5,5,5,5,6,6,0,0,0,0],     // 10 — back collar
+  [0,0,0,6,6,5,5,5,5,5,5,6,6,0,0,0],     // 11
+  [0,0,3,6,5,5,5,5,5,5,5,5,6,3,0,0],     // 12
+  [0,0,3,6,5,5,5,5,5,5,5,5,6,3,0,0],     // 13
+  [0,0,3,6,5,5,5,5,5,5,5,5,6,3,0,0],     // 14
+  [0,0,4,6,6,5,5,5,5,5,5,6,6,4,0,0],     // 15
+  [0,0,0,0,6,6,6,6,6,6,6,6,0,0,0,0],     // 16
+  [0,0,0,0,8,8,8,8,8,8,8,8,0,0,0,0],     // 17
+  [0,0,0,0,8,8,8,0,0,8,8,8,0,0,0,0],     // 18
+  [0,0,0,0,8,8,8,0,0,8,8,8,0,0,0,0],     // 19
+  [0,0,0,0,8,8,9,0,0,9,8,8,0,0,0,0],     // 20
+  [0,0,0,0,9,9,9,0,0,9,9,9,0,0,0,0],     // 21
+  [0,0,0,10,10,10,10,0,0,10,10,10,10,0,0,0],// 22
+  [0,0,0,10,11,10,10,0,0,10,10,11,10,0,0,0],// 23
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],      // 24
+];
+
+// Back hair rows — hair covers back of head more
+const BACK_HAIR: Record<number, number[][]> = {
+  0: [
+    [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+  ],
+  1: [
+    [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+    [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
+    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
+    [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0],
+  ],
+  2: [
+    [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
+    [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
+    [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+    [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+    [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+  ],
+};
+
 function HabboAvatar({ id, direction }: { id: string; direction: number }) {
   const t = AVATAR_TRAITS[id] ?? AVATAR_TRAITS['1'];
-  const shirtDark = shadeColor(t.shirt, -40);
-  const skinDark = shadeColor(t.skin, -30);
-  const hairDark = shadeColor(t.hair, -20);
-  // Flip para direções esquerda
   const facingLeft = direction >= 5 && direction <= 7;
   const facingBack = direction === 0 || direction === 1 || direction === 7;
-  const px = 2; // pixel unit
+
+  // Build color palette from traits
+  const P: Record<number, string> = {
+    1: t.hair, 2: shadeColor(t.hair, -20),
+    3: t.skin, 4: shadeColor(t.skin, -30),
+    5: t.shirt, 6: shadeColor(t.shirt, -35), 7: shadeColor(t.shirt, 45),
+    8: t.pants, 9: shadeColor(t.pants, -25),
+    10: '#111827', 11: '#2D3748',
+    12: '#1E293B', 13: '#E8E8E8', 14: shadeColor(t.skin, -15),
+  };
+
+  // Assemble full grid: hair rows (0-4) + body rows (5-24) = 25 rows total
+  const hairRows = facingBack
+    ? (BACK_HAIR[t.hairStyle] ?? BACK_HAIR[0])
+    : (HAIR_ROWS[t.hairStyle] ?? HAIR_ROWS[0]);
+  const bodyRows = facingBack ? BACK_BODY : FRONT_BODY;
+  const grid = [...hairRows, ...bodyRows];
 
   return (
-    <svg width="28" height="56" viewBox="0 0 28 56" fill="none"
+    <svg width="32" height="50" viewBox="0 0 32 50" fill="none"
       style={{ imageRendering: 'pixelated', display: 'block', transform: facingLeft ? 'scaleX(-1)' : undefined }}
     >
-      {/* ─── Cabelo ─── */}
-      {t.hairStyle === 0 && <>
-        <rect x={8*px-4} y={0} width={10} height={px*2} fill={t.hair} />
-        <rect x={8*px-6} y={px*2} width={14} height={px*2} fill={t.hair} />
-        <rect x={8*px-6} y={px*4} width={4} height={px*2} fill={t.hair} />
-      </>}
-      {t.hairStyle === 1 && <>
-        <rect x={8*px-6} y={0} width={14} height={px*2} fill={t.hair} />
-        <rect x={8*px-6} y={px*2} width={14} height={px} fill={t.hair} />
-      </>}
-      {t.hairStyle === 2 && <>
-        <rect x={8*px-4} y={0} width={10} height={px*2} fill={t.hair} />
-        <rect x={8*px-6} y={px*2} width={14} height={px*2} fill={t.hair} />
-        <rect x={8*px-6} y={px*4} width={4} height={px*3} fill={t.hair} />
-        <rect x={8*px+6} y={px*4} width={4} height={px*3} fill={t.hair} />
-      </>}
-
-      {/* ─── Cabeça ─── */}
-      <rect x={8*px-6} y={px*3} width={14} height={12} fill={t.skin} />
-      <rect x={8*px-4} y={px*3+12} width={10} height={px} fill={skinDark} />
-
-      {/* ─── Face ─── */}
-      {!facingBack && <>
-        <rect x={8*px-2} y={px*5} width={px} height={px} fill="#1E293B" />
-        <rect x={8*px+4} y={px*5} width={px} height={px} fill="#1E293B" />
-        <rect x={8*px}   y={px*6+1} width={6} height={1} fill={skinDark} />
-      </>}
-
-      {/* ─── Pescoço ─── */}
-      <rect x={8*px-2} y={px*3+13} width={6} height={3} fill={skinDark} />
-
-      {/* ─── Corpo / Camisa ─── */}
-      <rect x={4} y={22} width={20} height={14} fill={t.shirt} />
-      {/* Gola */}
-      <rect x={10} y={22} width={8} height={3} fill={shadeColor(t.shirt, 30)} />
-      {/* Sombra inferior corpo */}
-      <rect x={4} y={34} width={20} height={2} fill={shirtDark} />
-
-      {/* ─── Braços ─── */}
-      <rect x={1} y={23} width={4} height={12} fill={t.shirt} />
-      <rect x={23} y={23} width={4} height={12} fill={shirtDark} />
-      {/* Mãos */}
-      <rect x={1} y={34} width={4} height={3} fill={t.skin} />
-      <rect x={23} y={34} width={4} height={3} fill={skinDark} />
-
-      {/* ─── Calça ─── */}
-      <rect x={6} y={36} width={16} height={10} fill={t.pants} />
-      {/* Separação das pernas */}
-      <rect x={13} y={40} width={2} height={6} fill={shadeColor(t.pants, 15)} />
-
-      {/* ─── Sapatos ─── */}
-      <rect x={5} y={46} width={8} height={4} rx={1} fill="#111827" />
-      <rect x={15} y={46} width={8} height={4} rx={1} fill="#0F172A" />
-      {/* Destaque sapato */}
-      <rect x={6} y={46} width={6} height={1} fill="#1E293B" />
+      {grid.map((row, ry) =>
+        row.map((cell, rx) => {
+          if (cell === 0) return null;
+          return <rect key={`${rx}-${ry}`} x={rx*2} y={ry*2} width={2} height={2} fill={P[cell] ?? '#FF00FF'} />;
+        })
+      )}
     </svg>
   );
 }
@@ -357,6 +424,12 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
 
       if (wall && val >= 8) {
         const isWindow = val === 9;
+        // Detect wall neighbors for continuous rendering
+        const hasWallLeft  = [8,9,10].includes(map[y]?.[x-1] ?? 0);
+        const hasWallRight = [8,9,10].includes(map[y]?.[x+1] ?? 0);
+        const hasWallUp    = [8,9,10].includes(map[y-1]?.[x] ?? 0);
+        const hasWallDown  = [8,9,10].includes(map[y+1]?.[x] ?? 0);
+
         tiles.push(
           <div
             key={`tile-${x}-${y}`}
@@ -374,48 +447,53 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
               clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
               backgroundColor: colors.top,
             }} />
-            {/* Face esquerda */}
-            <div className="absolute w-[32px] left-0" style={{
-              height: colors.h + 16,
-              top: 16,
-              clipPath: 'polygon(0% 0%, 100% 16px, 100% 100%, 0% calc(100% - 16px))',
-              backgroundColor: colors.left,
-              position: 'absolute',
-            }}>
-              {isWindow && (
-                <>
-                  {/* Moldura janela esq */}
-                  <div style={{ position:'absolute', left:2, top:'12%', width:12, height:colors.h*0.35, backgroundColor:'#334155', borderRadius:1, opacity:0.6 }} />
-                  <div style={{ position:'absolute', left:2, top:'55%', width:12, height:colors.h*0.32, backgroundColor:'#334155', borderRadius:1, opacity:0.6 }} />
-                  {/* Vidro azul esq */}
-                  <div style={{ position:'absolute', left:3, top:'13%', width:10, height:colors.h*0.33, backgroundColor:'#BFDBFE', borderRadius:1, opacity:0.55 }} />
-                  <div style={{ position:'absolute', left:3, top:'56%', width:10, height:colors.h*0.3, backgroundColor:'#BFDBFE', borderRadius:1, opacity:0.45 }} />
-                  {/* Reflexo */}
-                  <div style={{ position:'absolute', left:4, top:'14%', width:3, height:colors.h*0.1, backgroundColor:'white', borderRadius:1, opacity:0.3 }} />
-                </>
-              )}
-            </div>
-            {/* Face direita */}
-            <div className="absolute w-[32px] left-[32px]" style={{
-              height: colors.h + 16,
-              top: 16,
-              clipPath: 'polygon(0% 16px, 100% 0%, 100% calc(100% - 16px), 0% 100%)',
-              backgroundColor: colors.right,
-            }}>
-              {isWindow && (
-                <>
-                  <div style={{ position:'absolute', right:2, top:'12%', width:12, height:colors.h*0.35, backgroundColor:'#334155', borderRadius:1, opacity:0.5 }} />
-                  <div style={{ position:'absolute', right:2, top:'55%', width:12, height:colors.h*0.32, backgroundColor:'#334155', borderRadius:1, opacity:0.5 }} />
-                  <div style={{ position:'absolute', right:3, top:'13%', width:10, height:colors.h*0.33, backgroundColor:'#93C5FD', borderRadius:1, opacity:0.45 }} />
-                  <div style={{ position:'absolute', right:3, top:'56%', width:10, height:colors.h*0.3, backgroundColor:'#93C5FD', borderRadius:1, opacity:0.35 }} />
-                </>
-              )}
-            </div>
-            {/* Sombra na base da parede */}
+            {/* Face esquerda — oculta se vizinho à esquerda é parede (mesma linha) */}
+            {!hasWallUp && (
+              <div className="absolute w-[32px] left-0" style={{
+                height: colors.h + 16,
+                top: 16,
+                clipPath: 'polygon(0% 0%, 100% 16px, 100% 100%, 0% calc(100% - 16px))',
+                backgroundColor: colors.left,
+                position: 'absolute',
+              }}>
+                {isWindow && (
+                  <>
+                    <div style={{ position:'absolute', left:2, top:'12%', width:12, height:colors.h*0.35, backgroundColor:'#334155', borderRadius:1, opacity:0.6 }} />
+                    <div style={{ position:'absolute', left:2, top:'55%', width:12, height:colors.h*0.32, backgroundColor:'#334155', borderRadius:1, opacity:0.6 }} />
+                    <div style={{ position:'absolute', left:3, top:'13%', width:10, height:colors.h*0.33, background:'linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%)', borderRadius:1, opacity:0.6 }} />
+                    <div style={{ position:'absolute', left:3, top:'56%', width:10, height:colors.h*0.3, background:'linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%)', borderRadius:1, opacity:0.5 }} />
+                    <div style={{ position:'absolute', left:4, top:'14%', width:3, height:colors.h*0.08, backgroundColor:'white', borderRadius:1, opacity:0.5 }} />
+                  </>
+                )}
+                {/* Rodapé esquerdo */}
+                <div style={{ position:'absolute', bottom:0, left:0, width:'100%', height:6, backgroundColor:'rgba(0,0,0,0.2)' }} />
+              </div>
+            )}
+            {/* Face direita — oculta se vizinho abaixo é parede (continuidade vertical) */}
+            {!hasWallDown && (
+              <div className="absolute w-[32px] left-[32px]" style={{
+                height: colors.h + 16,
+                top: 16,
+                clipPath: 'polygon(0% 16px, 100% 0%, 100% calc(100% - 16px), 0% 100%)',
+                backgroundColor: colors.right,
+              }}>
+                {isWindow && (
+                  <>
+                    <div style={{ position:'absolute', right:2, top:'12%', width:12, height:colors.h*0.35, backgroundColor:'#334155', borderRadius:1, opacity:0.5 }} />
+                    <div style={{ position:'absolute', right:2, top:'55%', width:12, height:colors.h*0.32, backgroundColor:'#334155', borderRadius:1, opacity:0.5 }} />
+                    <div style={{ position:'absolute', right:3, top:'13%', width:10, height:colors.h*0.33, background:'linear-gradient(135deg, #93C5FD 0%, #60A5FA 100%)', borderRadius:1, opacity:0.5 }} />
+                    <div style={{ position:'absolute', right:3, top:'56%', width:10, height:colors.h*0.3, background:'linear-gradient(135deg, #93C5FD 0%, #60A5FA 100%)', borderRadius:1, opacity:0.4 }} />
+                  </>
+                )}
+                {/* Rodapé direito */}
+                <div style={{ position:'absolute', bottom:0, right:0, width:'100%', height:6, backgroundColor:'rgba(0,0,0,0.15)' }} />
+              </div>
+            )}
+            {/* Sombra sutil na base da parede */}
             <div className="absolute w-full" style={{
               bottom: 0,
-              height: 6,
-              background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.18))',
+              height: 8,
+              background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.22))',
               pointerEvents: 'none',
             }} />
           </div>
