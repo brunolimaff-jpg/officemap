@@ -3,7 +3,6 @@ import { User } from './HabboClient';
 import { furniture } from '@/data/specialists';
 import { Furniture } from '@/types';
 import FurniSprite from './FurniSprite';
-import AvatarSprite from './AvatarSprite';
 
 interface RoomViewProps {
   users: User[];
@@ -243,7 +242,7 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
               <div className="bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded mb-1 font-pixel tracking-wide whitespace-nowrap">
                 {user.name}
               </div>
-              {/* Avatar Habbo com fallback SVG */}
+              {/* Avatar Habbo com fallback SVG inline */}
               <img
                 src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${user.figure}&size=m&direction=${user.direction}&head_direction=${user.direction}&crr=0&gesture=sml${walkFrame}`}
                 alt={user.name}
@@ -259,7 +258,7 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                     svg.setAttribute('width', '40');
                     svg.setAttribute('height', '64');
                     svg.setAttribute('viewBox', '0 0 64 110');
-                    svg.innerHTML = `<ellipse cx="32" cy="100" rx="16" ry="6" fill="black" fill-opacity="0.2"/><path d="M20 60 L32 66 L44 60 L44 90 L32 96 L20 90 Z" fill="#4A90E2"/><path d="M16 50 L32 58 L48 50 L44 60 L32 66 L20 60 Z" fill="#4A90E2"/><path d="M24 30 L32 34 L40 30 L40 46 L32 50 L24 46 Z" fill="#FCD34D"/><path d="M22 26 L32 31 L42 26 L42 34 L32 38 L22 34 Z" fill="#1E293B"/>`;
+                    svg.innerHTML = '<ellipse cx="32" cy="100" rx="16" ry="6" fill="black" fill-opacity="0.2"/><path d="M20 60 L32 66 L44 60 L44 90 L32 96 L20 90 Z" fill="#4A90E2"/><path d="M16 50 L32 58 L48 50 L44 60 L32 66 L20 60 Z" fill="#4A90E2"/><path d="M24 30 L32 34 L40 30 L40 46 L32 50 L24 46 Z" fill="#FCD34D"/><path d="M22 26 L32 31 L42 26 L42 34 L32 38 L22 34 Z" fill="#1E293B"/>';
                     fallback.appendChild(svg);
                     parent.appendChild(fallback);
                   }
