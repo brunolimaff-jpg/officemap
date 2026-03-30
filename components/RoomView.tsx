@@ -144,51 +144,113 @@ function CityscapeSVG() {
   );
 }
 
-// Avatar fallback — terno escuro padrao, tamanho 24x52 como referencia
-function AvatarFallback({ color, name }: { color: string; name: string }) {
-  const initial = name.slice(0, 1).toUpperCase();
+// ═══ HABBO AVATAR — Pixel art local, sem API externa ═══════════════════════
+const AVATAR_TRAITS: Record<string, { hair: string; skin: string; shirt: string; pants: string; hairStyle: number }> = {
+  satya:      { hair: '#1A1A2E', skin: '#C68642', shirt: '#0078D4', pants: '#1E293B', hairStyle: 0 },
+  uncle_bob:  { hair: '#8B8B8B', skin: '#F5C99A', shirt: '#DC2626', pants: '#1E293B', hairStyle: 1 },
+  karpathy:   { hair: '#3B2506', skin: '#F5C99A', shirt: '#7C3AED', pants: '#334155', hairStyle: 0 },
+  rogati:     { hair: '#2D1F14', skin: '#DEB887', shirt: '#059669', pants: '#1E293B', hairStyle: 2 },
+  osmani:     { hair: '#1A1A2E', skin: '#C68642', shirt: '#F59E0B', pants: '#334155', hairStyle: 0 },
+  whittaker:  { hair: '#6B3A1F', skin: '#F5C99A', shirt: '#EF4444', pants: '#1E293B', hairStyle: 1 },
+  dixon:      { hair: '#4A3728', skin: '#F5C99A', shirt: '#06B6D4', pants: '#334155', hairStyle: 0 },
+  dodds:      { hair: '#3B2506', skin: '#F5C99A', shirt: '#EC4899', pants: '#1E293B', hairStyle: 0 },
+  rauch:      { hair: '#1A1A2E', skin: '#DEB887', shirt: '#171717', pants: '#0F172A', hairStyle: 0 },
+  rodrigues:  { hair: '#1A1A2E', skin: '#DEB887', shirt: '#16A34A', pants: '#1E293B', hairStyle: 1 },
+  kozyrkov:   { hair: '#6B3A1F', skin: '#F5C99A', shirt: '#8B5CF6', pants: '#334155', hairStyle: 2 },
+  cagan:      { hair: '#8B8B8B', skin: '#F5C99A', shirt: '#F97316', pants: '#1E293B', hairStyle: 1 },
+  grove:      { hair: '#C0C0C0', skin: '#F5C99A', shirt: '#64748B', pants: '#1E293B', hairStyle: 1 },
+  '1':        { hair: '#3B2506', skin: '#DEB887', shirt: '#4A90E2', pants: '#1E293B', hairStyle: 0 },
+};
+
+function shadeColor(hex: string, amount: number): string {
+  try {
+    const h = hex.replace('#', '');
+    const num = parseInt(h, 16);
+    const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+    const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
+    const b = Math.min(255, Math.max(0, (num & 0xff) + amount));
+    return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+  } catch { return hex; }
+}
+
+function HabboAvatar({ id, direction }: { id: string; direction: number }) {
+  const t = AVATAR_TRAITS[id] ?? AVATAR_TRAITS['1'];
+  const shirtDark = shadeColor(t.shirt, -40);
+  const skinDark = shadeColor(t.skin, -30);
+  const hairDark = shadeColor(t.hair, -20);
+  // Flip para direções esquerda
+  const facingLeft = direction >= 5 && direction <= 7;
+  const facingBack = direction === 0 || direction === 1 || direction === 7;
+  const px = 2; // pixel unit
+
   return (
-    <svg width="24" height="52" viewBox="0 0 24 52" fill="none" style={{ imageRendering: 'pixelated', display: 'block' }}>
-      {/* Sombra */}
-      <ellipse cx="12" cy="51" rx="8" ry="2" fill="black" fillOpacity="0.28" />
-      {/* Pernas — terno escuro */}
-      <rect x="7"  y="38" width="4" height="10" rx="1" fill="#1E293B" />
-      <rect x="13" y="38" width="4" height="10" rx="1" fill="#1E293B" />
-      {/* Sapatos */}
-      <rect x="6"  y="46" width="5" height="3" rx="1" fill="#111827" />
-      <rect x="13" y="46" width="5" height="3" rx="1" fill="#111827" />
-      {/* Corpo — terno */}
-      <rect x="6" y="24" width="12" height="16" rx="1" fill={color} />
-      {/* Camisa */}
-      <rect x="10" y="25" width="4" height="9" fill="#F1F5F9" />
-      {/* Gravata */}
-      <polygon points="12,26 13.5,27.5 12,34 10.5,27.5" fill="#1E3A5F" />
-      {/* Bracos */}
-      <rect x="3"  y="25" width="4" height="11" rx="1" fill={color} />
-      <rect x="17" y="25" width="4" height="11" rx="1" fill={color} />
-      {/* Maos */}
-      <ellipse cx="5"  cy="37" rx="2.5" ry="2" fill="#F5C99A" />
-      <ellipse cx="19" cy="37" rx="2.5" ry="2" fill="#F5C99A" />
-      {/* Pescoco */}
-      <rect x="10" y="19" width="4" height="6" rx="1" fill="#F5C99A" />
-      {/* Cabeca */}
-      <rect x="7" y="8" width="10" height="12" rx="3" fill="#F5C99A" />
-      {/* Cabelo */}
-      <rect x="7" y="8" width="10" height="4" rx="2" fill="#2D1F14" />
-      <rect x="7" y="10" width="3" height="3" rx="1" fill="#2D1F14" />
-      {/* Olhos */}
-      <rect x="9"  y="13" width="2" height="2" rx="0.5" fill="#1E293B" />
-      <rect x="13" y="13" width="2" height="2" rx="0.5" fill="#1E293B" />
-      {/* Inicial */}
-      <text x="12" y="33" textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="5" fontFamily="monospace" fontWeight="bold" opacity="0.9">{initial}</text>
+    <svg width="28" height="56" viewBox="0 0 28 56" fill="none"
+      style={{ imageRendering: 'pixelated', display: 'block', transform: facingLeft ? 'scaleX(-1)' : undefined }}
+    >
+      {/* ─── Cabelo ─── */}
+      {t.hairStyle === 0 && <>
+        <rect x={8*px-4} y={0} width={10} height={px*2} fill={t.hair} />
+        <rect x={8*px-6} y={px*2} width={14} height={px*2} fill={t.hair} />
+        <rect x={8*px-6} y={px*4} width={4} height={px*2} fill={t.hair} />
+      </>}
+      {t.hairStyle === 1 && <>
+        <rect x={8*px-6} y={0} width={14} height={px*2} fill={t.hair} />
+        <rect x={8*px-6} y={px*2} width={14} height={px} fill={t.hair} />
+      </>}
+      {t.hairStyle === 2 && <>
+        <rect x={8*px-4} y={0} width={10} height={px*2} fill={t.hair} />
+        <rect x={8*px-6} y={px*2} width={14} height={px*2} fill={t.hair} />
+        <rect x={8*px-6} y={px*4} width={4} height={px*3} fill={t.hair} />
+        <rect x={8*px+6} y={px*4} width={4} height={px*3} fill={t.hair} />
+      </>}
+
+      {/* ─── Cabeça ─── */}
+      <rect x={8*px-6} y={px*3} width={14} height={12} fill={t.skin} />
+      <rect x={8*px-4} y={px*3+12} width={10} height={px} fill={skinDark} />
+
+      {/* ─── Face ─── */}
+      {!facingBack && <>
+        <rect x={8*px-2} y={px*5} width={px} height={px} fill="#1E293B" />
+        <rect x={8*px+4} y={px*5} width={px} height={px} fill="#1E293B" />
+        <rect x={8*px}   y={px*6+1} width={6} height={1} fill={skinDark} />
+      </>}
+
+      {/* ─── Pescoço ─── */}
+      <rect x={8*px-2} y={px*3+13} width={6} height={3} fill={skinDark} />
+
+      {/* ─── Corpo / Camisa ─── */}
+      <rect x={4} y={22} width={20} height={14} fill={t.shirt} />
+      {/* Gola */}
+      <rect x={10} y={22} width={8} height={3} fill={shadeColor(t.shirt, 30)} />
+      {/* Sombra inferior corpo */}
+      <rect x={4} y={34} width={20} height={2} fill={shirtDark} />
+
+      {/* ─── Braços ─── */}
+      <rect x={1} y={23} width={4} height={12} fill={t.shirt} />
+      <rect x={23} y={23} width={4} height={12} fill={shirtDark} />
+      {/* Mãos */}
+      <rect x={1} y={34} width={4} height={3} fill={t.skin} />
+      <rect x={23} y={34} width={4} height={3} fill={skinDark} />
+
+      {/* ─── Calça ─── */}
+      <rect x={6} y={36} width={16} height={10} fill={t.pants} />
+      {/* Separação das pernas */}
+      <rect x={13} y={40} width={2} height={6} fill={shadeColor(t.pants, 15)} />
+
+      {/* ─── Sapatos ─── */}
+      <rect x={5} y={46} width={8} height={4} rx={1} fill="#111827" />
+      <rect x={15} y={46} width={8} height={4} rx={1} fill="#0F172A" />
+      {/* Destaque sapato */}
+      <rect x={6} y={46} width={6} height={1} fill="#1E293B" />
     </svg>
   );
 }
 
 const AVATAR_COLORS: Record<string, string> = {
-  carlos: '#EF4444', marcos: '#06B6D4', sophia: '#8B5CF6', andre: '#3B82F6',
-  diego: '#10B981', raquel: '#F59E0B', helena: '#EC4899', victor: '#F97316',
-  '1': '#4A90E2',
+  satya: '#0078D4', uncle_bob: '#DC2626', karpathy: '#7C3AED', rogati: '#059669',
+  osmani: '#F59E0B', whittaker: '#EF4444', dixon: '#06B6D4', dodds: '#EC4899',
+  rauch: '#171717', rodrigues: '#16A34A', kozyrkov: '#8B5CF6', cagan: '#F97316',
+  grove: '#64748B', '1': '#4A90E2',
 };
 
 export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
@@ -417,8 +479,60 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     }
   }
 
+  // ═══ BORDA DO PISO — detectar edges e desenhar contorno ═══════════════════
+  const floorEdges: React.ReactNode[] = [];
+  const isFloor = (v: number) => [1,2,3,6,7].includes(v);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const val = map[y][x];
+      if (!isFloor(val)) continue;
+      const pos = getScreenPos(x, y);
+      const z = (x + y) * 10 + 1;
+      // Borda direita-baixo (tile à direita é void ou parede)
+      const rightVal = map[y]?.[x+1] ?? 0;
+      if (!isFloor(rightVal) && rightVal !== 4 && rightVal !== 5) {
+        floorEdges.push(
+          <div key={`edge-r-${x}-${y}`} className="absolute pointer-events-none" style={{
+            left: pos.x + TILE_W/4 - 1, top: pos.y - TILE_H/4,
+            width: 3, height: TILE_H/2 + 10,
+            backgroundColor: '#0F172A',
+            transform: 'skewY(26.57deg)',
+            zIndex: z,
+          }} />
+        );
+      }
+      // Borda esquerda-baixo (tile abaixo é void ou parede)
+      const bottomVal = map[y+1]?.[x] ?? 0;
+      if (!isFloor(bottomVal) && bottomVal !== 4 && bottomVal !== 5) {
+        floorEdges.push(
+          <div key={`edge-b-${x}-${y}`} className="absolute pointer-events-none" style={{
+            left: pos.x - TILE_W/4 - 1, top: pos.y - TILE_H/4,
+            width: 3, height: TILE_H/2 + 10,
+            backgroundColor: '#1E293B',
+            transform: 'skewY(-26.57deg)',
+            zIndex: z,
+          }} />
+        );
+      }
+    }
+  }
+
   return (
     <div className="absolute inset-0 overflow-hidden">
+      {/* ═══ BARRA SUPERIOR — nome do quarto estilo Habbo ═══ */}
+      <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-center pointer-events-none" style={{ height: 32 }}>
+        <div className="px-4 py-1 font-pixel text-[9px] text-white tracking-wider" style={{
+          background: 'linear-gradient(180deg, rgba(10,20,40,0.92) 0%, rgba(5,15,35,0.88) 100%)',
+          border: '1px solid rgba(74,158,255,0.4)',
+          borderTop: 'none',
+          borderRadius: '0 0 6px 6px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+          textShadow: '0 1px 2px rgba(0,0,0,0.9)',
+        }}>
+          🏢 BOARD ROOM — Senior Scout 360
+        </div>
+      </div>
+
       <div
         className={`absolute inset-0 overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
         style={{ backgroundColor: '#87CEEB' }}
@@ -438,6 +552,7 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         }} />
 
         {tiles}
+        {floorEdges}
 
         {furniture.map((f: Furniture) => {
           const pos = getScreenPos(f.x, f.y);
@@ -459,9 +574,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
 
         {users.map(user => {
           const pos = getScreenPos(user.x, user.y);
-          const frame = walkFrames[user.id] ?? 0;
-          const failed = habboFailed[user.id] ?? false;
-          const avatarColor = AVATAR_COLORS[user.id] ?? '#334155';
 
           return (
             <div
@@ -489,26 +601,15 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                 {user.name}
               </div>
 
-              {/* Avatar */}
-              {!failed ? (
-                <img
-                  src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${user.figure}&size=s&direction=${user.direction}&head_direction=${user.direction}&crr=0&gesture=sml&frame=${frame}`}
-                  alt={user.name}
-                  width={24}
-                  height={52}
-                  style={{ imageRendering: 'pixelated', display: 'block' }}
-                  onError={() => setHabboFailed(prev => ({ ...prev, [user.id]: true }))}
-                />
-              ) : (
-                <AvatarFallback color={avatarColor} name={user.name} />
-              )}
+              {/* Avatar pixel art local */}
+              <HabboAvatar id={user.id} direction={user.direction} />
 
               {/* Sombra no chao */}
               <div style={{
-                width: 18,
-                height: 6,
-                marginTop: -2,
-                background: 'radial-gradient(ellipse, rgba(0,0,0,0.32) 0%, transparent 70%)',
+                width: 20,
+                height: 7,
+                marginTop: -3,
+                background: 'radial-gradient(ellipse, rgba(0,0,0,0.35) 0%, transparent 70%)',
                 borderRadius: '100%',
               }} />
             </div>
