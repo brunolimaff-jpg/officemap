@@ -19,8 +19,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Board Room',
-  description: 'A personal virtual office in pixel art style to consult AI specialists.',
+  title: 'Habbo Hotel — AI Agents',
+  description: 'Um Habbo Hotel com agentes de IA — escritório virtual de Bruno Lima.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
