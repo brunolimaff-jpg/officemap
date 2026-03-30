@@ -1,60 +1,50 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Office } from '@/components/Office';
-import { GroupSelector } from '@/components/GroupSelector';
+import { HabboRoom } from '@/components/HabboRoom';
+import { HabboNavigator } from '@/components/HabboNavigator';
+import { HabboTopBar } from '@/components/HabboTopBar';
+import { HabboChatBar } from '@/components/HabboChatBar';
 import { ConvocationPanel } from '@/components/ConvocationPanel';
 import { useConvocation } from '@/hooks/useConvocation';
 import { useSessionMemory } from '@/hooks/useSessionMemory';
 import { useStreamingChat } from '@/hooks/useStreamingChat';
-import { SpecialistId, SpecialistStatus, Message } from '@/types';
+import { rooms, specialists } from '@/data/specialists';
+import { RoomId, SpecialistId, SpecialistStatus, Message } from '@/types';
 
 export default function BoardRoomClient() {
+  const [currentRoomId, setCurrentRoomId] = useState<RoomId>('director');
+
   const { state: convocationState, toggleSpecialist, openGroupConvocation, closeConvocation } = useConvocation();
   const { getMessages, addMessage, updateLastMessage } = useSessionMemory();
-  
-  const [specialistStatuses, setSpecialistStatuses] = useState<Record<SpecialistId, SpecialistStatus>>({} as any);
+  const [specialistStatuses, setSpecialistStatuses] = useState<Record<SpecialistId, SpecialistStatus>>({} as Record<SpecialistId, SpecialistStatus>);
 
-  const sessionKey = useMemo(() => {
-    return convocationState.selectedIds.sort().join('-');
-  }, [convocationState.selectedIds]);
-
+  const sessionKey = useMemo(
+    () => [...convocationState.selectedIds].sort().join('-'),
+    [convocationState.selectedIds]
+  );
   const currentMessages = getMessages(sessionKey);
 
   const handleMessageStart = (role: 'assistant', specialistId?: SpecialistId) => {
-    const newMsg: Message = {
-      id: Date.now().toString(),
-      role,
-      content: '',
-      specialistId,
-    };
-    addMessage(sessionKey, newMsg);
-
+    addMessage(sessionKey, { id: Date.now().toString(), role, content: '', specialistId });
     if (specialistId) {
-      setSpecialistStatuses((prev) => ({ ...prev, [specialistId]: 'responding' }));
+      setSpecialistStatuses(prev => ({ ...prev, [specialistId]: 'responding' }));
     } else if (convocationState.selectedIds.length === 1) {
-      setSpecialistStatuses((prev) => ({ ...prev, [convocationState.selectedIds[0]]: 'responding' }));
+      setSpecialistStatuses(prev => ({ ...prev, [convocationState.selectedIds[0]]: 'responding' }));
     }
   };
 
-  const handleMessageUpdate = (content: string) => {
-    updateLastMessage(sessionKey, content);
-  };
+  const handleMessageUpdate = (content: string) => updateLastMessage(sessionKey, content);
 
   const handleSpecialistDone = (specialistId?: SpecialistId) => {
-    if (specialistId) {
-      setSpecialistStatuses((prev) => ({ ...prev, [specialistId]: 'available' }));
-    }
+    if (specialistId) setSpecialistStatuses(prev => ({ ...prev, [specialistId]: 'available' }));
   };
 
   const handleMessageComplete = () => {
-    // Ensure all are reset
-    setSpecialistStatuses((prev) => {
-      const newStatuses = { ...prev };
-      convocationState.selectedIds.forEach((id) => {
-        newStatuses[id] = 'available';
-      });
-      return newStatuses;
+    setSpecialistStatuses(prev => {
+      const next = { ...prev };
+      convocationState.selectedIds.forEach(id => { next[id] = 'available'; });
+      return next;
     });
   };
 
@@ -67,66 +57,107 @@ export default function BoardRoomClient() {
   });
 
   const handleSendMessage = async (content: string) => {
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content,
-    };
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', content };
     addMessage(sessionKey, userMsg);
-
-    // Set thinking status
-    setSpecialistStatuses((prev) => {
-      const newStatuses = { ...prev };
-      convocationState.selectedIds.forEach((id) => {
-        newStatuses[id] = 'thinking';
-      });
-      return newStatuses;
+    setSpecialistStatuses(prev => {
+      const next = { ...prev };
+      convocationState.selectedIds.forEach(id => { next[id] = 'thinking'; });
+      return next;
     });
-
     if (convocationState.isGroup) {
-      await sendMessage(
-        'group',
-        {
-          specialistIds: convocationState.selectedIds,
-          userMessage: content,
-        },
-        sessionKey
-      );
+      await sendMessage('group', { specialistIds: convocationState.selectedIds, userMessage: content }, sessionKey);
     } else {
-      await sendMessage(
-        'single',
-        {
-          specialistId: convocationState.selectedIds[0],
-          messages: [...currentMessages, userMsg],
-        },
-        sessionKey
-      );
+      await sendMessage('single', { specialistId: convocationState.selectedIds[0], messages: [...currentMessages, userMsg] }, sessionKey);
     }
   };
 
+  const handleRoomChange = (id: RoomId) => {
+    setCurrentRoomId(id);
+    closeConvocation();
+  };
+
+  const handleMeetingRoom = () => {
+    setCurrentRoomId('meeting');
+    closeConvocation();
+  };
+
+  // Determine which specialists appear in the current room
+  const roomSpecialists = useMemo(() => {
+    if (currentRoomId === 'meeting') {
+      // All specialists in meeting room, use meeting positions
+      return specialists.map(s => ({
+        ...s,
+        col: s.meetingCol,
+        row: s.meetingRow,
+      }));
+    }
+    return specialists
+      .filter(s => s.homeRoomId === currentRoomId)
+      .map(s => ({ ...s }));
+  }, [currentRoomId]);
+
+  const currentRoom = rooms.find(r => r.id === currentRoomId)!;
+  const showBruno = currentRoomId === 'director' || currentRoomId === 'meeting';
+
   return (
-    <main className="w-full h-screen bg-[#0F172A] overflow-hidden font-sans">
-      <Office
-        selectedSpecialists={convocationState.selectedIds}
-        onSpecialistClick={toggleSpecialist}
-        specialistStatuses={specialistStatuses}
-      />
+    <div className="flex flex-col w-full h-screen overflow-hidden font-sans" style={{ background: '#060D16' }}>
+      {/* Top bar */}
+      <HabboTopBar currentRoomId={currentRoomId} />
 
-      <GroupSelector
-        selectedIds={convocationState.selectedIds}
-        onConvoke={openGroupConvocation}
-        onClear={closeConvocation}
-      />
+      {/* Main area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Navigator */}
+        <HabboNavigator currentRoom={currentRoomId} onRoomChange={handleRoomChange} />
 
-      <ConvocationPanel
-        isOpen={convocationState.isOpen}
-        onClose={closeConvocation}
+        {/* Room view */}
+        <div
+          className="flex-1 relative overflow-auto flex items-center justify-center"
+          style={{
+            background: 'radial-gradient(ellipse at center, #0D1B2A 0%, #060D16 100%)',
+          }}
+        >
+          {/* Room name label */}
+          <div
+            className="absolute top-3 left-1/2 -translate-x-1/2 font-pixel text-[8px] px-3 py-1 rounded z-10 pointer-events-none"
+            style={{
+              background: 'rgba(0,0,0,0.6)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: '#93C5FD',
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            {currentRoom?.name}
+          </div>
+
+          <HabboRoom
+            room={currentRoom}
+            specialists={roomSpecialists}
+            showBruno={showBruno}
+            selectedSpecialists={convocationState.selectedIds}
+            onSpecialistClick={toggleSpecialist}
+            specialistStatuses={specialistStatuses}
+          />
+        </div>
+
+        {/* Chat panel */}
+        <ConvocationPanel
+          isOpen={convocationState.isOpen}
+          onClose={closeConvocation}
+          selectedIds={convocationState.selectedIds}
+          messages={currentMessages}
+          onSendMessage={handleSendMessage}
+          streamStatus={streamStatus}
+          stopStreaming={stopStreaming}
+        />
+      </div>
+
+      {/* Bottom bar */}
+      <HabboChatBar
         selectedIds={convocationState.selectedIds}
-        messages={currentMessages}
-        onSendMessage={handleSendMessage}
-        streamStatus={streamStatus}
-        stopStreaming={stopStreaming}
+        onGroupConvoke={openGroupConvocation}
+        onClearSelection={closeConvocation}
+        onMeetingRoom={handleMeetingRoom}
       />
-    </main>
+    </div>
   );
 }
