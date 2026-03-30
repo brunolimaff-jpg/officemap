@@ -1,157 +1,70 @@
-'use client';
-
-import { useState, useRef, useEffect } from 'react';
-import { SpecialistId, Message, StreamStatus } from '@/types';
+import React, { useState } from 'react';
+import DraggableWindow from './DraggableWindow';
+import { Specialist } from '@/types';
 import { specialists } from '@/data/specialists';
-import { MessageStream } from './MessageStream';
-import { X, Send, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface ConvocationPanelProps {
-  isOpen: boolean;
   onClose: () => void;
-  selectedIds: SpecialistId[];
-  messages: Message[];
-  onSendMessage: (content: string) => void;
-  streamStatus: StreamStatus;
-  stopStreaming: () => void;
+  onSummon: (selectedIds: string[]) => void;
 }
 
-export function ConvocationPanel({
-  isOpen,
-  onClose,
-  selectedIds,
-  messages,
-  onSendMessage,
-  streamStatus,
-  stopStreaming,
-}: ConvocationPanelProps) {
-  const [input, setInput] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+export default function ConvocationPanel({ onClose, onSummon }: ConvocationPanelProps) {
+  const [selected, setSelected] = useState<string[]>([]);
 
-  const isStreaming = streamStatus.status === 'loading' || streamStatus.status === 'streaming';
-  const isGroup = selectedIds.length > 1;
-
-  const selectedSpecialists = selectedIds
-    .map((id) => specialists.find((s) => s.id === id))
-    .filter(Boolean);
-
-  const title = isGroup
-    ? `Sessão em Grupo (${selectedIds.length})`
-    : selectedSpecialists[0]?.name || 'Sessão';
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const toggleSelection = (id: string) => {
+    setSelected(prev => 
+      prev.includes(id) 
+        ? prev.filter(sId => sId !== id)
+        : prev.length < 5 ? [...prev, id] : prev
+    );
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, streamStatus]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isStreaming) return;
-    onSendMessage(input);
-    setInput('');
+  const handleSummon = () => {
+    if (selected.length > 0) {
+      onSummon(selected);
+      onClose();
+    }
   };
 
   return (
-    <div
-      className={cn(
-        'fixed top-4 right-4 bottom-4 w-[400px] habbo-window z-40 flex flex-col transition-transform duration-300 ease-in-out',
-        isOpen ? 'translate-x-0' : 'translate-x-[120%]'
-      )}
-    >
-      {/* Header */}
-      <div className="habbo-header">
-        <div className="flex items-center gap-2">
-          <div className="flex -space-x-1">
-            {selectedSpecialists.map((s) => (
-              <div
-                key={s!.id}
-                className="w-4 h-4 rounded-full border border-black flex items-center justify-center text-white font-bold text-[8px]"
-                style={{ backgroundColor: s!.color }}
-                title={s!.name}
-              >
-                {s!.name.charAt(0)}
+    <DraggableWindow title="Convocação de Especialistas" onClose={onClose} defaultX={150} defaultY={150} width={350} height={450}>
+      <div className="w-full h-full flex flex-col bg-[#EBEBEB] p-2 font-sans text-sm">
+        <div className="mb-2 text-black">
+          Selecione até 5 especialistas para a Sala de Reuniões:
+        </div>
+        
+        <div className="flex-1 overflow-y-auto border border-[#999] bg-white p-1">
+          {specialists.map(specialist => (
+            <div 
+              key={specialist.id} 
+              className={`p-2 border-b border-gray-200 cursor-pointer flex items-center justify-between ${selected.includes(specialist.id) ? 'bg-blue-100' : 'hover:bg-gray-50'}`}
+              onClick={() => toggleSelection(specialist.id)}
+            >
+              <div>
+                <div className="font-bold text-black" style={{ color: specialist.color }}>{specialist.name}</div>
+                <div className="text-xs text-gray-600">{specialist.role}</div>
               </div>
-            ))}
-          </div>
-          <span>{title}</span>
-        </div>
-        <button onClick={onClose} className="hover:text-red-400">
-          <X size={12} />
-        </button>
-      </div>
-
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto bg-white p-2">
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-500 p-8 text-center">
-            <div className="font-pixel text-[10px] uppercase tracking-widest mb-4 text-black">
-              Sessão Iniciada
+              <input 
+                type="checkbox" 
+                checked={selected.includes(specialist.id)} 
+                readOnly
+                className="w-4 h-4"
+              />
             </div>
-            <p className="font-sans text-xs">
-              {isGroup
-                ? 'Faça uma pergunta para iniciar o debate entre os especialistas.'
-                : `Olá Bruno. O que você gostaria de discutir com ${selectedSpecialists[0]?.name}?`}
-            </p>
-          </div>
-        ) : (
-          <MessageStream messages={messages} isStreaming={isStreaming} />
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Error State */}
-      {streamStatus.status === 'error' && (
-        <div className="bg-red-100 border-t-2 border-black p-2 flex items-start gap-2 text-red-800 text-xs font-sans">
-          <AlertCircle className="shrink-0 mt-0.5" size={14} />
-          <div>
-            <p className="font-bold">Erro de Conexão</p>
-            <p>{streamStatus.error}</p>
-          </div>
+          ))}
         </div>
-      )}
 
-      {/* Input Area */}
-      <div className="p-2 bg-[#E8E8E8] border-t-2 border-black rounded-b-lg">
-        <form onSubmit={handleSubmit} className="relative flex gap-2">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Digite algo..."
-            className="flex-1 bg-white border-2 border-black rounded p-2 text-black font-sans text-sm resize-none focus:outline-none focus:ring-0"
-            rows={2}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit(e);
-              }
-            }}
-          />
-          <div className="flex flex-col gap-1 justify-end">
-            {isStreaming ? (
-              <button
-                type="button"
-                onClick={stopStreaming}
-                className="habbo-button !px-2 !py-1 text-red-600"
-                title="Parar"
-              >
-                <div className="w-3 h-3 bg-current rounded-sm" />
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={!input.trim()}
-                className="habbo-button !px-2 !py-1 disabled:opacity-50"
-              >
-                <Send size={14} />
-              </button>
-            )}
-          </div>
-        </form>
+        <div className="mt-2 flex justify-between items-center">
+          <span className="text-xs text-gray-600">{selected.length}/5 selecionados</span>
+          <button 
+            onClick={handleSummon}
+            disabled={selected.length === 0}
+            className={`px-4 py-2 text-white text-xs font-bold rounded border ${selected.length > 0 ? 'bg-[#4A90E2] border-[#2A60A2] hover:bg-[#3A80D2]' : 'bg-gray-400 border-gray-500 cursor-not-allowed'}`}
+          >
+            Convocar
+          </button>
+        </div>
       </div>
-    </div>
+    </DraggableWindow>
   );
 }

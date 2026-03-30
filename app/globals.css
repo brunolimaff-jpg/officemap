@@ -2,101 +2,48 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-pixel: "Press Start 2P", system-ui;
-  --font-mono: "JetBrains Mono", monospace;
-  --font-sans: "Inter", system-ui;
+  --font-pixel: var(--font-pixel);
+  --font-mono: var(--font-mono);
+  --font-sans: var(--font-sans);
 }
 
 @layer utilities {
   .font-pixel {
     font-family: var(--font-pixel);
   }
-
-  /* Classic Habbo Hotel UI */
-  .habbo-window {
-    @apply bg-[#E8E8E8] border-2 border-black rounded-lg shadow-[4px_4px_0_rgba(0,0,0,0.2)];
+  
+  /* Habbo UI Utilities */
+  .habbo-ui-bar {
+    background: linear-gradient(to bottom, #3A3A3A, #1A1A1A);
   }
 
-  .habbo-header {
-    @apply bg-[#1E5B8A] text-white px-2 py-1 rounded-t-[6px] border-b-2 border-black flex justify-between items-center font-pixel text-[10px];
+  .habbo-btn {
+    box-shadow: inset 1px 1px 0 rgba(255,255,255,0.1), inset -1px -1px 0 rgba(0,0,0,0.3);
   }
-
-  .habbo-button {
-    @apply bg-gradient-to-b from-white to-[#CCCCCC] border-2 border-black rounded px-3 py-1 font-pixel text-[10px] text-black shadow-[inset_1px_1px_0_#fff,inset_-1px_-1px_0_#999] active:from-[#CCCCCC] active:to-[#CCCCCC] active:shadow-[inset_2px_2px_0_#999];
-  }
-
-  .habbo-speech {
-    @apply bg-white border-2 border-black rounded-lg px-3 py-2 font-pixel text-[10px] text-black relative shadow-sm;
-  }
-
-  .habbo-speech::after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 20px;
-    width: 0;
-    height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 6px solid black;
-  }
-
-  .habbo-speech::before {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 22px;
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 4px solid white;
-    z-index: 1;
+  
+  .habbo-btn:active {
+    box-shadow: inset 2px 2px 0 rgba(0,0,0,0.3);
   }
 }
 
-/* ─── Animations ───────────────────────────────────────────────────────────── */
-
-@keyframes thinking-bob {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50%       { transform: translateX(-50%) translateY(-4px); }
-}
-
-.animate-thinking-bob {
-  animation: thinking-bob 1.2s ease-in-out infinite;
-}
-
-@keyframes habbo-idle {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-2px); }
-}
-
-.animate-habbo-idle {
-  animation: habbo-idle 3s ease-in-out infinite;
-}
-
-@keyframes shadow-pulse {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50%       { opacity: 0.2; transform: scale(1.15); }
-}
-
-.animate-shadow-pulse {
-  animation: shadow-pulse 1.5s ease-in-out infinite;
-}
-
-/* Habbo-style scrollbar */
+/* Global scrollbar styling for Habbo windows */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 12px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #0D1B2A;
+  background: #ECE9D8;
+  border-left: 1px solid #808080;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #1E3A5F;
-  border-radius: 4px;
-  border: 1px solid #0D1B2A;
+  background: #D4D0C8;
+  border: 1px solid #FFFFFF;
+  border-bottom-color: #808080;
+  border-right-color: #808080;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #2A5280;
+
+::-webkit-scrollbar-thumb:active {
+  background: #C0C0C0;
 }
+
