@@ -14,6 +14,13 @@ export const furniture: Furniture[] = [
   { id: 'desk-andre',   type: 'desk',  x: 4,  y: 12, direction: 2, color: '#3B82F6' },
   { id: 'chair-andre',  type: 'chair', x: 5,  y: 12, direction: 6, color: '#3B82F6' },
 
+  // Prateleiras e lâmpadas — ala esquerda
+  { id: 'shelf-L1',  type: 'bookshelf', x: 3, y: 4  },
+  { id: 'shelf-L2',  type: 'bookshelf', x: 3, y: 10 },
+  { id: 'lamp-L1',   type: 'lamp',      x: 3, y: 2  },
+  { id: 'trash-L1',  type: 'trash',     x: 6, y: 4  },
+  { id: 'trash-L2',  type: 'trash',     x: 6, y: 10 },
+
   // ─── ALA DIREITA: Diego, Raquel, Helena, Victor ───
   { id: 'desk-diego',   type: 'desk',  x: 20, y: 3,  direction: 6, color: '#10B981' },
   { id: 'chair-diego',  type: 'chair', x: 19, y: 3,  direction: 2, color: '#10B981' },
@@ -27,6 +34,13 @@ export const furniture: Furniture[] = [
   { id: 'desk-victor',  type: 'desk',  x: 20, y: 12, direction: 6, color: '#F97316' },
   { id: 'chair-victor', type: 'chair', x: 19, y: 12, direction: 2, color: '#F97316' },
 
+  // Prateleiras e lâmpadas — ala direita
+  { id: 'shelf-R1',  type: 'bookshelf', x: 21, y: 4  },
+  { id: 'shelf-R2',  type: 'bookshelf', x: 21, y: 10 },
+  { id: 'lamp-R1',   type: 'lamp',      x: 21, y: 2  },
+  { id: 'trash-R1',  type: 'trash',     x: 18, y: 4  },
+  { id: 'trash-R2',  type: 'trash',     x: 18, y: 10 },
+
   // ─── SALA DE REUNIÃO CENTRAL ───
   { id: 'board-table',    type: 'table', x: 12, y: 8 },
   { id: 'board-chair-N1', type: 'chair', x: 11, y: 6,  direction: 4, color: '#334155' },
@@ -38,19 +52,25 @@ export const furniture: Furniture[] = [
   { id: 'board-chair-W',  type: 'chair', x: 10, y: 8,  direction: 2, color: '#334155' },
   { id: 'board-chair-E',  type: 'chair', x: 14, y: 8,  direction: 6, color: '#334155' },
 
-  // Whiteboard — próximo à sala de reunião
+  // Whiteboard e tapete da sala de reunião
   { id: 'board-whiteboard', type: 'whiteboard', x: 12, y: 4, direction: 4 },
+  { id: 'board-rug',        type: 'rug',        x: 12, y: 8, color: '#1D4ED8' },
+  { id: 'lamp-meeting-L',   type: 'lamp',       x: 9,  y: 5 },
+  { id: 'lamp-meeting-R',   type: 'lamp',       x: 15, y: 5 },
 
   // ─── RECEPÇÃO (canto inferior esquerdo) ───
   { id: 'rec-desk',  type: 'desk',  x: 5,  y: 18, direction: 4, color: '#94A3B8' },
   { id: 'rec-chair', type: 'chair', x: 5,  y: 19, direction: 0, color: '#94A3B8' },
+  { id: 'rec-rug',   type: 'rug',   x: 5,  y: 18, color: '#475569' },
 
   // ─── LOUNGE (canto inferior direito) ───
   { id: 'lounge-sofa',   type: 'sofa',  x: 19, y: 18, direction: 6, color: '#1D4ED8' },
   { id: 'lounge-sofa2',  type: 'sofa',  x: 19, y: 20, direction: 6, color: '#1D4ED8' },
+  { id: 'lounge-rug',    type: 'rug',   x: 19, y: 19, color: '#1E3A8A' },
+  { id: 'lounge-lamp',   type: 'lamp',  x: 21, y: 17 },
+  { id: 'lounge-plant',  type: 'plant', x: 21, y: 21 },
 
   // ─── DIVISORES VISUAIS DE ZONA ───
-  // Divisor horizontal superior — separa alas de trabalho do corredor
   { id: 'div-top-1', type: 'divider', x: 2,  y: 14 },
   { id: 'div-top-2', type: 'divider', x: 4,  y: 14 },
   { id: 'div-top-3', type: 'divider', x: 18, y: 14 },
@@ -133,7 +153,6 @@ export const specialists: Specialist[] = [
   },
 ];
 
-// Posições fixas de cada especialista no escritório (desk) — ajustadas para mapa 26x24
 export const specialistDeskPositions: Record<string, { x: number; y: number; direction: number }> = {
   carlos:  { x: 5,  y: 3,  direction: 6 },
   marcos:  { x: 5,  y: 6,  direction: 6 },
@@ -145,7 +164,6 @@ export const specialistDeskPositions: Record<string, { x: number; y: number; dir
   victor:  { x: 19, y: 12, direction: 2 },
 };
 
-// 8 posições ao redor da mesa de reunião central — ajustadas
 export const meetingPositions = [
   { x: 11, y: 6,  dir: 4 },
   { x: 12, y: 6,  dir: 4 },
