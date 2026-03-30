@@ -2,68 +2,68 @@ import { Specialist, Furniture } from '@/types';
 
 export const furniture: Furniture[] = [
   // ─── ALA ESQUERDA: Carlos, Marcos, Sophia, Andre ───
-  // Carlos (CTO) — desk top-left
   { id: 'desk-carlos',  type: 'desk',  x: 4,  y: 3,  direction: 2, color: '#EF4444' },
-  { id: 'chair-carlos', type: 'chair', x: 5,  y: 3,  direction: 6 },
+  { id: 'chair-carlos', type: 'chair', x: 5,  y: 3,  direction: 6, color: '#EF4444' },
 
-  // Marcos (Comercial)
   { id: 'desk-marcos',  type: 'desk',  x: 4,  y: 6,  direction: 2, color: '#06B6D4' },
-  { id: 'chair-marcos', type: 'chair', x: 5,  y: 6,  direction: 6 },
+  { id: 'chair-marcos', type: 'chair', x: 5,  y: 6,  direction: 6, color: '#06B6D4' },
 
-  // Sophia (IA)
   { id: 'desk-sophia',  type: 'desk',  x: 4,  y: 9,  direction: 2, color: '#8B5CF6' },
-  { id: 'chair-sophia', type: 'chair', x: 5,  y: 9,  direction: 6 },
+  { id: 'chair-sophia', type: 'chair', x: 5,  y: 9,  direction: 6, color: '#8B5CF6' },
 
-  // Andre (Dados)
   { id: 'desk-andre',   type: 'desk',  x: 4,  y: 12, direction: 2, color: '#3B82F6' },
-  { id: 'chair-andre',  type: 'chair', x: 5,  y: 12, direction: 6 },
+  { id: 'chair-andre',  type: 'chair', x: 5,  y: 12, direction: 6, color: '#3B82F6' },
 
   // ─── ALA DIREITA: Diego, Raquel, Helena, Victor ───
-  // Diego (UX)
-  { id: 'desk-diego',   type: 'desk',  x: 18, y: 3,  direction: 6, color: '#10B981' },
-  { id: 'chair-diego',  type: 'chair', x: 17, y: 3,  direction: 2 },
+  { id: 'desk-diego',   type: 'desk',  x: 20, y: 3,  direction: 6, color: '#10B981' },
+  { id: 'chair-diego',  type: 'chair', x: 19, y: 3,  direction: 2, color: '#10B981' },
 
-  // Raquel (QA)
-  { id: 'desk-raquel',  type: 'desk',  x: 18, y: 6,  direction: 6, color: '#F59E0B' },
-  { id: 'chair-raquel', type: 'chair', x: 17, y: 6,  direction: 2 },
+  { id: 'desk-raquel',  type: 'desk',  x: 20, y: 6,  direction: 6, color: '#F59E0B' },
+  { id: 'chair-raquel', type: 'chair', x: 19, y: 6,  direction: 2, color: '#F59E0B' },
 
-  // Helena (Dev)
-  { id: 'desk-helena',  type: 'desk',  x: 18, y: 9,  direction: 6, color: '#EC4899' },
-  { id: 'chair-helena', type: 'chair', x: 17, y: 9,  direction: 2 },
+  { id: 'desk-helena',  type: 'desk',  x: 20, y: 9,  direction: 6, color: '#EC4899' },
+  { id: 'chair-helena', type: 'chair', x: 19, y: 9,  direction: 2, color: '#EC4899' },
 
-  // Victor (Infra)
-  { id: 'desk-victor',  type: 'desk',  x: 18, y: 12, direction: 6, color: '#F97316' },
-  { id: 'chair-victor', type: 'chair', x: 17, y: 12, direction: 2 },
+  { id: 'desk-victor',  type: 'desk',  x: 20, y: 12, direction: 6, color: '#F97316' },
+  { id: 'chair-victor', type: 'chair', x: 19, y: 12, direction: 2, color: '#F97316' },
 
   // ─── SALA DE REUNIÃO CENTRAL ───
-  { id: 'board-table',    type: 'table', x: 11, y: 8 },
-  // 8 cadeiras ao redor
-  { id: 'board-chair-N1', type: 'chair', x: 10, y: 7,  direction: 4 },
-  { id: 'board-chair-N2', type: 'chair', x: 11, y: 7,  direction: 4 },
-  { id: 'board-chair-N3', type: 'chair', x: 12, y: 7,  direction: 4 },
-  { id: 'board-chair-S1', type: 'chair', x: 10, y: 9,  direction: 0 },
-  { id: 'board-chair-S2', type: 'chair', x: 11, y: 9,  direction: 0 },
-  { id: 'board-chair-S3', type: 'chair', x: 12, y: 9,  direction: 0 },
-  { id: 'board-chair-W',  type: 'chair', x: 10, y: 8,  direction: 0 },
-  { id: 'board-chair-E',  type: 'chair', x: 12, y: 8,  direction: 4 },
+  { id: 'board-table',    type: 'table', x: 12, y: 8 },
+  { id: 'board-chair-N1', type: 'chair', x: 11, y: 6,  direction: 4, color: '#334155' },
+  { id: 'board-chair-N2', type: 'chair', x: 12, y: 6,  direction: 4, color: '#334155' },
+  { id: 'board-chair-N3', type: 'chair', x: 13, y: 6,  direction: 4, color: '#334155' },
+  { id: 'board-chair-S1', type: 'chair', x: 11, y: 10, direction: 0, color: '#334155' },
+  { id: 'board-chair-S2', type: 'chair', x: 12, y: 10, direction: 0, color: '#334155' },
+  { id: 'board-chair-S3', type: 'chair', x: 13, y: 10, direction: 0, color: '#334155' },
+  { id: 'board-chair-W',  type: 'chair', x: 10, y: 8,  direction: 2, color: '#334155' },
+  { id: 'board-chair-E',  type: 'chair', x: 14, y: 8,  direction: 6, color: '#334155' },
 
-  // Whiteboard
-  { id: 'board-whiteboard', type: 'whiteboard', x: 11, y: 5, direction: 4 },
+  // Whiteboard — próximo à sala de reunião
+  { id: 'board-whiteboard', type: 'whiteboard', x: 12, y: 4, direction: 4 },
 
   // ─── RECEPÇÃO (canto inferior esquerdo) ───
-  { id: 'rec-desk',  type: 'desk',  x: 5,  y: 17, direction: 4 },
-  { id: 'rec-chair', type: 'chair', x: 5,  y: 18, direction: 0 },
+  { id: 'rec-desk',  type: 'desk',  x: 5,  y: 18, direction: 4, color: '#94A3B8' },
+  { id: 'rec-chair', type: 'chair', x: 5,  y: 19, direction: 0, color: '#94A3B8' },
 
   // ─── LOUNGE (canto inferior direito) ───
-  { id: 'lounge-sofa', type: 'sofa', x: 17, y: 17, direction: 6 },
+  { id: 'lounge-sofa',   type: 'sofa',  x: 19, y: 18, direction: 6, color: '#1D4ED8' },
+  { id: 'lounge-sofa2',  type: 'sofa',  x: 19, y: 20, direction: 6, color: '#1D4ED8' },
+
+  // ─── DIVISORES VISUAIS DE ZONA ───
+  // Divisor horizontal superior — separa alas de trabalho do corredor
+  { id: 'div-top-1', type: 'divider', x: 2,  y: 14 },
+  { id: 'div-top-2', type: 'divider', x: 4,  y: 14 },
+  { id: 'div-top-3', type: 'divider', x: 18, y: 14 },
+  { id: 'div-top-4', type: 'divider', x: 20, y: 14 },
 
   // ─── PLANTAS DECORATIVAS ───
-  { id: 'plant-TL', type: 'plant', x: 3,  y: 2  },
-  { id: 'plant-TR', type: 'plant', x: 20, y: 2  },
-  { id: 'plant-BL', type: 'plant', x: 3,  y: 18 },
-  { id: 'plant-BR', type: 'plant', x: 20, y: 18 },
-  { id: 'plant-TC', type: 'plant', x: 11, y: 2  },
-  { id: 'plant-BC', type: 'plant', x: 11, y: 18 },
+  { id: 'plant-TL',  type: 'plant', x: 2,  y: 2  },
+  { id: 'plant-TR',  type: 'plant', x: 22, y: 2  },
+  { id: 'plant-BL',  type: 'plant', x: 2,  y: 20 },
+  { id: 'plant-BR',  type: 'plant', x: 22, y: 20 },
+  { id: 'plant-TC',  type: 'plant', x: 12, y: 2  },
+  { id: 'plant-ML1', type: 'plant', x: 6,  y: 14 },
+  { id: 'plant-MR1', type: 'plant', x: 16, y: 14 },
 ];
 
 export const specialists: Specialist[] = [
@@ -133,28 +133,28 @@ export const specialists: Specialist[] = [
   },
 ];
 
-// Posições fixas de cada especialista no escritório (desk)
+// Posições fixas de cada especialista no escritório (desk) — ajustadas para mapa 26x24
 export const specialistDeskPositions: Record<string, { x: number; y: number; direction: number }> = {
   carlos:  { x: 5,  y: 3,  direction: 6 },
   marcos:  { x: 5,  y: 6,  direction: 6 },
   sophia:  { x: 5,  y: 9,  direction: 6 },
   andre:   { x: 5,  y: 12, direction: 6 },
-  diego:   { x: 17, y: 3,  direction: 2 },
-  raquel:  { x: 17, y: 6,  direction: 2 },
-  helena:  { x: 17, y: 9,  direction: 2 },
-  victor:  { x: 17, y: 12, direction: 2 },
+  diego:   { x: 19, y: 3,  direction: 2 },
+  raquel:  { x: 19, y: 6,  direction: 2 },
+  helena:  { x: 19, y: 9,  direction: 2 },
+  victor:  { x: 19, y: 12, direction: 2 },
 };
 
-// 8 posições ao redor da mesa de reunião central
+// 8 posições ao redor da mesa de reunião central — ajustadas
 export const meetingPositions = [
-  { x: 10, y: 7,  dir: 4 },
-  { x: 11, y: 7,  dir: 4 },
-  { x: 12, y: 7,  dir: 4 },
-  { x: 10, y: 9,  dir: 0 },
-  { x: 11, y: 9,  dir: 0 },
-  { x: 12, y: 9,  dir: 0 },
+  { x: 11, y: 6,  dir: 4 },
+  { x: 12, y: 6,  dir: 4 },
+  { x: 13, y: 6,  dir: 4 },
+  { x: 11, y: 10, dir: 0 },
+  { x: 12, y: 10, dir: 0 },
+  { x: 13, y: 10, dir: 0 },
   { x: 10, y: 8,  dir: 2 },
-  { x: 12, y: 8,  dir: 6 },
+  { x: 14, y: 8,  dir: 6 },
 ];
 
 export function getSpecialistPrompt(specialist: Specialist): string {
