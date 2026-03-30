@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { User } from './HabboClient';
 import { furniture } from '@/data/specialists';
 import { Furniture } from '@/types';
@@ -13,34 +13,37 @@ interface RoomViewProps {
 const TILE_W = 64;
 const TILE_H = 32;
 
-// Retorna cores e altura por tipo de tile
+// Paleta Habbo original — losango cinza-azulado com borda dark
 const getTileColors = (val: number, x: number, y: number) => {
   const isLight = (x + y) % 2 === 0;
   switch (val) {
-    // Piso padrão — alas de trabalho
+    // Piso ala de trabalho — losango clássico Habbo
     case 1: return isLight
-      ? { top: '#E2E8F0', left: '#CBD5E1', right: '#94A3B8', h: 8 }
-      : { top: '#F1F5F9', left: '#E2E8F0', right: '#CBD5E1', h: 8 };
-    // Corredor / tapete — tom mais frio e escuro
+      ? { top: '#C8D4E0', left: '#8FA3B5', right: '#6E8BA0', h: 8, accent: 'rgba(255,255,255,0.12)' }
+      : { top: '#D8E4EE', left: '#9FB3C5', right: '#7E9BB0', h: 8, accent: 'rgba(255,255,255,0.06)' };
+    // Corredor — tom mais escuro, bordas mais marcadas
     case 2: return isLight
-      ? { top: '#B8C4D4', left: '#9AABB8', right: '#7A8FA0', h: 8 }
-      : { top: '#C7D2E2', left: '#B0BED0', right: '#8898AE', h: 8 };
-    // Meeting Room — azul escuro premium
+      ? { top: '#9BAEBE', left: '#6B8090', right: '#4E6878', h: 8, accent: 'rgba(255,255,255,0.08)' }
+      : { top: '#A8BAC8', left: '#7A8FA0', right: '#5E7888', h: 8, accent: 'rgba(255,255,255,0.04)' };
+    // Meeting Room — azul royal escuro premium
     case 3: return isLight
-      ? { top: '#1E3A5F', left: '#162D4A', right: '#0E2035', h: 8 }
-      : { top: '#243D63', left: '#1A2F4E', right: '#102238', h: 8 };
-    // Parede externa
-    case 4: return { top: '#334155', left: '#1E293B', right: '#0F172A', h: 72 };
-    // Meia-parede interna — separa zonas
-    case 5: return { top: '#475569', left: '#334155', right: '#1E293B', h: 40 };
+      ? { top: '#1A3550', left: '#102440', right: '#081830', h: 8, accent: 'rgba(74,158,255,0.1)' }
+      : { top: '#1E3D5A', left: '#142A48', right: '#0C1E38', h: 8, accent: 'rgba(74,158,255,0.06)' };
+    // Parede externa — alta com textura
+    case 4: return { top: '#2D3A4A', left: '#1A2535', right: '#0F1825', h: 72, accent: 'rgba(255,255,255,0.03)' };
+    // Meia-parede interna
+    case 5: return { top: '#3D4E60', left: '#2A3A4C', right: '#1A2835', h: 40, accent: 'rgba(255,255,255,0.05)' };
     default: return null;
   }
 };
 
-// Altura bonus por tipo de furni para z-order correto
 const FURNI_Z_BONUS: Record<string, number> = {
   desk: 2, chair: 1, table: 3, sofa: 2, whiteboard: 5, plant: 3, divider: 1,
+  lamp: 3, rug: 0, bookshelf: 4, trash: 1,
 };
+
+// Habbo avatar walk frames
+const WALK_FRAMES = [0, 1, 2, 3];
 
 export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const width = map[0].length;
@@ -50,8 +53,8 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragMoved, setDragMoved] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
-  // Rastreia qual usuário está andando para animação de frame
-  const [walkingUsers, setWalkingUsers] = useState<Set<string>>(new Set());
+  const [walkFrames, setWalkFrames] = useState<Record<string, number>>({});
+  const walkTimers = useRef<Record<string, ReturnType<typeof setInterval>>>({});
   const prevPositions = useRef<Record<string, { x: number; y: number }>>({});
 
   const [windowSize, setWindowSize] = useState({ width: 1024, height: 768 });
@@ -62,21 +65,30 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Detecta movimento de usuários para ativar frame de caminhada
+  // Walk animation: 4-frame loop durante movimento
   useEffect(() => {
-    const newWalking = new Set<string>();
     users.forEach(u => {
       const prev = prevPositions.current[u.id];
-      if (prev && (prev.x !== u.x || prev.y !== u.y)) {
-        newWalking.add(u.id);
-      }
+      const moved = prev && (prev.x !== u.x || prev.y !== u.y);
       prevPositions.current[u.id] = { x: u.x, y: u.y };
+      if (moved) {
+        if (!walkTimers.current[u.id]) {
+          let frame = 0;
+          walkTimers.current[u.id] = setInterval(() => {
+            frame = (frame + 1) % WALK_FRAMES.length;
+            setWalkFrames(prev => ({ ...prev, [u.id]: WALK_FRAMES[frame] }));
+          }, 160);
+        }
+        // Para o loop após 640ms (4 frames)
+        setTimeout(() => {
+          if (walkTimers.current[u.id]) {
+            clearInterval(walkTimers.current[u.id]);
+            delete walkTimers.current[u.id];
+            setWalkFrames(prev => ({ ...prev, [u.id]: 0 }));
+          }
+        }, 640);
+      }
     });
-    if (newWalking.size > 0) {
-      setWalkingUsers(newWalking);
-      const timer = setTimeout(() => setWalkingUsers(new Set()), 400);
-      return () => clearTimeout(timer);
-    }
   }, [users]);
 
   useEffect(() => {
@@ -99,10 +111,10 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const offsetX = windowSize.width / 2;
   const offsetY = windowSize.height / 2 - (height * TILE_H) / 2;
 
-  const getScreenPos = (x: number, y: number) => ({
+  const getScreenPos = useCallback((x: number, y: number) => ({
     x: offsetX + (x - y) * (TILE_W / 2) + cameraOffset.x,
     y: offsetY + (x + y) * (TILE_H / 2) + cameraOffset.y,
-  });
+  }), [offsetX, offsetY, cameraOffset]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
@@ -122,10 +134,9 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const handleTouchEnd = () => setIsDragging(false);
   const handleTileClick = (x: number, y: number) => { if (!dragMoved) onTileClick(x, y); };
 
-  // Tiles walkable: 1, 2, 3
   const isWalkable = (val: number) => val === 1 || val === 2 || val === 3;
 
-  // ── Tiles ──────────────────────────────────────────────────────────────────
+  // ── Tiles ──────────────────────────────────────────────────────────
   const tiles = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -135,11 +146,13 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
       if (!colors) continue;
       const pos = getScreenPos(x, y);
       const walkable = isWalkable(val);
+
+      // Marca de click no tile — cursor Habbo
       tiles.push(
         <div
           key={`tile-${x}-${y}`}
           onMouseUp={() => walkable && handleTileClick(x, y)}
-          className={`absolute ${walkable && !isDragging ? 'cursor-pointer hover:brightness-110' : ''} transition-all duration-75`}
+          className={`absolute ${walkable && !isDragging ? 'cursor-pointer' : ''} group`}
           style={{
             left: pos.x - TILE_W / 2,
             top: pos.y - colors.h,
@@ -148,15 +161,28 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
             zIndex: (x + y) * 10,
           }}
         >
-          {/* Face superior */}
+          {/* Face superior — losango com borda Habbo */}
           <div
             className="absolute w-full h-[32px] top-0 left-0"
             style={{
               clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
               backgroundColor: colors.top,
-              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: walkable ? 'inset 0 0 0 1px rgba(0,0,0,0.15)' : undefined,
             }}
-          />
+          >
+            {/* Acento luminoso no canto superior do losango */}
+            <div className="absolute inset-0" style={{
+              clipPath: 'polygon(50% 0%, 75% 25%, 50% 50%, 25% 25%)',
+              backgroundColor: colors.accent,
+            }} />
+            {/* Hover highlight — estilo Habbo */}
+            {walkable && (
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-75" style={{
+                clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+                backgroundColor: 'rgba(255,255,255,0.18)',
+              }} />
+            )}
+          </div>
           {/* Face esquerda */}
           {colors.h > 0 && (
             <div
@@ -166,6 +192,7 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                 top: 16,
                 clipPath: 'polygon(0% 0%, 100% 16px, 100% 100%, 0% calc(100% - 16px))',
                 backgroundColor: colors.left,
+                borderLeft: '1px solid rgba(0,0,0,0.2)',
               }}
             />
           )}
@@ -178,6 +205,7 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                 top: 16,
                 clipPath: 'polygon(0% 16px, 100% 0%, 100% calc(100% - 16px), 0% 100%)',
                 backgroundColor: colors.right,
+                borderRight: '1px solid rgba(0,0,0,0.2)',
               }}
             />
           )}
@@ -187,24 +215,33 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   }
 
   return (
-    // Moldura externa — separa "mundo" do HUD
     <div className="absolute inset-0 border-b-2 border-[#111] overflow-hidden">
       <div
-        className={`absolute inset-0 bg-[radial-gradient(ellipse_at_center,#1a2744_0%,#020617_100%)] overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        className={`absolute inset-0 overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        style={{ background: 'radial-gradient(ellipse at 50% 40%, #1a2744 0%, #0a0f1e 60%, #020617 100%)' }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Estrelas de fundo — atmosfera Habbo */}
-        <div className="absolute inset-0 opacity-30" style={{
-          backgroundImage: 'radial-gradient(1px 1px at 20% 30%, white, transparent), radial-gradient(1px 1px at 70% 20%, white, transparent), radial-gradient(1px 1px at 45% 60%, white, transparent), radial-gradient(1px 1px at 85% 45%, white, transparent), radial-gradient(1px 1px at 10% 70%, white, transparent)',
+        {/* Fundo estrelado Habbo */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: [
+            'radial-gradient(1.5px 1.5px at 15% 25%, rgba(255,255,255,0.8), transparent)',
+            'radial-gradient(1px 1px at 65% 15%, rgba(255,255,255,0.6), transparent)',
+            'radial-gradient(2px 2px at 40% 55%, rgba(255,255,255,0.5), transparent)',
+            'radial-gradient(1px 1px at 80% 40%, rgba(255,255,255,0.7), transparent)',
+            'radial-gradient(1.5px 1.5px at 8% 65%, rgba(255,255,255,0.6), transparent)',
+            'radial-gradient(1px 1px at 90% 70%, rgba(255,255,255,0.4), transparent)',
+            'radial-gradient(2px 2px at 55% 80%, rgba(255,255,255,0.3), transparent)',
+            'radial-gradient(1px 1px at 30% 90%, rgba(255,255,255,0.5), transparent)',
+          ].join(', '),
         }} />
 
         {/* Tiles do chão */}
         {tiles}
 
-        {/* Móveis SVG isométricos — z-order com bonus por altura */}
+        {/* Móveis */}
         {furniture.map((f: Furniture) => {
           const pos = getScreenPos(f.x, f.y);
           const bonus = FURNI_Z_BONUS[f.type] ?? 2;
@@ -222,11 +259,11 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
           );
         })}
 
-        {/* Avatares — z sempre acima do furni no mesmo tile */}
+        {/* Avatares */}
         {users.map(user => {
           const pos = getScreenPos(user.x, user.y);
-          const isWalking = walkingUsers.has(user.id);
-          const walkFrame = isWalking ? '&frame=1' : '&frame=0';
+          const frame = walkFrames[user.id] ?? 0;
+
           return (
             <div
               key={user.id}
@@ -238,19 +275,30 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                 zIndex: (user.x + user.y) * 10 + 6,
               }}
             >
-              {/* Nametag — sempre legível */}
-              <div className="bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded mb-1 font-pixel tracking-wide whitespace-nowrap">
+              {/* Nametag estilo Habbo — fundo azul com borda */}
+              <div
+                className="mb-1 px-2 py-0.5 font-pixel text-[9px] font-bold text-white whitespace-nowrap"
+                style={{
+                  background: 'linear-gradient(180deg, #1a4a8a 0%, #0e2d5e 100%)',
+                  border: '1px solid #4a9eff',
+                  borderRadius: '3px',
+                  boxShadow: '0 1px 0 #07193a, 0 0 6px rgba(74,158,255,0.3)',
+                  letterSpacing: '0.04em',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                }}
+              >
                 {user.name}
               </div>
-              {/* Avatar Habbo com fallback SVG inline */}
+
+              {/* Avatar Habbo com fallback SVG */}
               <img
-                src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${user.figure}&size=m&direction=${user.direction}&head_direction=${user.direction}&crr=0&gesture=sml${walkFrame}`}
+                src={`https://www.habbo.com/habbo-imaging/avatarimage?figure=${user.figure}&size=m&direction=${user.direction}&head_direction=${user.direction}&crr=0&gesture=sml&frame=${frame}`}
                 alt={user.name}
-                className="drop-shadow-lg"
-                style={{ imageRendering: 'pixelated' }}
+                style={{ imageRendering: 'pixelated', display: 'block' }}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                  const parent = (e.target as HTMLImageElement).parentElement;
+                  const img = e.target as HTMLImageElement;
+                  img.style.display = 'none';
+                  const parent = img.parentElement;
                   if (parent && !parent.querySelector('.avatar-fallback')) {
                     const fallback = document.createElement('div');
                     fallback.className = 'avatar-fallback';
@@ -264,8 +312,12 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                   }
                 }}
               />
-              {/* Sombra no chão */}
-              <div className="w-10 h-3 bg-black/25 rounded-[100%] -mt-1" />
+
+              {/* Sombra no chão — oval Habbo */}
+              <div className="w-8 h-2.5 -mt-0.5" style={{
+                background: 'radial-gradient(ellipse, rgba(0,0,0,0.35) 0%, transparent 70%)',
+                borderRadius: '100%',
+              }} />
             </div>
           );
         })}
