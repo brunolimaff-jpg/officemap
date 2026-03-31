@@ -15,7 +15,7 @@ export default function ConvocationPanel({ onClose, onSummon }: ConvocationPanel
     setSelected(prev => 
       prev.includes(id) 
         ? prev.filter(sId => sId !== id)
-        : prev.length < 5 ? [...prev, id] : prev
+        : prev.length < 13 ? [...prev, id] : prev
     );
   };
 
@@ -27,10 +27,10 @@ export default function ConvocationPanel({ onClose, onSummon }: ConvocationPanel
   };
 
   return (
-    <DraggableWindow title="Convocação de Especialistas" onClose={onClose} defaultX={150} defaultY={150} width={350} height={450}>
+    <DraggableWindow title="Convocação — Board Room" onClose={onClose} defaultX={150} defaultY={80} width={380} height={560}>
       <div className="w-full h-full flex flex-col bg-[#EBEBEB] p-2 font-sans text-sm">
         <div className="mb-2 text-black">
-          Selecione até 5 especialistas para a Sala de Reuniões:
+          Selecione especialistas para a Sala de Reunião:
         </div>
         
         <div className="flex-1 overflow-y-auto border border-[#999] bg-white p-1">
@@ -42,6 +42,7 @@ export default function ConvocationPanel({ onClose, onSummon }: ConvocationPanel
             >
               <div>
                 <div className="font-bold text-black" style={{ color: specialist.color }}>{specialist.name}</div>
+                <div className="text-xs text-gray-500">{specialist.realPerson}</div>
                 <div className="text-xs text-gray-600">{specialist.role}</div>
               </div>
               <input 
@@ -55,7 +56,7 @@ export default function ConvocationPanel({ onClose, onSummon }: ConvocationPanel
         </div>
 
         <div className="mt-2 flex justify-between items-center">
-          <span className="text-xs text-gray-600">{selected.length}/5 selecionados</span>
+          <span className="text-xs text-gray-600">{selected.length}/13 selecionados</span>
           <button 
             onClick={handleSummon}
             disabled={selected.length === 0}

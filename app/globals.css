@@ -11,39 +11,80 @@
   .font-pixel {
     font-family: var(--font-pixel);
   }
-  
-  /* Habbo UI Utilities */
+
+  /* Habbo UI Bar */
   .habbo-ui-bar {
     background: linear-gradient(to bottom, #3A3A3A, #1A1A1A);
   }
 
+  /* Botões estilo Habbo — bevel 3D */
   .habbo-btn {
-    box-shadow: inset 1px 1px 0 rgba(255,255,255,0.1), inset -1px -1px 0 rgba(0,0,0,0.3);
+    box-shadow: inset 1px 1px 0 rgba(255,255,255,0.12), inset -1px -1px 0 rgba(0,0,0,0.35);
+    transition: box-shadow 80ms ease;
   }
-  
   .habbo-btn:active {
-    box-shadow: inset 2px 2px 0 rgba(0,0,0,0.3);
+    box-shadow: inset 2px 2px 0 rgba(0,0,0,0.35);
+  }
+
+  /* Janelas Habbo — borda estilo Windows 98 */
+  .habbo-window {
+    background: #ECE9D8;
+    border: 2px solid #FFFFFF;
+    border-bottom-color: #808080;
+    border-right-color: #808080;
+    box-shadow: 2px 2px 0 #000000;
+  }
+
+  .habbo-window-title {
+    background: linear-gradient(to right, #0A246A, #A6CAF0);
+    color: white;
+    font-family: var(--font-pixel);
+    font-size: 11px;
+    padding: 2px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Tile hover — destaque suave */
+  .tile-walkable:hover {
+    filter: brightness(1.15);
   }
 }
 
-/* Global scrollbar styling for Habbo windows */
+/* Scrollbar estilo Habbo/Windows */
 ::-webkit-scrollbar {
   width: 12px;
 }
-
 ::-webkit-scrollbar-track {
   background: #ECE9D8;
   border-left: 1px solid #808080;
 }
-
 ::-webkit-scrollbar-thumb {
   background: #D4D0C8;
   border: 1px solid #FFFFFF;
   border-bottom-color: #808080;
   border-right-color: #808080;
 }
-
 ::-webkit-scrollbar-thumb:active {
   background: #C0C0C0;
 }
 
+/* Seleção de texto */
+::selection {
+  background: #0A246A;
+  color: white;
+}
+
+/* Garante pixel-perfect em todo o canvas */
+canvas, img[style*="pixelated"] {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Font-pixel em elementos de chat */
+.font-pixel,
+[class*="font-pixel"] {
+  font-family: var(--font-pixel), 'Courier New', monospace;
+  letter-spacing: 0.02em;
+}
