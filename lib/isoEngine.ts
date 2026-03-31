@@ -10,7 +10,6 @@ export const MAP_COLS = 32;
 export const MAP_ROWS = 25;
 
 // Origem do canvas em pixels — centraliza o mapa
-// O tile (0,0) fica no topo do diamante
 export const ORIGIN_X = (MAP_COLS * TILE_W) / 2;   // 1024
 export const ORIGIN_Y = 80;                          // margem topo
 
@@ -39,29 +38,32 @@ export function zOrder(x: number, y: number): number {
 
 // ─── Dimensão total do canvas em pixels ──────────────────────────────────────
 export const CANVAS_W = MAP_COLS * TILE_W + 200;           // 2248
-export const CANVAS_H = (MAP_ROWS + MAP_COLS) * (TILE_H / 2) + ORIGIN_Y + 120; // ~1036
+export const CANVAS_H = (MAP_ROWS + MAP_COLS) * (TILE_H / 2) + ORIGIN_Y + 120;
 
-// ─── Paleta de cores por tipo de tile ────────────────────────────────────────
+// ─── Paleta Habbo-style — azul marinho profundo, bordas suaves ───────────────
+// Sprint 1: cores alinhadas ao padrão Habbo (hotel view escuro azulado)
+// Borda de tile: rgba(0,0,0,0.10) — mais suave que o anterior 0.18
 export const TILE_COLORS: Record<number, {
   top: string;
   left: string;
   right: string;
-  h: number;   // altura 3D em px
+  h: number;
+  border?: string;   // borda customizada por tipo
 }> = {
   // 0 = void — não renderiza
-  1: { top: '#3B5EA6', left: '#2A4580', right: '#1E3566', h: 4  },  // piso open space
-  2: { top: '#4A6FA5', left: '#385A8A', right: '#2C4A72', h: 4  },  // corredor
-  3: { top: '#1E3A6E', left: '#162D56', right: '#0E2040', h: 4  },  // boardroom
-  4: { top: '#8B9EB5', left: '#6B7E95', right: '#4F6075', h: 48 },  // meia-parede
-  5: { top: '#6B7E95', left: '#4F6075', right: '#3A4F62', h: 16 },  // divider baixo
-  6: { top: '#6B4E2A', left: '#503B20', right: '#3A2B17', h: 4  },  // lounge madeira
-  7: { top: '#8A9BAA', left: '#6B7E8F', right: '#526070', h: 4  },  // copa concreto
-  8: { top: '#4A5568', left: '#2D3748', right: '#1A202C', h: 80 },  // parede externa
-  9: { top: '#4A90D9', left: '#2D6FAA', right: '#1A4F80', h: 80 },  // parede janelas
-  10:{ top: '#3A4A5A', left: '#252F3A', right: '#161E26', h: 96 },  // parede fundo
+  1: { top: '#1a2e52', left: '#142244', right: '#0e1a35', h: 4,  border: 'rgba(74,158,255,0.12)' }, // piso open space — azul marinho Habbo
+  2: { top: '#1e3460', left: '#172850', right: '#10203e', h: 4,  border: 'rgba(74,158,255,0.18)' }, // corredor — ligeiramente mais brilhante
+  3: { top: '#0f1e3e', left: '#0a1530', right: '#060e20', h: 4,  border: 'rgba(30,100,200,0.20)' }, // boardroom — petróleo escuro
+  4: { top: '#6b7e95', left: '#4a5a70', right: '#344258', h: 48, border: 'rgba(0,0,0,0.15)' },      // meia-parede
+  5: { top: '#556070', left: '#3d4d5e', right: '#2c3a4a', h: 16, border: 'rgba(0,0,0,0.12)' },      // divider baixo
+  6: { top: '#3d2a14', left: '#2c1e0e', right: '#1e1409', h: 4,  border: 'rgba(180,100,30,0.20)' }, // lounge madeira — marrom escuro
+  7: { top: '#2a3040', left: '#1e2535', right: '#141a28', h: 4,  border: 'rgba(74,130,200,0.15)' }, // copa — concreto azulado escuro
+  8: { top: '#2d3748', left: '#1a2535', right: '#0f1825', h: 80, border: 'rgba(0,0,0,0.20)' },      // parede externa
+  9: { top: '#1a3a6e', left: '#122c56', right: '#0b1e3e', h: 80, border: 'rgba(74,158,255,0.25)' }, // parede com janelas
+  10:{ top: '#1a2535', left: '#0f1825', right: '#080f18', h: 96, border: 'rgba(0,0,0,0.25)' },      // parede de fundo
 };
 
-// ─── BFS 8 direções ──────────────────────────────────────────────────────────
+// ─── Tiles onde avatar pode caminhar ─────────────────────────────────────────
 const WALKABLE_TILES = new Set([1, 2, 3, 6, 7]);
 
 export function bfs(
