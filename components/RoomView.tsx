@@ -1,1 +1,147 @@
-aW1wb3J0IFJlYWN0IGZyb20gJ3JlYWN0JzsKaW1wb3J0IHsgVXNlciB9IGZyb20gJy4vSGFiYm9DbGllbnQnOwppbXBvcnQgdHlwZSB7IEF2YXRhclN0YXR1cyB9IGZyb20gJ0AvdHlwZXMnOwoKaW50ZXJmYWNlIFJvb21WaWV3UHJvcHMgewogIHVzZXJzOiBVc2VyW107CiAgbWFwOiBudW1iZXJbXVtdOwogIG9uVGlsZUNsaWNrOiAoeDogbnVtYmVyLCB5OiBudW1iZXIpID0+IHZvaWQ7Cn0KCi8vIOKUgOKUgOKUgCBNYXBlYW1lbnRvIGRlIEF2YXRhclN0YXR1cyDihpIgcGFyw6JtZXRyb3MgSGFiYm8gQVBJIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgAovLyAgaWRsZSAgICAgIOKGkiBzZW50YWRvIG9saGFuZG8gdGVsYSAgIChhY3Rpb249c2l0LCBnZXN0dXJlPWV5YikKLy8gIHNwZWFraW5nIOKGkiByZXNwb25kZW5kbyBhdGl2YW1lbnRlICAoYWN0aW9uPXNpdCwgZ2VzdHVyZT1zcGspCi8vICBzdW1tb25lZCDihpIgbmEgc2FsYSBkZSByZXVuacOjbyAgICAgIChhY3Rpb249bm9uZSwgZ2VzdHVyZT13YXYpCi8vICB3YWxraW5nICDihpIgQnJ1bm8gYW5kYW5kbyAgICAgICAgICAgIChhY3Rpb249bm9uZSwgZ2VzdHVyZT1zdGQpCmZ1bmN0aW9uIGdldEhhYmJvR2VzdHVyZVBhcmFtcyhzdGF0dXM6IEF2YXRhclN0YXR1cyk6IHN0cmluZyB7CiAgc3dpdGNoIChzdGF0dXMpIHsKICAgIGNhc2UgJ2lkbGUnOgogICAgICByZXR1cm4gJyZhY3Rpb249c2l0Jmdlc3R1cmU9ZXliJzsKICAgIGNhc2UgJ3NwZWFraW5nJzoKICAgICAgcmV0dXJuICcmYWN0aW9uPXNpdCZnZXN0dXJlPXNwayc7CiAgICBjYXNlICdzdW1tb25lZCc6CiAgICAgIHJldHVybiAnJmdlc3R1cmU9d2F2JzsKICAgIGNhc2UgJ3dhbGtpbmcnOgogICAgZGVmYXVsdDoKICAgICAgcmV0dXJuICcmZ2VzdHVyZT1zdGQnOwogIH0KfQoKLy8g4pSA4pSA4pSAIEluZGljYWRvciBkZSBzdGF0dXMgYWNpbWEgZG8gbm9tZSBkbyBhdmF0YXIg4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSACmZ1bmN0aW9uIFN0YXR1c0JhZGdlKHsgc3RhdHVzIH06IHsgc3RhdHVzOiBBdmF0YXJTdGF0dXMgfSkgewogIGlmIChzdGF0dXMgPT09ICd3YWxraW5nJyB8fCBzdGF0dXMgPT09ICdpZGxlJykgcmV0dXJuIG51bGw7CiAgY29uc3QgY29uZmlnOiBSZWNvcmQ8c3RyaW5nLCB7IGxhYmVsOiBzdHJpbmc7IGNvbG9yOiBzdHJpbmcgfT4gPSB7CiAgICBzcGVha2luZzogeyBsYWJlbDogJ+KZoScgLCBjb2xvcjogJyM3QzNBRUQnIH0sCiAgICBzdW1tb25lZDogeyBsYWJlbDogJ/CfkI0nLCBjb2xvcjogJyMxRDRFRDgnIH0sCiAgfTsKICBjb25zdCB7IGxhYmVsLCBjb2xvciB9ID0gY29uZmlnW3N0YXR1c10gPz8geyBsYWJlbDogJycsIGNvbG9yOiAnI2NjYycgfTsKICByZXR1cm4gKAogICAgPHNwYW4KICAgICAgc3R5bGU9e3sKICAgICAgICBkaXNwbGF5OiAnaW5saW5lLWJsb2NrJywKICAgICAgICBmb250U2l6ZTogOCwKICAgICAgICBsaW5lSGVpZ2h0OiAxLAogICAgICAgIHBhZGRpbmc6ICcycHggNHB4JywKICAgICAgICBib3JkZXJSYWRpdXM6IDMsCiAgICAgICAgYmFja2dyb3VuZDogY29sb3IsCiAgICAgICAgbWFyZ2luQm90dG9tOiAyLAogICAgICAgIGZvbnRXZWlnaHQ6IDcwMCwKICAgICAgICBsZXR0ZXJTcGFjaW5nOiAnMC4wNWVtJywKICAgICAgICBib3hTaGFkb3c6IGAwIDFweCA0cHggJHtjb2xvcn04MGAsCiAgICAgIH19CiAgICA+CiAgICAgIHtsYWJlbH0KICAgIDwvc3Bhbj4KICApOwp9CgpleHBvcnQgZGVmYXVsdCBmdW5jdGlvbiBSb29tVmlldyh7IHVzZXJzLCBtYXAsIG9uVGlsZUNsaWNrIH06IFJvb21WaWV3UHJvcHMpIHsKICB2b2lkIG1hcDsKICB2b2lkIG9uVGlsZUNsaWNrOwoKICBjb25zdCBwcm9qZWN0VG9QZXJjZW50ID0gKHg6IG51bWJlciwgeTogbnVtYmVyKSA9PiB7CiAgICBjb25zdCBsZWZ0ID0gNTIgKyAoeCAtIHkpICogMS44NTsKICAgIGNvbnN0IHRvcCAgPSAyMCArICh4ICsgeSkgKiAxLjE4OwogICAgcmV0dXJuIHsKICAgICAgbGVmdDogTWF0aC5tYXgoMywgTWF0aC5taW4oOTcsIGxlZnQpKSwKICAgICAgdG9wOiAgTWF0aC5tYXgoNiwgTWF0aC5taW4oOTUsIHRvcCkpLAogICAgICB6SW5kZXg6IE1hdGgucm91bmQoKHggKyB5KSAqIDEwKSArIDIwLAogICAgfTsKICB9OwoKICByZXR1cm4gKAogICAgPGRpdiBjbGFzc05hbWU9ImFic29sdXRlIGluc2V0LTAgb3ZlcmZsb3ctaGlkZGVuIGJnLWJsYWNrIj4KICAgICAgey8qIEJhbmRlaXJhIHRvcG8gKi99CiAgICAgIDxkaXYKICAgICAgICBjbGFzc05hbWU9ImFic29sdXRlIHRvcC0wIGxlZnQtMCByaWdodC0wIHotMzAgZmxleCBpdGVtcy1jZW50ZXIganVzdGlmeS1jZW50ZXIgcG9pbnRlci1ldmVudHMtbm9uZSIKICAgICAgICBzdHlsZT17eyBoZWlnaHQ6IDMyIH19CiAgICAgID4KICAgICAgICA8ZGl2CiAgICAgICAgICBjbGFzc05hbWU9InB4LTQgcHktMSBmb250LXBpeGVsIHRleHQtWzlweF0gdGV4dC13aGl0ZSB0cmFja2luZy13aWRlciIKICAgICAgICAgIHN0eWxlPXt7CiAgICAgICAgICAgIGJhY2tncm91bmQ6ICdsaW5lYXItZ3JhZGllbnQoMTgwZGVnLHJnYmEoMTAsMjAsNDAsMC45MikscmdiYSg1LDE1LDM1LDAuODgpKScsCiAgICAgICAgICAgIGJvcmRlcjogJzFweCBzb2xpZCByZ2JhKDc0LDE1OCwyNTUsMC40KScsCiAgICAgICAgICAgIGJvcmRlclRvcDogJ25vbmUnLAogICAgICAgICAgICBib3JkZXJSYWRpdXM6ICcwIDAgNnB4IDZweCcsCiAgICAgICAgICAgIGJveFNoYWRvdzogJzAgMnB4IDhweCByZ2JhKDAsMCwwLDAuNSknLAogICAgICAgICAgICB0ZXh0U2hhZG93OiAnMCAxcHggMnB4IHJnYmEoMCwwLDAsMC45KScsCiAgICAgICAgICB9fQogICAgICAgID4KICAgICAgICAgIPCfj4IgQk9BUkQgUk9PTSDigJQgU2VuaW9yIFNjb3V0IDM2MAogICAgICAgIDwvZGl2PgogICAgICA8L2Rpdj4KCiAgICAgIDxkaXYgY2xhc3NOYW1lPSJhYnNvbHV0ZSBpbnNldC0wIGZsZXggaXRlbXMtY2VudGVyIGp1c3RpZnktY2VudGVyIHAtMiI+CiAgICAgICAgPGRpdiBjbGFzc05hbWU9InJlbGF0aXZlIGgtZnVsbCB3LWZ1bGwgbWF4LXctWzEzNjVweF0gbWF4LWhbNzY4cHhdIj4KICAgICAgICAgIDxpbWcKICAgICAgICAgICAgc3JjPSIvaXNvbWV0cmljLW9mZmljZS1iZy5wbmciCiAgICAgICAgICAgIGFsdD0iT2ZmaWNlIHJlZmVyZW5jZSBiYWNrZ3JvdW5kIgogICAgICAgICAgICBjbGFzc05hbWU9ImFic29sdXRlIGluc2V0LTAgaC1mdWxsIHctZnVsbCBvYmplY3QtY29udGFpbiIKICAgICAgICAgIC8+CgogICAgICAgICAge3VzZXJzLm1hcCgodXNlcikgPT4gewogICAgICAgICAgICBjb25zdCBwICAgICAgICA9IHByb2plY3RUb1BlcmNlbnQodXNlci54LCB1c2VyLnkpOwogICAgICAgICAgICBjb25zdCBoYWJib0RpciA9IHVzZXIuZGlyZWN0aW9uICUgODsKICAgICAgICAgICAgY29uc3QgZ2VzdHVyZVBhcmFtcyA9IGdldEhhYmJvR2VzdHVyZVBhcmFtcyh1c2VyLmF2YXRhclN0YXR1cyk7CgogICAgICAgICAgICBjb25zdCBhdmF0YXJTcmMgPQogICAgICAgICAgICAgIGBodHRwczovL3d3dy5oYWJiby5jb20vaGFiYm8taW1hZ2luZy9hdmF0YXJpbWFnZT9maWd1cmU9JHt1c2VyLmZpZ3VyZX1gICsKICAgICAgICAgICAgICBgJmRpcmVjdGlvbj0ke2hhYmJvRGlyfSZoZWFkX2RpcmVjdGlvbj0ke2hhYmJvRGlyfSR7Z2VzdHVyZVBhcmFtc30mc2l6ZT1tYDsKCiAgICAgICAgICAgIHJldHVybiAoCiAgICAgICAgICAgICAgPGRpdgogICAgICAgICAgICAgICAga2V5PXt1c2VyLmlkfQogICAgICAgICAgICAgICAgY2xhc3NOYW1lPSJhYnNvbHV0ZSBwb2ludGVyLWV2ZW50cy1ub25lIGZsZXggZmxleC1jb2wgaXRlbXMtY2VudGVyIgogICAgICAgICAgICAgICAgc3R5bGU9e3sKICAgICAgICAgICAgICAgICAgbGVmdDogYCR7cC5sZWZ0fSVgLAogICAgICAgICAgICAgICAgICB0b3A6IGAke3AudG9wfSVgLAogICAgICAgICAgICAgICAgICB0cmFuc2Zvcm06ICd0cmFuc2xhdGUoLTUwJSwgLTEwMCUpJywKICAgICAgICAgICAgICAgICAgelluZGV4OiBwLnpJbmRleCwKICAgICAgICAgICAgICAgIH19CiAgICAgICAgICAgICAgPgogICAgICAgICAgICAgICAgeyAvKiBCYWRnZSBkZSBzdGF0dXMgKHPDsyBzcGVha2luZyBlIHN1bW1vbmVkKSAqLyB9CiAgICAgICAgICAgICAgICA8U3RhdHVzQmFkZ2Ugc3RhdHVzPXt1c2VyLmF2YXRhclN0YXR1c30gLz4KCiAgICAgICAgICAgICAgICB7IC8qIE5vbWUgKi8gfQogICAgICAgICAgICAgICAgPGRpdgogICAgICAgICAgICAgICAgICBjbGFzc05hbWU9Im1iLTAuNSBweC0xLjUgcHktcHggZm9udC1waXhlbCB0ZXh0LVs4cHhdIGZvbnQtYm9sZCB0ZXh0LXdoaXRlIHdoaXRlc3BhY2Utbm93cmFwIHJvdW5kZWQtc20gYm9yZGVyIGJvcmRlci1ibHVlLTMwMC80MCIKICAgICAgICAgICAgICAgICAgc3R5bGU9e3sgYmFja2dyb3VuZDogJ3JnYmEoMTAsMzAsNzAsMC44KScgfX0KICAgICAgICAgICAgICAgID4KICAgICAgICAgICAgICAgICAge3VzZXIubmFtZX0KICAgICAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgICAgIHsgLyogQXZhdGFyICovIH0KICAgICAgICAgICAgICAgIDxpbWcKICAgICAgICAgICAgICAgICAgc3JjPXthdmF0YXJTcmN9CiAgICAgICAgICAgICAgICAgIGFsdD17dXNlci5uYW1lfQogICAgICAgICAgICAgICAgICBjbGFzc05hbWU9Imgtbls3OHB4XSB3LWF1dG8iCiAgICAgICAgICAgICAgICAgIHN0eWxlPXt7IGltYWdlUmVuZGVyaW5nOiAncGl4ZWxhdGVkJyB9fQogICAgICAgICAgICAgICAgLz4KICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgKTsKICAgICAgICAgIH0pfQogICAgICAgIDwvZGl2PgogICAgICA8L2Rpdj4KICAgIDwvZGl2PgogICk7Cn0K
+import React from 'react';
+import { User } from './HabboClient';
+import type { AvatarStatus } from '@/types';
+
+interface RoomViewProps {
+  users: User[];
+  map: number[][];
+  onTileClick: (x: number, y: number) => void;
+}
+
+// Mapeia AvatarStatus → parâmetros Habbo API
+// idle      → sentado olhando tela   (action=sit, gesture=eyb)
+// speaking  → respondendo ativamente (action=sit, gesture=spk)
+// summoned  → na sala de reunião     (gesture=wav)
+// walking   → Bruno andando          (gesture=std)
+function getHabboGestureParams(status: AvatarStatus): string {
+  switch (status) {
+    case 'idle':
+      return '&action=sit&gesture=eyb';
+    case 'speaking':
+      return '&action=sit&gesture=spk';
+    case 'summoned':
+      return '&gesture=wav';
+    case 'walking':
+    default:
+      return '&gesture=std';
+  }
+}
+
+// Badge de status — aparece só quando relevante (speaking ou summoned)
+function StatusBadge({ status }: { status: AvatarStatus }) {
+  if (status === 'walking' || status === 'idle') return null;
+  const config: Record<string, { label: string; color: string }> = {
+    speaking:  { label: '🗣', color: '#7C3AED' },
+    summoned:  { label: '📍', color: '#1D4ED8' },
+  };
+  const { label, color } = config[status] ?? { label: '', color: '#ccc' };
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        fontSize: 8,
+        lineHeight: 1,
+        padding: '2px 4px',
+        borderRadius: 3,
+        background: color,
+        marginBottom: 2,
+        fontWeight: 700,
+        letterSpacing: '0.05em',
+        boxShadow: `0 1px 4px ${color}80`,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
+export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
+  void map;
+  void onTileClick;
+
+  const projectToPercent = (x: number, y: number) => {
+    const left = 52 + (x - y) * 1.85;
+    const top  = 20 + (x + y) * 1.18;
+    return {
+      left: Math.max(3, Math.min(97, left)),
+      top:  Math.max(6, Math.min(95, top)),
+      zIndex: Math.round((x + y) * 10) + 20,
+    };
+  };
+
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-black">
+      {/* Bandeira topo */}
+      <div
+        className="absolute top-0 left-0 right-0 z-30 flex items-center justify-center pointer-events-none"
+        style={{ height: 32 }}
+      >
+        <div
+          className="px-4 py-1 font-pixel text-[9px] text-white tracking-wider"
+          style={{
+            background: 'linear-gradient(180deg,rgba(10,20,40,0.92),rgba(5,15,35,0.88))',
+            border: '1px solid rgba(74,158,255,0.4)',
+            borderTop: 'none',
+            borderRadius: '0 0 6px 6px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+            textShadow: '0 1px 2px rgba(0,0,0,0.9)',
+          }}
+        >
+          🏢 BOARD ROOM — Senior Scout 360
+        </div>
+      </div>
+
+      <div className="absolute inset-0 flex items-center justify-center p-2">
+        <div className="relative h-full w-full max-w-[1365px] max-h-[768px]">
+          <img
+            src="/isometric-office-bg.png"
+            alt="Office reference background"
+            className="absolute inset-0 h-full w-full object-contain"
+          />
+
+          {users.map((user) => {
+            const p            = projectToPercent(user.x, user.y);
+            const habboDir     = user.direction % 8;
+            const gestureParams = getHabboGestureParams(user.avatarStatus);
+
+            const avatarSrc =
+              `https://www.habbo.com/habbo-imaging/avatarimage?figure=${user.figure}` +
+              `&direction=${habboDir}&head_direction=${habboDir}${gestureParams}&size=m`;
+
+            return (
+              <div
+                key={user.id}
+                className="absolute pointer-events-none flex flex-col items-center"
+                style={{
+                  left: `${p.left}%`,
+                  top: `${p.top}%`,
+                  transform: 'translate(-50%, -100%)',
+                  zIndex: p.zIndex,
+                }}
+              >
+                {/* Badge de status (só speaking e summoned) */}
+                <StatusBadge status={user.avatarStatus} />
+
+                {/* Nome */}
+                <div
+                  className="mb-0.5 px-1.5 py-px font-pixel text-[8px] font-bold text-white whitespace-nowrap rounded-sm border border-blue-300/40"
+                  style={{ background: 'rgba(10,30,70,0.8)' }}
+                >
+                  {user.name}
+                </div>
+
+                {/* Avatar */}
+                <img
+                  src={avatarSrc}
+                  alt={user.name}
+                  className="h-[78px] w-auto"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
