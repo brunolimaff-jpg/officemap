@@ -8,14 +8,13 @@ interface RoomViewProps {
   onTileClick: (x: number, y: number) => void;
 }
 
-// ─── Calibração isométrica ─────────────────────────────────────────────────────
-// Derivada por regressão linear sobre 6 avatares com posições conhecidas
+// ─── Calibração isométrica ───────────────────────────────────────────────────
 // left% = OX + (x - y) * SX
 // top%  = OY + (x + y) * SY
-const OX = 56.8;   // origem horizontal (%)
-const SX = 1.893;  // escala horizontal por tile
-const OY = 31.4;   // origem vertical (%)
-const SY = 0.887;  // escala vertical por tile
+const OX = 56.8;
+const SX = 1.893;
+const OY = 31.4;
+const SY = 0.887;
 
 function projectToPercent(x: number, y: number) {
   const left = OX + (x - y) * SX;
@@ -27,17 +26,16 @@ function projectToPercent(x: number, y: number) {
   };
 }
 
-// Fórmula inversa para converter clique (%) → tile (x, y)
-function screenPercentToTile(leftPct: number, topPct: number): { x: number; y: number } {
-  const diff = (leftPct - OX) / SX;  // x - y
-  const sum  = (topPct  - OY) / SY;  // x + y
+function screenPercentToTile(leftPct: number, topPct: number) {
+  const diff = (leftPct - OX) / SX;
+  const sum  = (topPct  - OY) / SY;
   return {
     x: Math.round((sum + diff) / 2),
     y: Math.round((sum - diff) / 2),
   };
 }
 
-// ─── Mapeia AvatarStatus → parâmetros Habbo API ───────────────────────────────
+// ─── AvatarStatus → Habbo params ───────────────────────────────────────────
 function getHabboGestureParams(status: AvatarStatus): string {
   switch (status) {
     case 'idle':     return '&action=sit&gesture=eyb';
@@ -48,7 +46,7 @@ function getHabboGestureParams(status: AvatarStatus): string {
   }
 }
 
-// ─── Badge de status ────────────────────────────────────────────────────────────
+// ─── Badge ──────────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: AvatarStatus }) {
   if (status === 'walking' || status === 'idle') return null;
   const config: Record<string, { label: string; color: string }> = {
@@ -57,20 +55,12 @@ function StatusBadge({ status }: { status: AvatarStatus }) {
   };
   const { label, color } = config[status] ?? { label: '', color: '#ccc' };
   return (
-    <span
-      style={{
-        display: 'inline-block',
-        fontSize: 8,
-        lineHeight: 1,
-        padding: '2px 4px',
-        borderRadius: 3,
-        background: color,
-        marginBottom: 2,
-        fontWeight: 700,
-        letterSpacing: '0.05em',
-        boxShadow: `0 1px 4px ${color}80`,
-      }}
-    >
+    <span style={{
+      display: 'inline-block', fontSize: 8, lineHeight: 1,
+      padding: '2px 4px', borderRadius: 3, background: color,
+      marginBottom: 2, fontWeight: 700, letterSpacing: '0.05em',
+      boxShadow: `0 1px 4px ${color}80`,
+    }}>
       {label}
     </span>
   );
@@ -83,9 +73,24 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
+
       const leftPct = ((e.clientX - rect.left) / rect.width)  * 100;
       const topPct  = ((e.clientY - rect.top)  / rect.height) * 100;
       const { x, y } = screenPercentToTile(leftPct, topPct);
+
+      // ─── DEBUG MODE: Shift+Click loga coordenadas sem mover o avatar ───
+      if (e.shiftKey) {
+        console.log(
+          `%c[DEBUG TILE] x=${x} y=${y} | left=${leftPct.toFixed(1)}% top=${topPct.toFixed(1)}%`,
+          'background:#1D4ED8;color:#fff;padding:2px 6px;border-radius:3px;font-weight:bold'
+        );
+        console.log(
+          `%c[DEBUG PROJ] left_calc=${(OX + (x-y)*SX).toFixed(1)}% top_calc=${(OY + (x+y)*SY).toFixed(1)}%`,
+          'background:#059669;color:#fff;padding:2px 6px;border-radius:3px'
+        );
+        return; // não move o avatar
+      }
+
       const rows = map.length;
       const cols = map[0]?.length ?? 0;
       if (x >= 0 && x < cols && y >= 0 && y < rows) {
@@ -122,17 +127,14 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
           ref={containerRef}
           className="relative h-full w-full max-w-[1365px] max-h-[768px] cursor-crosshair"
         >
-          {/* Background */}
           <img
             src="/isometric-office-bg.png"
             alt="Office background"
             className="absolute inset-0 h-full w-full object-contain pointer-events-none"
           />
 
-          {/* Overlay clicável */}
           <div className="absolute inset-0 z-10" onClick={handleOverlayClick} />
 
-          {/* Avatares */}
           {users.map((user) => {
             const p             = projectToPercent(user.x, user.y);
             const habboDir      = user.direction % 8;
@@ -151,12 +153,12 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                   top:  `${p.top}%`,
                   transform: 'translate(-50%, -100%)',
                   zIndex: p.zIndex + 10,
-                  // Transition suaviza o deslizamento entre tiles durante caminhada
                   transition: isWalking
                     ? 'left 140ms linear, top 140ms linear'
                     : 'left 80ms ease-out, top 80ms ease-out',
                 }}
               >
+                {/* Label de debug — só visualmente para facilitar identificação */}
                 <StatusBadge status={user.avatarStatus} />
                 <div
                   className="mb-0.5 px-1.5 py-px font-pixel text-[8px] font-bold text-white whitespace-nowrap rounded-sm border border-blue-300/40"
