@@ -15,6 +15,13 @@ export type SpecialistId =
 
 export type SpecialistStatus = 'available' | 'thinking' | 'responding';
 
+// Status visual do avatar — determina gesture + action na API do Habbo
+export type AvatarStatus =
+  | 'idle'      // sentado, olhando tela (gesture=eyb, action=sit)
+  | 'speaking'  // respondendo ativamente (gesture=spk, action=sit)
+  | 'summoned'  // na sala de reunião (gesture=wav)
+  | 'walking';  // se movendo — apenas Bruno (gesture=std)
+
 export interface Specialist {
   id: SpecialistId;
   name: string;
