@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import { User } from './HabboClient';
 import type { AvatarStatus } from '@/types';
 
@@ -9,30 +9,22 @@ interface RoomViewProps {
 }
 
 // Mapeia AvatarStatus → parâmetros Habbo API
-// idle      → sentado olhando tela   (action=sit, gesture=eyb)
-// speaking  → respondendo ativamente (action=sit, gesture=spk)
-// summoned  → na sala de reunião     (gesture=wav)
-// walking   → Bruno andando          (gesture=std)
 function getHabboGestureParams(status: AvatarStatus): string {
   switch (status) {
-    case 'idle':
-      return '&action=sit&gesture=eyb';
-    case 'speaking':
-      return '&action=sit&gesture=spk';
-    case 'summoned':
-      return '&gesture=wav';
+    case 'idle':     return '&action=sit&gesture=eyb';
+    case 'speaking': return '&action=sit&gesture=spk';
+    case 'summoned': return '&gesture=wav';
     case 'walking':
-    default:
-      return '&gesture=std';
+    default:         return '&gesture=std';
   }
 }
 
-// Badge de status — aparece só quando relevante (speaking ou summoned)
+// Badge de status — aparece só para speaking e summoned
 function StatusBadge({ status }: { status: AvatarStatus }) {
   if (status === 'walking' || status === 'idle') return null;
   const config: Record<string, { label: string; color: string }> = {
-    speaking:  { label: '🗣', color: '#7C3AED' },
-    summoned:  { label: '📍', color: '#1D4ED8' },
+    speaking: { label: '🗣', color: '#7C3AED' },
+    summoned: { label: '📍', color: '#1D4ED8' },
   };
   const { label, color } = config[status] ?? { label: '', color: '#ccc' };
   return (
@@ -55,9 +47,40 @@ function StatusBadge({ status }: { status: AvatarStatus }) {
   );
 }
 
+// ─── Projeção isométrica ────────────────────────────────────────────────────
+// Fórmula direta:  left = 52 + (x - y) * 1.85   top = 20 + (x + y) * 1.18
+// Fórmula inversa: resolve o sistema de duas equações para obter x e y de tile
+function screenPercentToTile(leftPct: number, topPct: number): { x: number; y: number } {
+  // left = 52 + (x - y) * 1.85  →  x - y = (left - 52) / 1.85
+  // top  = 20 + (x + y) * 1.18  →  x + y = (top  - 20) / 1.18
+  const diff = (leftPct - 52) / 1.85;
+  const sum  = (topPct  - 20) / 1.18;
+  return {
+    x: Math.round((sum + diff) / 2),
+    y: Math.round((sum - diff) / 2),
+  };
+}
+
 export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
-  void map;
-  void onTileClick;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Converte clique do mouse em coordenadas de tile e delega ao handler
+  const handleOverlayClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const leftPct = ((e.clientX - rect.left) / rect.width)  * 100;
+      const topPct  = ((e.clientY - rect.top)  / rect.height) * 100;
+      const { x, y } = screenPercentToTile(leftPct, topPct);
+      // Limita ao bounds do mapa antes de repassar
+      const rows = map.length;
+      const cols = map[0]?.length ?? 0;
+      if (x >= 0 && x < cols && y >= 0 && y < rows) {
+        onTileClick(x, y);
+      }
+    },
+    [map, onTileClick]
+  );
 
   const projectToPercent = (x: number, y: number) => {
     const left = 52 + (x - y) * 1.85;
@@ -92,18 +115,28 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
       </div>
 
       <div className="absolute inset-0 flex items-center justify-center p-2">
-        <div className="relative h-full w-full max-w-[1365px] max-h-[768px]">
+        <div
+          ref={containerRef}
+          className="relative h-full w-full max-w-[1365px] max-h-[768px] cursor-crosshair"
+        >
+          {/* Background */}
           <img
             src="/isometric-office-bg.png"
-            alt="Office reference background"
-            className="absolute inset-0 h-full w-full object-contain"
+            alt="Office background"
+            className="absolute inset-0 h-full w-full object-contain pointer-events-none"
           />
 
-          {users.map((user) => {
-            const p            = projectToPercent(user.x, user.y);
-            const habboDir     = user.direction % 8;
-            const gestureParams = getHabboGestureParams(user.avatarStatus);
+          {/* Overlay clicável — captura cliques e converte em tiles */}
+          <div
+            className="absolute inset-0 z-10"
+            onClick={handleOverlayClick}
+          />
 
+          {/* Avatares — acima do overlay */}
+          {users.map((user) => {
+            const p             = projectToPercent(user.x, user.y);
+            const habboDir      = user.direction % 8;
+            const gestureParams = getHabboGestureParams(user.avatarStatus);
             const avatarSrc =
               `https://www.habbo.com/habbo-imaging/avatarimage?figure=${user.figure}` +
               `&direction=${habboDir}&head_direction=${habboDir}${gestureParams}&size=m`;
@@ -114,23 +147,18 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                 className="absolute pointer-events-none flex flex-col items-center"
                 style={{
                   left: `${p.left}%`,
-                  top: `${p.top}%`,
+                  top:  `${p.top}%`,
                   transform: 'translate(-50%, -100%)',
-                  zIndex: p.zIndex,
+                  zIndex: p.zIndex + 10, // acima do overlay (z-10)
                 }}
               >
-                {/* Badge de status (só speaking e summoned) */}
                 <StatusBadge status={user.avatarStatus} />
-
-                {/* Nome */}
                 <div
                   className="mb-0.5 px-1.5 py-px font-pixel text-[8px] font-bold text-white whitespace-nowrap rounded-sm border border-blue-300/40"
                   style={{ background: 'rgba(10,30,70,0.8)' }}
                 >
                   {user.name}
                 </div>
-
-                {/* Avatar */}
                 <img
                   src={avatarSrc}
                   alt={user.name}
