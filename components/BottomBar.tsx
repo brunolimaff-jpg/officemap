@@ -8,7 +8,6 @@ interface BottomBarProps {
   presentUsers?: { id: string; name: string; color: string }[];
 }
 
-// Icones pixel-art SVG — estilo Habbo dourado/laranja
 const PixelIcon = ({ type }: { type: string }) => {
   const icons: Record<string, React.ReactNode> = {
     history: (
@@ -18,8 +17,6 @@ const PixelIcon = ({ type }: { type: string }) => {
         <rect x="6" y="7" width="6" height="1" fill="#7C3F00" />
         <rect x="6" y="9" width="5" height="1" fill="#7C3F00" />
         <rect x="6" y="11" width="4" height="1" fill="#7C3F00" />
-        <rect x="8" y="4" width="1" height="3" fill="#B45309" />
-        <rect x="8" y="5" width="3" height="2" fill="#B45309" />
       </svg>
     ),
     profile: (
@@ -77,14 +74,16 @@ export default function BottomBar({
   onToggleChatLog,
   presentUsers = [],
 }: BottomBarProps) {
-  const [chatInput, setChatInput] = useState('');
+  const [chatInput, setChatInput]   = useState('');
   const [showProfile, setShowProfile] = useState(false);
-  const [inputFlash, setInputFlash] = useState(false);
+  const [inputFlash,  setInputFlash]  = useState(false);
+  const [isFocused,   setIsFocused]   = useState(false);
 
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim()) return;
-    onSendMessage(chatInput);
+    const trimmed = chatInput.trim();
+    if (!trimmed) return;
+    onSendMessage(trimmed);
     setChatInput('');
     setInputFlash(true);
     setTimeout(() => setInputFlash(false), 300);
@@ -97,10 +96,21 @@ export default function BottomBar({
     }
   };
 
+  const btnStyle = (active?: boolean): React.CSSProperties => ({
+    background: active
+      ? 'linear-gradient(180deg, #2A60A2 0%, #1A4A82 100%)'
+      : 'linear-gradient(180deg, #383838 0%, #222 100%)',
+    border: '2px solid #555',
+    borderBottom: active ? '2px solid #7AB8FF' : '2px solid #111',
+    borderRight:  active ? '2px solid #7AB8FF' : '2px solid #111',
+    cursor: 'pointer',
+    transition: 'background 0.1s',
+  });
+
   return (
     <div className="absolute bottom-0 left-0 right-0 z-50">
 
-      {/* Barra de presenca — estilo Habbo */}
+      {/* Barra de presenca */}
       {presentUsers.length > 0 && (
         <div
           className="absolute bottom-[52px] left-2 flex items-center gap-1 px-2 py-1"
@@ -113,14 +123,15 @@ export default function BottomBar({
           }}
         >
           <span className="text-[7px] text-[#F59E0B] font-pixel mr-1 tracking-widest">NA SALA:</span>
-          {presentUsers.slice(0, 10).map(u => (
+          {presentUsers.slice(0, 12).map(u => (
             <div
               key={u.id}
-              className="w-5 h-5 rounded flex items-center justify-center text-[7px] font-pixel font-bold text-white"
+              className="w-5 h-5 flex items-center justify-center text-[7px] font-bold text-white"
               style={{
                 backgroundColor: u.color,
                 border: '1px solid rgba(255,255,255,0.2)',
                 boxShadow: '0 1px 0 rgba(0,0,0,0.5)',
+                imageRendering: 'pixelated',
               }}
               title={u.name}
             >
@@ -144,22 +155,22 @@ export default function BottomBar({
         >
           <div className="flex items-center gap-2 mb-2">
             <div
-              className="w-8 h-8 flex items-center justify-center text-white font-pixel text-xs"
-              style={{ background: '#4A90E2', border: '2px solid #7AB8FF', borderBottom: '2px solid #2A60A2' }}
-            >B</div>
+              className="w-8 h-8 flex items-center justify-center text-white text-xs font-bold"
+              style={{ background: '#4A90E2', border: '2px solid #7AB8FF', borderBottom: '2px solid #2A60A2', imageRendering: 'pixelated' }}
+            >BL</div>
             <div>
-              <div className="text-white text-[9px] font-pixel font-bold">Bruno Lima</div>
-              <div className="text-[#F59E0B] text-[8px] font-pixel">Economista · Agronegócio</div>
+              <div className="text-white text-[9px] font-bold">Bruno Lima</div>
+              <div className="text-[#F59E0B] text-[8px]">Economista · Agronegócio</div>
             </div>
           </div>
           <div style={{ borderTop: '1px solid #334155', paddingTop: 6 }}>
-            <div className="text-[8px] text-slate-400 font-pixel">Cuiabá, MT · Tech & ERP</div>
-            <div className="text-[8px] text-[#F59E0B] font-pixel mt-0.5">Board Room Host ★</div>
+            <div className="text-[8px] text-slate-400">Cuiabá, MT · Tech & ERP</div>
+            <div className="text-[8px] text-[#F59E0B] mt-0.5">Board Room Host ★</div>
           </div>
         </div>
       )}
 
-      {/* HUD principal — estilo Habbo escuro com aba de contador */}
+      {/* HUD principal */}
       <div
         className="h-[52px] flex items-center px-2 gap-2"
         style={{
@@ -168,7 +179,7 @@ export default function BottomBar({
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
         }}
       >
-        {/* Contadores moedas/pixels estilo Habbo */}
+        {/* Contadores */}
         <div className="flex items-center gap-1 mr-1">
           <div
             className="flex items-center gap-1 px-2 py-1"
@@ -180,7 +191,7 @@ export default function BottomBar({
             }}
           >
             <PixelIcon type="coin" />
-            <span className="text-[#F59E0B] font-pixel text-[9px] font-bold">2,000</span>
+            <span className="text-[#F59E0B] text-[9px] font-bold">2,000</span>
           </div>
           <div
             className="flex items-center gap-1 px-2 py-1"
@@ -192,7 +203,7 @@ export default function BottomBar({
             }}
           >
             <PixelIcon type="pixel" />
-            <span className="text-[#A5B4FC] font-pixel text-[9px] font-bold">PIXELS</span>
+            <span className="text-[#A5B4FC] text-[9px] font-bold">SCOUT</span>
           </div>
         </div>
 
@@ -201,14 +212,7 @@ export default function BottomBar({
           <button
             onClick={() => setShowProfile(p => !p)}
             className="w-9 h-9 flex items-center justify-center"
-            style={{
-              background: showProfile
-                ? 'linear-gradient(180deg, #2A60A2 0%, #1A4A82 100%)'
-                : 'linear-gradient(180deg, #383838 0%, #222 100%)',
-              border: '2px solid #555',
-              borderBottom: showProfile ? '2px solid #7AB8FF' : '2px solid #111',
-              borderRight: showProfile ? '2px solid #7AB8FF' : '2px solid #111',
-            }}
+            style={btnStyle(showProfile)}
             title="Meu Perfil"
             aria-label="Meu Perfil"
           >
@@ -217,12 +221,7 @@ export default function BottomBar({
           <button
             onClick={onToggleHistory}
             className="w-9 h-9 flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(180deg, #383838 0%, #222 100%)',
-              border: '2px solid #555',
-              borderBottom: '2px solid #111',
-              borderRight: '2px solid #111',
-            }}
+            style={btnStyle()}
             title="Histórico de Conversas"
             aria-label="Histórico"
           >
@@ -230,17 +229,17 @@ export default function BottomBar({
           </button>
         </div>
 
-        {/* Chat Input — compacto */}
+        {/* Chat input */}
         <form onSubmit={handleChatSubmit} className="flex-1 flex items-center gap-1 max-w-2xl">
           <div
-            className="flex-1 h-7 flex items-center px-2"
+            className="flex-1 h-8 flex items-center px-2"
             style={{
               background: '#fff',
               border: '2px solid #111',
-              borderBottom: '2px solid #555',
-              borderRight: '2px solid #555',
+              borderBottom: isFocused ? '2px solid #4A90E2' : '2px solid #555',
+              borderRight:  isFocused ? '2px solid #4A90E2' : '2px solid #555',
               outline: inputFlash ? '2px solid #4A90E2' : 'none',
-              transition: 'outline 0.15s',
+              transition: 'border-color 0.15s, outline 0.15s',
             }}
           >
             <input
@@ -248,24 +247,28 @@ export default function BottomBar({
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full h-full outline-none text-black font-pixel"
-              style={{ fontSize: 11 }}
-              placeholder="Clique aqui para falar..."
-              maxLength={100}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              className="w-full h-full outline-none text-black"
+              style={{ fontSize: 11, fontFamily: 'monospace' }}
+              placeholder="Pergunte ao Board Room..."
+              maxLength={200}
             />
           </div>
           <button
             type="submit"
-            className="h-7 px-3 font-pixel font-bold text-white"
+            className="h-8 px-3 font-bold text-white"
             style={{
               fontSize: 10,
+              fontFamily: 'monospace',
               background: 'linear-gradient(180deg, #4A90E2 0%, #2A60B2 100%)',
               border: '2px solid #7AB8FF',
               borderBottom: '2px solid #1A4080',
               borderRight: '2px solid #1A4080',
+              cursor: 'pointer',
             }}
           >
-            Falar
+            FALAR
           </button>
         </form>
 
@@ -274,28 +277,18 @@ export default function BottomBar({
           <button
             onClick={onToggleChatLog}
             className="w-9 h-9 flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(180deg, #383838 0%, #222 100%)',
-              border: '2px solid #555',
-              borderBottom: '2px solid #111',
-              borderRight: '2px solid #111',
-            }}
-            title="Painel de Discussão"
-            aria-label="Painel de Discussão"
+            style={btnStyle()}
+            title="Board Room Chat"
+            aria-label="Chat"
           >
             <PixelIcon type="chat" />
           </button>
           <button
             onClick={onToggleConvocation}
             className="w-9 h-9 flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(180deg, #383838 0%, #222 100%)',
-              border: '2px solid #555',
-              borderBottom: '2px solid #111',
-              borderRight: '2px solid #111',
-            }}
+            style={btnStyle()}
             title="Convocar Especialistas"
-            aria-label="Convocar Especialistas"
+            aria-label="Convocar"
           >
             <PixelIcon type="users" />
           </button>

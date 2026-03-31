@@ -1,10 +1,10 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import { OFFICE_MAIN_MAP } from '@/data/maps/office_main';
-import { TILE_SIZE, tileToSprite } from '@/lib/topDownEngine';
+import { TILE_SIZE, SPRITESHEET_COLS } from '@/lib/topDownEngine';
 
-const MAP_COLS = OFFICE_MAIN_MAP[0]?.length ?? 30;
 const MAP_ROWS = OFFICE_MAIN_MAP.length;
+const MAP_COLS = OFFICE_MAIN_MAP[0]?.length ?? 30;
 
 interface Props {
   width: number;
@@ -21,33 +21,33 @@ export default function TileBackground({ width, height }: Props) {
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
 
-    const img = new Image();
-    img.src = '/assets/tiles/Modern_Office_32x32.png';
+    const scaleX = width  / (MAP_COLS * TILE_SIZE);
+    const scaleY = height / (MAP_ROWS * TILE_SIZE);
 
-    const draw = () => {
-      // Calcula escala para cobrir o canvas isométrico inteiro
-      const scaleX = width / (MAP_COLS * TILE_SIZE);
-      const scaleY = height / (MAP_ROWS * TILE_SIZE);
+    const draw = (img: HTMLImageElement) => {
       ctx.clearRect(0, 0, width, height);
       for (let row = 0; row < MAP_ROWS; row++) {
         for (let col = 0; col < MAP_COLS; col++) {
           const id = OFFICE_MAIN_MAP[row]?.[col] ?? -1;
           if (id < 0) continue;
-          const { sx, sy } = tileToSprite(id);
+          const sx = (id % SPRITESHEET_COLS) * TILE_SIZE;
+          const sy = Math.floor(id / SPRITESHEET_COLS) * TILE_SIZE;
           ctx.drawImage(
             img,
             sx, sy, TILE_SIZE, TILE_SIZE,
             Math.round(col * TILE_SIZE * scaleX),
             Math.round(row * TILE_SIZE * scaleY),
-            Math.round(TILE_SIZE * scaleX),
-            Math.round(TILE_SIZE * scaleY),
+            Math.ceil(TILE_SIZE * scaleX),
+            Math.ceil(TILE_SIZE * scaleY),
           );
         }
       }
     };
 
-    if (img.complete) draw();
-    else img.onload = draw;
+    const img = new Image();
+    img.src = '/assets/tiles/Modern_Office_32x32.png';
+    if (img.complete) draw(img);
+    else img.onload = () => draw(img);
   }, [width, height]);
 
   return (
@@ -61,7 +61,8 @@ export default function TileBackground({ width, height }: Props) {
         left: 0,
         imageRendering: 'pixelated',
         zIndex: 0,
-        opacity: 0.92,
+        opacity: 0.95,
+        pointerEvents: 'none',
       }}
     />
   );
