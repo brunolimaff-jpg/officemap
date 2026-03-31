@@ -83,7 +83,8 @@ const MemoRoomView = memo(RoomView, (prev, next) => {
   if (prev.onTileClick !== next.onTileClick) return false;
   if (prev.users.length !== next.users.length) return false;
   for (let i = 0; i < prev.users.length; i++) {
-    const p = prev.users[i], n = next.users[i];
+    const p = prev.users[i];
+    const n = next.users[i];
     if (
       p.x !== n.x || p.y !== n.y ||
       p.direction !== n.direction ||
@@ -94,6 +95,35 @@ const MemoRoomView = memo(RoomView, (prev, next) => {
   return true;
 });
 
+// CSS global para animacoes dos avatares — injetado uma vez
+const AVATAR_STYLES = `
+  @keyframes avatarBounce {
+    0%   { transform: translateY(0px); }
+    50%  { transform: translateY(-3px); }
+    100% { transform: translateY(0px); }
+  }
+  @keyframes avatarWalk {
+    0%   { transform: translateY(0px) rotate(-1deg); }
+    25%  { transform: translateY(-2px) rotate(0deg); }
+    50%  { transform: translateY(0px) rotate(1deg); }
+    75%  { transform: translateY(-2px) rotate(0deg); }
+    100% { transform: translateY(0px) rotate(-1deg); }
+  }
+  @keyframes avatarSpeak {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.04); }
+    100% { transform: scale(1); }
+  }
+  @keyframes shadowPulse {
+    0%   { rx: 10; opacity: 0.22; }
+    100% { rx: 8;  opacity: 0.15; }
+  }
+  @keyframes blinkCursor {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+  }
+`;
+
 export default function HabboClient() {
   const [isHistoryOpen,     setIsHistoryOpen]     = useState(false);
   const [isConvocationOpen, setIsConvocationOpen] = useState(false);
@@ -101,15 +131,14 @@ export default function HabboClient() {
   const [messages,          setMessages]          = useState<ChatMessage[]>([]);
   const [users,             setUsers]             = useState<User[]>(INITIAL_USERS);
 
-  // IDs dos especialistas atualmente convocados
-  const summonedIdsRef = useRef<SpecialistId[]>([]);
+  const summonedIdsRef    = useRef<SpecialistId[]>([]);
+  const streamingMsgIdRef = useRef<string | null>(null);
+  const cameraOffsetRef   = useRef({ x: 0, y: 0 });
+  const walkQueueRef      = useRef<Array<{ x: number; y: number }>>([]);
+  const walkTimerRef      = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { sessions, currentSessionId, saveSession, updateCurrentSession, loadSession, startNewSession } =
     useChatHistory();
-  const cameraOffsetRef = useRef({ x: 0, y: 0 });
-
-  const walkQueueRef = useRef<Array<{ x: number; y: number }>>([]);
-  const walkTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopWalking = useCallback(() => {
     if (walkTimerRef.current) {
@@ -121,7 +150,6 @@ export default function HabboClient() {
 
   useEffect(() => () => stopWalking(), [stopWalking]);
 
-  // ─── Avatar status helpers ───────────────────────────────────────────────
   const setAvatarStatus = useCallback((userId: string, status: AvatarStatus) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, avatarStatus: status } : u));
   }, []);
@@ -134,21 +162,15 @@ export default function HabboClient() {
     id: u.id, name: u.name, color: SPECIALIST_COLORS[u.id] ?? '#64748B',
   }));
 
-  // ─── Streaming Gemini ───────────────────────────────────────────────────
-  // streamingMsgIdRef guarda o id da mensagem em construção para o update incremental
-  const streamingMsgIdRef = useRef<string | null>(null);
-
   const { sendMessage: sendGemini, stopStreaming } = useStreamingChat({
     onMessageStart: useCallback((role: 'assistant', specialistId?: SpecialistId) => {
       const id = `${Date.now()}-${specialistId ?? 'ai'}`;
       streamingMsgIdRef.current = id;
-      const spec = specialists.find(s => s.id === specialistId);
       setMessages(prev => [
         ...prev,
         { id, userId: specialistId ?? 'ai', text: '', timestamp: Date.now(), streaming: true },
       ]);
       if (specialistId) setAvatarStatus(specialistId, 'speaking');
-      // Abre o painel ao primeiro chunk
       setIsChatLogOpen(true);
     }, [setAvatarStatus]),
 
@@ -160,9 +182,7 @@ export default function HabboClient() {
 
     onSpecialistDone: useCallback((specialistId?: SpecialistId) => {
       const id = streamingMsgIdRef.current;
-      if (id) {
-        setMessages(prev => prev.map(m => m.id === id ? { ...m, streaming: false } : m));
-      }
+      if (id) setMessages(prev => prev.map(m => m.id === id ? { ...m, streaming: false } : m));
       streamingMsgIdRef.current = null;
       if (specialistId) setAvatarStatus(specialistId, 'idle');
     }, [setAvatarStatus]),
@@ -180,7 +200,6 @@ export default function HabboClient() {
     }, [resetSpecialistsToIdle]),
   });
 
-  // ─── Movimento ─────────────────────────────────────────────────────────────────
   const handleMoveUser = useCallback((tx: number, ty: number) => {
     if (!isWalkable(officeMap, tx, ty)) return;
     setUsers(prev => {
@@ -200,57 +219,48 @@ export default function HabboClient() {
         }
         setUsers(u => u.map(usr => {
           if (usr.id !== '1') return usr;
-          return { ...usr, x: next.x, y: next.y, direction: directionBetween(usr.x, usr.y, next.x, next.y), avatarStatus: 'walking' };
+          return {
+            ...usr,
+            x: next.x, y: next.y,
+            direction: directionBetween(usr.x, usr.y, next.x, next.y),
+            avatarStatus: 'walking',
+          };
         }));
       }, STEP_MS);
       const first = path[0];
       return prev.map(u =>
-        u.id === '1' ? { ...u, direction: directionBetween(u.x, u.y, first.x, first.y), avatarStatus: 'walking' } : u
+        u.id === '1'
+          ? { ...u, direction: directionBetween(u.x, u.y, first.x, first.y), avatarStatus: 'walking' }
+          : u
       );
     });
   }, [stopWalking]);
 
-  // ─── Envio de mensagem → Gemini ───────────────────────────────────────────
   const handleSendMessage = useCallback((text: string) => {
-    const userMsg: ChatMessage = {
-      id: Date.now().toString(),
-      userId: '1',
-      text,
-      timestamp: Date.now(),
-    };
-
+    const userMsg: ChatMessage = { id: Date.now().toString(), userId: '1', text, timestamp: Date.now() };
     setMessages(prev => {
       const msgs = [...prev, userMsg];
       if (!currentSessionId) saveSession(msgs, ['Bruno']);
       else updateCurrentSession(msgs);
       return msgs;
     });
-
-    const summoned = summonedIdsRef.current;
+    const summoned  = summonedIdsRef.current;
     const sessionId = currentSessionId ?? Date.now().toString();
-
-    // Monta histórico de mensagens no formato Message[]
-    const history = messages.map(m => ({
+    const history   = messages.map(m => ({
       id: m.id,
       role: m.userId === '1' ? ('user' as const) : ('assistant' as const),
       content: m.text,
-      specialistId: m.userId !== '1' && m.userId !== 'system'
-        ? (m.userId as SpecialistId)
-        : undefined,
+      specialistId: m.userId !== '1' && m.userId !== 'system' ? (m.userId as SpecialistId) : undefined,
     }));
     history.push({ id: userMsg.id, role: 'user', content: text, specialistId: undefined });
-
     if (summoned.length >= 2) {
-      // Modo grupo: especialistas respondem em sequência
       sendGemini('group', { specialistIds: summoned, userMessage: text }, sessionId);
     } else {
-      // Modo individual: usa o único convocado ou o primeiro especialista como default
       const targetId: SpecialistId = summoned[0] ?? 'satya';
       sendGemini('single', { specialistId: targetId, messages: history }, sessionId);
     }
   }, [messages, currentSessionId, saveSession, updateCurrentSession, sendGemini]);
 
-  // ─── Sessões ──────────────────────────────────────────────────────────────
   const handleLoadSession = useCallback((id: string) => {
     setMessages(loadSession(id));
     setIsHistoryOpen(false);
@@ -265,7 +275,6 @@ export default function HabboClient() {
     summonedIdsRef.current = [];
   }, [startNewSession, resetSpecialistsToIdle, stopStreaming]);
 
-  // ─── Convocação ───────────────────────────────────────────────────────────
   const handleSummon = useCallback((selectedIds: string[]) => {
     stopWalking();
     summonedIdsRef.current = selectedIds as SpecialistId[];
@@ -286,22 +295,28 @@ export default function HabboClient() {
       .map(id => specialists.find(s => s.id === id)?.name)
       .filter(Boolean)
       .join(', ');
-    setMessages(prev => [...prev, {
+    setMessages(prev => [{
       id: Date.now().toString(), userId: 'system',
       text: `🏢 Convocados para Sala de Reuniões: ${names}.`,
       timestamp: Date.now(),
-    }]);
+    }, ...prev]);
     setIsChatLogOpen(true);
   }, [stopWalking]);
 
   return (
     <div className="w-full h-screen overflow-hidden bg-[#0a0f1e] relative font-sans select-none">
+      {/* CSS de animacoes */}
+      <style>{AVATAR_STYLES}</style>
+
+      {/* Vinheta de borda */}
       <div
         className="absolute inset-0 pointer-events-none z-40"
         style={{ boxShadow: 'inset 0 0 0 4px #111, inset 0 0 0 6px #222, inset 0 0 24px rgba(0,0,0,0.7)' }}
       />
+
       <MemoRoomView users={users} map={officeMap} onTileClick={handleMoveUser} />
       <ChatBubbles messages={messages} users={users} cameraOffsetRef={cameraOffsetRef} />
+
       {isHistoryOpen && (
         <HistoryWindow
           onClose={() => setIsHistoryOpen(false)}
@@ -316,6 +331,7 @@ export default function HabboClient() {
       {isChatLogOpen && (
         <ChatLogWindow onClose={() => setIsChatLogOpen(false)} messages={messages} users={users} />
       )}
+
       <BottomBar
         onSendMessage={handleSendMessage}
         onToggleHistory={() => setIsHistoryOpen(p => !p)}
