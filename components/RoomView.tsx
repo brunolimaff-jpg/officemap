@@ -1,6 +1,7 @@
 'use client';
-import React, { useRef, useCallback, useEffect, useState } from 'react';
+import React, { useRef, useCallback, useEffect, useState, memo } from 'react';
 import IsoCanvas from './IsoCanvas';
+import FurniSprite from './FurniSprite';
 import { tileToScreen, TILE_H, CANVAS_W, CANVAS_H, zOrder } from '@/lib/isoEngine';
 import { furniture } from '@/data/specialists';
 import type { User } from './HabboClient';
@@ -12,7 +13,6 @@ interface RoomViewProps {
   onTileClick: (x: number, y: number) => void;
 }
 
-// ─── AvatarStatus → Habbo API params ─────────────────────────────────────────
 function getHabboGestureParams(status: AvatarStatus): string {
   switch (status) {
     case 'idle':     return '&action=sit&gesture=eyb';
@@ -23,7 +23,6 @@ function getHabboGestureParams(status: AvatarStatus): string {
   }
 }
 
-// ─── Badge de status ──────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: AvatarStatus }) {
   if (status === 'walking' || status === 'idle') return null;
   const cfg: Record<string, { label: string; color: string }> = {
@@ -41,11 +40,17 @@ function StatusBadge({ status }: { status: AvatarStatus }) {
   );
 }
 
+// ─── Mobília pré-calculada (posições não mudam em runtime) ────────────────────
+// Calculamos fora do componente para evitar recalcular a cada render.
+const furniWithPos = furniture.map(f => {
+  const { px, py } = tileToScreen(f.x, f.y);
+  return { ...f, pos: { x: px, y: py + TILE_H } };
+});
+
 export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
-  const containerRef  = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
-  // ─── Calcula escala para caber o canvas no container ─────────────────────
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -60,19 +65,16 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     return () => ro.disconnect();
   }, []);
 
-  // ─── Posição de um avatar em px dentro do canvas, depois escalonada ──────
   const avatarStyle = useCallback(
     (user: User) => {
-      // px, py = topo-centro do tile
       const { px, py } = tileToScreen(user.x, user.y);
-      // Avatar fica com os pés no centro-inferior do tile (py + TILE_H)
       const footX = px;
       const footY = py + TILE_H;
       const isWalking = user.avatarStatus === 'walking';
       return {
-        left:      footX * scale,
-        top:       footY * scale,
-        zIndex:    zOrder(user.x, user.y) + 200,
+        left:   footX * scale,
+        top:    footY * scale,
+        zIndex: zOrder(user.x, user.y) + 200,
         transition: isWalking
           ? 'left 140ms linear, top 140ms linear'
           : 'left 60ms ease-out, top 60ms ease-out',
@@ -103,29 +105,52 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         </div>
       </div>
 
-      {/* Container do canvas + avatares */}
+      {/* Container do canvas + sprites + avatares */}
       <div
         ref={containerRef}
         className="absolute inset-0 overflow-hidden"
         style={{ paddingTop: 32 }}
       >
-        {/* Canvas isométrico — tiles + móveis */}
+        {/* Camada 1 — canvas isométrico: apenas tiles */}
         <IsoCanvas
           map={map}
-          furniture={furniture}
           onTileClick={onTileClick}
           scale={scale}
         />
 
-        {/* Avatares — posicionados em px sobre o canvas escalonado */}
+        {/* Camada 2 — móveis SVG: posicionados como HTML sobre o canvas */}
+        <div
+          className="absolute top-0 left-0 pointer-events-none"
+          style={{
+            width:  CANVAS_W * scale,
+            height: CANVAS_H * scale,
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+          }}
+        >
+          {furniWithPos.map(f => (
+            <FurniSprite
+              key={f.id}
+              type={f.type}
+              pos={f.pos}
+              color={f.color}
+              direction={f.direction}
+              tileX={f.x}
+              tileY={f.y}
+              label={f.label}
+            />
+          ))}
+        </div>
+
+        {/* Camada 3 — avatares */}
         {users.map((user) => {
-          const st          = avatarStyle(user);
-          const habboDir    = user.direction % 8;
-          const gesture     = getHabboGestureParams(user.avatarStatus);
-          const avatarSrc   =
+          const st       = avatarStyle(user);
+          const habboDir = user.direction % 8;
+          const gesture  = getHabboGestureParams(user.avatarStatus);
+          const avatarSrc =
             `https://www.habbo.com/habbo-imaging/avatarimage?figure=${user.figure}` +
             `&direction=${habboDir}&head_direction=${habboDir}${gesture}&size=m`;
-          const avatarH     = Math.round(78 * scale);
+          const avatarH = Math.round(78 * scale);
 
           return (
             <div
