@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import { User } from './HabboClient';
 import { furniture } from '@/data/specialists';
 import { Furniture } from '@/types';
@@ -12,6 +12,9 @@ interface RoomViewProps {
 
 const TILE_W = 64;
 const TILE_H = 32;
+
+// FIX B: detecta pointer coarse (touch) uma vez para desabilitar hover
+const IS_TOUCH = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
 // ─── Figure codes Habbo Imager por especialista ───────────────────────────────
 const HABBO_FIGURE: Record<string, string> = {
@@ -58,15 +61,9 @@ const getTileColors = (val: number, x: number, y: number) => {
   }
 };
 
-// ─── Z-ordering: fórmula isométrica precisa ───────────────────────────────────
-// Multiplicar por 200 garante espaço para todos os layers por tile:
-//   +0   = tile base
-//   +10  = floor edge
-//   +20  = furni (por zBonus 0-7, cada um +20)
-//   +200 = avatar (sempre acima dos móveis do mesmo tile)
-const tileZ    = (x: number, y: number) => (x + y) * 200;
-const furniZ   = (x: number, y: number, bonus: number) => (x + y) * 200 + 20 + bonus * 20;
-const avatarZ  = (x: number, y: number) => (x + y) * 200 + 180;
+const tileZ   = (x: number, y: number) => (x + y) * 200;
+const furniZ  = (x: number, y: number, bonus: number) => (x + y) * 200 + 20 + bonus * 20;
+const avatarZ = (x: number, y: number) => (x + y) * 200 + 180;
 
 const FURNI_Z_BONUS: Record<string, number> = {
   rug: 0, chair: 1, trash: 1, divider: 1, locker: 1,
@@ -77,14 +74,11 @@ const FURNI_Z_BONUS: Record<string, number> = {
   computer: 6, monitor_dual: 6, mug: 7,
 };
 
-// ─── Móveis com sombra projetada isométrica ───────────────────────────────────
-// Tipos altos que projetam sombra no tile adjacente SE (sudeste)
 const CASTS_SHADOW = new Set([
   'bookshelf', 'whiteboard', 'lamp', 'glass_wall', 'cabinet',
   'fridge', 'locker', 'tv_screen', 'monitor_dual',
 ]);
 
-// ─── Cityscape — memoizado ────────────────────────────────────────────────────
 const CityscapeSVG = memo(function CityscapeSVG() {
   return (
     <svg
@@ -159,7 +153,6 @@ const CityscapeSVG = memo(function CityscapeSVG() {
   );
 });
 
-// ─── AVATAR_TRAITS (para fallback SVG) ───────────────────────────────────────
 const AVATAR_TRAITS: Record<string, { hair: string; skin: string; shirt: string; pants: string; hairStyle: number }> = {
   satya:      { hair: '#1A1A2E', skin: '#C68642', shirt: '#0078D4', pants: '#1E293B', hairStyle: 0 },
   uncle_bob:  { hair: '#D4D4D4', skin: '#F5C99A', shirt: '#DC2626', pants: '#1E293B', hairStyle: 1 },
@@ -288,7 +281,6 @@ function HabboAvatarSVGFallback({ id, direction }: { id: string; direction: numb
   );
 }
 
-// ─── HabboAvatar — Imager + idle breathing + fallback ────────────────────────
 function HabboAvatar({ id, direction, isMoving }: { id: string; direction: number; isMoving: boolean }) {
   const [imgFailed, setImgFailed] = useState(false);
   const [idleBob, setIdleBob] = useState(0);
@@ -315,7 +307,6 @@ function HabboAvatar({ id, direction, isMoving }: { id: string; direction: numbe
     display: 'block',
   };
 
-  // ─── Sombra radial no chão (presente em ambos os caminhos) ────────────────
   const groundShadow = (
     <div style={{
       position: 'absolute', bottom: -2, left: '50%', transform: 'translateX(-50%)',
@@ -352,8 +343,6 @@ function HabboAvatar({ id, direction, isMoving }: { id: string; direction: numbe
   );
 }
 
-// ─── Cursor isométrico de destino — losango pulsante ─────────────────────────
-// Injetado uma única vez no <head> via useEffect no RoomView
 const ISO_CURSOR_KEYFRAMES = `
 @keyframes iso-pulse {
   0%   { opacity: 0.85; transform: scaleX(1)   scaleY(1);   }
@@ -367,6 +356,7 @@ const ISO_CURSOR_KEYFRAMES = `
 }
 `;
 
+// FIX C: IsoCursor sem key dinâmico — recebe pos como prop, sem unmount/mount
 function IsoCursor({ pos }: { pos: { x: number; y: number } }) {
   return (
     <div
@@ -380,7 +370,6 @@ function IsoCursor({ pos }: { pos: { x: number; y: number } }) {
         zIndex: 99999,
       }}
     >
-      {/* Losango preenchido pulsante */}
       <div style={{
         position: 'absolute',
         inset: 0,
@@ -388,7 +377,6 @@ function IsoCursor({ pos }: { pos: { x: number; y: number } }) {
         backgroundColor: 'rgba(74,158,255,0.30)',
         animation: 'iso-pulse 1s ease-in-out infinite',
       }} />
-      {/* Borda do losango */}
       <div style={{
         position: 'absolute',
         inset: 1,
@@ -397,7 +385,6 @@ function IsoCursor({ pos }: { pos: { x: number; y: number } }) {
         outline: '2px solid rgba(74,158,255,0.85)',
         outlineOffset: '-2px',
       }} />
-      {/* Anel expansivo — ondulação que some */}
       <div style={{
         position: 'absolute',
         inset: 0,
@@ -418,17 +405,15 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const [dragMoved, setDragMoved] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
 
-  // ─── Hover tile para cursor isométrico ────────────────────────────────────
+  // FIX B: hover só em dispositivos não-touch
   const [hoverTile, setHoverTile] = useState<{ x: number; y: number } | null>(null);
 
-  // ─── Walk animation ───────────────────────────────────────────────────────
   const [movingUsers, setMovingUsers] = useState<Set<string>>(new Set());
   const prevPositions = useRef<Record<string, { x: number; y: number }>>({});
   const walkTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const [windowSize, setWindowSize] = useState({ width: 1024, height: 768 });
 
-  // Injeta keyframes do cursor uma única vez
   useEffect(() => {
     const id = 'iso-cursor-styles';
     if (!document.getElementById(id)) {
@@ -511,7 +496,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const isWall     = (val: number) => [4, 5, 8, 9, 10].includes(val);
   const isFloor    = (v: number)   => [1, 2, 3, 6, 7].includes(v);
 
-  // ─── Render tiles ─────────────────────────────────────────────────────────
   const tiles: React.ReactNode[] = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -579,8 +563,9 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         <div
           key={`tile-${x}-${y}`}
           onMouseUp={() => walkable && handleTileClick(x, y)}
-          onMouseEnter={() => walkable && setHoverTile({ x, y })}
-          onMouseLeave={() => setHoverTile(null)}
+          // FIX B: handlers de hover zerados em touch — evita re-render em cascata no iOS
+          onMouseEnter={IS_TOUCH ? undefined : () => walkable && setHoverTile({ x, y })}
+          onMouseLeave={IS_TOUCH ? undefined : () => setHoverTile(null)}
           className={`absolute ${walkable && !isDragging ? 'cursor-pointer' : ''} group`}
           style={{ left: pos.x - TILE_W / 2, top: pos.y - colors.h, width: TILE_W, height: TILE_H + colors.h, zIndex: baseZ }}
         >
@@ -618,7 +603,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     }
   }
 
-  // ─── Floor edges ──────────────────────────────────────────────────────────
   const floorEdges: React.ReactNode[] = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -653,38 +637,39 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     }
   }
 
-  // ─── Cursor de destino ────────────────────────────────────────────────────
-  const cursorNode = hoverTile && !isDragging
-    ? <IsoCursor key={`cursor-${hoverTile.x}-${hoverTile.y}`} pos={getScreenPos(hoverTile.x, hoverTile.y)} />
-    : null;
+  // FIX C: cursor sem key dinâmico — apenas move via prop, sem unmount/mount por tile
+  const cursorPos = hoverTile && !isDragging ? getScreenPos(hoverTile.x, hoverTile.y) : null;
 
-  // ─── Sombras projetadas de móveis altos ───────────────────────────────────
-  // Projetada no tile adjacente SE — a luz vem do NW no padrão isométrico Habbo
-  const furniShadows: React.ReactNode[] = furniture
-    .filter(f => CASTS_SHADOW.has(f.type) && !isWall(map[f.y]?.[f.x] ?? 0))
-    .map(f => {
-      // Tile sombra = f.x + 1, f.y + 1 (diagonal SE)
-      const sx = f.x + 1;
-      const sy = f.y + 1;
-      if ((map[sy]?.[sx] ?? 0) === 0) return null;
-      const pos = getScreenPos(sx, sy);
-      return (
-        <div
-          key={`shadow-${f.id}`}
-          className="absolute pointer-events-none"
-          style={{
-            left: pos.x - TILE_W / 2,
-            top: pos.y - TILE_H / 2 - 4,
-            width: TILE_W,
-            height: TILE_H + 8,
-            // Gradiente diagonal que simula projeção isométrica NW → SE
-            background: 'linear-gradient(135deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.08) 40%, transparent 70%)',
-            clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-            zIndex: tileZ(sx, sy) + 5,
-          }}
-        />
-      );
-    });
+  // FIX C: furniShadows memoizado — recalcula só quando map ou cameraOffset mudam
+  const furniShadows = useMemo(() => {
+    const isWallFn = (val: number) => [4, 5, 8, 9, 10].includes(val);
+    return furniture
+      .filter(f => CASTS_SHADOW.has(f.type) && !isWallFn(map[f.y]?.[f.x] ?? 0))
+      .map(f => {
+        const sx = f.x + 1;
+        const sy = f.y + 1;
+        if ((map[sy]?.[sx] ?? 0) === 0) return null;
+        const pos = {
+          x: offsetX + (sx - sy) * (TILE_W / 2) + cameraOffset.x,
+          y: offsetY + (sx + sy) * (TILE_H / 2) + cameraOffset.y,
+        };
+        return (
+          <div
+            key={`shadow-${f.id}`}
+            className="absolute pointer-events-none"
+            style={{
+              left: pos.x - TILE_W / 2,
+              top: pos.y - TILE_H / 2 - 4,
+              width: TILE_W,
+              height: TILE_H + 8,
+              background: 'linear-gradient(135deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.08) 40%, transparent 70%)',
+              clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+              zIndex: tileZ(sx, sy) + 5,
+            }}
+          />
+        );
+      });
+  }, [map, cameraOffset, offsetX, offsetY]);
 
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -772,8 +757,8 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
           );
         })}
 
-        {/* Cursor losango — renderizado por cima de tudo */}
-        {cursorNode}
+        {/* FIX C: cursor estável — sem key dinâmico, posição via prop */}
+        {cursorPos && <IsoCursor pos={cursorPos} />}
       </div>
     </div>
   );
