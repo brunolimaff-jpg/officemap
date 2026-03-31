@@ -13,10 +13,8 @@ interface RoomViewProps {
 const TILE_W = 64;
 const TILE_H = 32;
 
-// FIX B: detecta pointer coarse (touch) uma vez para desabilitar hover
 const IS_TOUCH = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
-// ─── Figure codes Habbo Imager por especialista ───────────────────────────────
 const HABBO_FIGURE: Record<string, string> = {
   satya:      'hd-180-2.hr-100-61.ch-210-1341.lg-280-1341.sh-290-1341',
   uncle_bob:  'hd-180-1.hr-3163-8.ch-230-1408.lg-280-1408.sh-290-62',
@@ -79,15 +77,13 @@ const CASTS_SHADOW = new Set([
   'fridge', 'locker', 'tv_screen', 'monitor_dual',
 ]);
 
+// ─── CityscapeSVG — memoizado, nunca re-renderiza ─────────────────────────────
 const CityscapeSVG = memo(function CityscapeSVG() {
   return (
     <svg
-      width="100%"
-      height="100%"
-      viewBox="0 0 1400 320"
-      preserveAspectRatio="xMidYMid slice"
-      fill="none"
-      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 1 }}
+      width="100%" height="100%" viewBox="0 0 1400 320"
+      preserveAspectRatio="xMidYMid slice" fill="none"
+      style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
     >
       <defs>
         <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
@@ -96,16 +92,13 @@ const CityscapeSVG = memo(function CityscapeSVG() {
           <stop offset="100%" stopColor="#D8EEF8" />
         </linearGradient>
         <linearGradient id="buildingFar" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#8AA0B8" />
-          <stop offset="100%" stopColor="#607080" />
+          <stop offset="0%" stopColor="#8AA0B8" /><stop offset="100%" stopColor="#607080" />
         </linearGradient>
         <linearGradient id="buildingMid" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#6A8098" />
-          <stop offset="100%" stopColor="#485868" />
+          <stop offset="0%" stopColor="#6A8098" /><stop offset="100%" stopColor="#485868" />
         </linearGradient>
         <linearGradient id="buildingNear" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#506070" />
-          <stop offset="100%" stopColor="#303E4A" />
+          <stop offset="0%" stopColor="#506070" /><stop offset="100%" stopColor="#303E4A" />
         </linearGradient>
       </defs>
       <rect width="1400" height="320" fill="url(#skyGrad)" />
@@ -114,62 +107,33 @@ const CityscapeSVG = memo(function CityscapeSVG() {
       <ellipse cx="650" cy="45" rx="100" ry="20" fill="white" opacity="0.65" />
       <ellipse cx="700" cy="40" rx="70" ry="15" fill="white" opacity="0.5" />
       <ellipse cx="1100" cy="70" rx="90" ry="16" fill="white" opacity="0.6" />
-      <rect x="0"    y="160" width="60"  height="160" fill="url(#buildingFar)" />
-      <rect x="55"   y="140" width="45"  height="180" fill="url(#buildingFar)" />
-      <rect x="95"   y="170" width="70"  height="150" fill="url(#buildingFar)" />
-      <rect x="200"  y="130" width="55"  height="190" fill="url(#buildingFar)" />
-      <rect x="250"  y="155" width="80"  height="165" fill="url(#buildingFar)" />
-      <rect x="400"  y="120" width="60"  height="200" fill="url(#buildingFar)" />
-      <rect x="455"  y="145" width="45"  height="175" fill="url(#buildingFar)" />
-      <rect x="600"  y="135" width="55"  height="185" fill="url(#buildingFar)" />
-      <rect x="650"  y="110" width="70"  height="210" fill="url(#buildingFar)" />
-      <rect x="800"  y="150" width="60"  height="170" fill="url(#buildingFar)" />
-      <rect x="855"  y="125" width="50"  height="195" fill="url(#buildingFar)" />
-      <rect x="1000" y="140" width="65"  height="180" fill="url(#buildingFar)" />
-      <rect x="1060" y="115" width="55"  height="205" fill="url(#buildingFar)" />
-      <rect x="1200" y="130" width="70"  height="190" fill="url(#buildingFar)" />
-      <rect x="1265" y="155" width="50"  height="165" fill="url(#buildingFar)" />
-      <rect x="1340" y="145" width="60"  height="175" fill="url(#buildingFar)" />
-      {[0,55,95,200,250,400,455,600,650,800,855,1000,1060,1200,1265,1340].map((bx, i) => (
-        <g key={i}>
+      {([0,55,95,200,250,400,455,600,650,800,855,1000,1060,1200,1265,1340] as number[]).map((bx, i) => (
+        <rect key={`bf-${i}`} x={bx} y={[160,140,170,130,155,120,145,135,110,150,125,140,115,130,155,145][i]} width={[60,45,70,55,80,60,45,55,70,60,50,65,55,70,50,60][i]} height={[160,180,150,190,165,200,175,185,210,170,195,180,205,190,165,175][i]} fill="url(#buildingFar)" />
+      ))}
+      {([0,55,95,200,250,400,455,600,650,800,855,1000,1060,1200,1265,1340] as number[]).map((bx, i) => (
+        <g key={`bw-${i}`}>
           <rect x={bx+6}  y={170+(i%3)*12} width={8} height={6} fill="#FCD34D" opacity="0.4" />
           <rect x={bx+18} y={175+(i%2)*14} width={8} height={6} fill="#FCD34D" opacity="0.3" />
           <rect x={bx+6}  y={195+(i%3)*10} width={8} height={6} fill="white" opacity="0.2" />
         </g>
       ))}
-      <rect x="130"  y="175" width="75"  height="145" fill="url(#buildingMid)" />
-      <rect x="330"  y="160" width="80"  height="160" fill="url(#buildingMid)" />
-      <rect x="520"  y="165" width="90"  height="155" fill="url(#buildingMid)" />
-      <rect x="720"  y="158" width="85"  height="162" fill="url(#buildingMid)" />
-      <rect x="920"  y="163" width="80"  height="157" fill="url(#buildingMid)" />
-      <rect x="1120" y="155" width="88"  height="165" fill="url(#buildingMid)" />
-      <rect x="165"  y="190" width="60"  height="130" fill="url(#buildingNear)" />
-      <rect x="370"  y="185" width="65"  height="135" fill="url(#buildingNear)" />
-      <rect x="560"  y="188" width="58"  height="132" fill="url(#buildingNear)" />
-      <rect x="760"  y="182" width="62"  height="138" fill="url(#buildingNear)" />
-      <rect x="960"  y="187" width="60"  height="133" fill="url(#buildingNear)" />
+      <rect x="130" y="175" width="75" height="145" fill="url(#buildingMid)" />
+      <rect x="330" y="160" width="80" height="160" fill="url(#buildingMid)" />
+      <rect x="520" y="165" width="90" height="155" fill="url(#buildingMid)" />
+      <rect x="720" y="158" width="85" height="162" fill="url(#buildingMid)" />
+      <rect x="920" y="163" width="80" height="157" fill="url(#buildingMid)" />
+      <rect x="1120" y="155" width="88" height="165" fill="url(#buildingMid)" />
+      <rect x="165" y="190" width="60" height="130" fill="url(#buildingNear)" />
+      <rect x="370" y="185" width="65" height="135" fill="url(#buildingNear)" />
+      <rect x="560" y="188" width="58" height="132" fill="url(#buildingNear)" />
+      <rect x="760" y="182" width="62" height="138" fill="url(#buildingNear)" />
+      <rect x="960" y="187" width="60" height="133" fill="url(#buildingNear)" />
       <rect x="0" y="316" width="1400" height="4" fill="#304050" opacity="0.4" />
     </svg>
   );
 });
 
-const AVATAR_TRAITS: Record<string, { hair: string; skin: string; shirt: string; pants: string; hairStyle: number }> = {
-  satya:      { hair: '#1A1A2E', skin: '#C68642', shirt: '#0078D4', pants: '#1E293B', hairStyle: 0 },
-  uncle_bob:  { hair: '#D4D4D4', skin: '#F5C99A', shirt: '#DC2626', pants: '#1E293B', hairStyle: 1 },
-  karpathy:   { hair: '#3B2506', skin: '#F5C99A', shirt: '#7C3AED', pants: '#334155', hairStyle: 0 },
-  rogati:     { hair: '#2D1F14', skin: '#DEB887', shirt: '#059669', pants: '#1E293B', hairStyle: 2 },
-  osmani:     { hair: '#1A1A2E', skin: '#C68642', shirt: '#F59E0B', pants: '#334155', hairStyle: 0 },
-  whittaker:  { hair: '#6B3A1F', skin: '#F5C99A', shirt: '#EF4444', pants: '#1E293B', hairStyle: 1 },
-  dixon:      { hair: '#4A3728', skin: '#F5C99A', shirt: '#06B6D4', pants: '#334155', hairStyle: 0 },
-  dodds:      { hair: '#3B2506', skin: '#F5C99A', shirt: '#EC4899', pants: '#1E293B', hairStyle: 0 },
-  rauch:      { hair: '#1A1A2E', skin: '#DEB887', shirt: '#171717', pants: '#0F172A', hairStyle: 0 },
-  rodrigues:  { hair: '#1A1A2E', skin: '#DEB887', shirt: '#16A34A', pants: '#1E293B', hairStyle: 1 },
-  kozyrkov:   { hair: '#6B3A1F', skin: '#F5C99A', shirt: '#8B5CF6', pants: '#334155', hairStyle: 2 },
-  cagan:      { hair: '#8B8B8B', skin: '#F5C99A', shirt: '#F97316', pants: '#1E293B', hairStyle: 1 },
-  grove:      { hair: '#C0C0C0', skin: '#F5C99A', shirt: '#64748B', pants: '#1E293B', hairStyle: 1 },
-  '1':        { hair: '#3B2506', skin: '#DEB887', shirt: '#4A90E2', pants: '#1E293B', hairStyle: 0 },
-};
-
+// ─── shadeColor helper ────────────────────────────────────────────────────────
 function shadeColor(hex: string, amount: number): string {
   try {
     const h = hex.replace('#', '');
@@ -180,6 +144,23 @@ function shadeColor(hex: string, amount: number): string {
     return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
   } catch { return hex; }
 }
+
+const AVATAR_TRAITS: Record<string, { hair: string; skin: string; shirt: string; pants: string; hairStyle: number }> = {
+  satya:     { hair: '#1A1A2E', skin: '#C68642', shirt: '#0078D4', pants: '#1E293B', hairStyle: 0 },
+  uncle_bob: { hair: '#D4D4D4', skin: '#F5C99A', shirt: '#DC2626', pants: '#1E293B', hairStyle: 1 },
+  karpathy:  { hair: '#3B2506', skin: '#F5C99A', shirt: '#7C3AED', pants: '#334155', hairStyle: 0 },
+  rogati:    { hair: '#2D1F14', skin: '#DEB887', shirt: '#059669', pants: '#1E293B', hairStyle: 2 },
+  osmani:    { hair: '#1A1A2E', skin: '#C68642', shirt: '#F59E0B', pants: '#334155', hairStyle: 0 },
+  whittaker: { hair: '#6B3A1F', skin: '#F5C99A', shirt: '#EF4444', pants: '#1E293B', hairStyle: 1 },
+  dixon:     { hair: '#4A3728', skin: '#F5C99A', shirt: '#06B6D4', pants: '#334155', hairStyle: 0 },
+  dodds:     { hair: '#3B2506', skin: '#F5C99A', shirt: '#EC4899', pants: '#1E293B', hairStyle: 0 },
+  rauch:     { hair: '#1A1A2E', skin: '#DEB887', shirt: '#171717', pants: '#0F172A', hairStyle: 0 },
+  rodrigues: { hair: '#1A1A2E', skin: '#DEB887', shirt: '#16A34A', pants: '#1E293B', hairStyle: 1 },
+  kozyrkov:  { hair: '#6B3A1F', skin: '#F5C99A', shirt: '#8B5CF6', pants: '#334155', hairStyle: 2 },
+  cagan:     { hair: '#8B8B8B', skin: '#F5C99A', shirt: '#F97316', pants: '#1E293B', hairStyle: 1 },
+  grove:     { hair: '#C0C0C0', skin: '#F5C99A', shirt: '#64748B', pants: '#1E293B', hairStyle: 1 },
+  '1':       { hair: '#3B2506', skin: '#DEB887', shirt: '#4A90E2', pants: '#1E293B', hairStyle: 0 },
+};
 
 const HABBO_ISO_SPRITES = {
   front: [
@@ -281,17 +262,9 @@ function HabboAvatarSVGFallback({ id, direction }: { id: string; direction: numb
   );
 }
 
-function HabboAvatar({ id, direction, isMoving }: { id: string; direction: number; isMoving: boolean }) {
+// PERF FIX 3: memo() em HabboAvatar — evita re-render nos 13 avatares durante drag
+const HabboAvatar = memo(function HabboAvatar({ id, direction, isMoving }: { id: string; direction: number; isMoving: boolean }) {
   const [imgFailed, setImgFailed] = useState(false);
-  const [idleBob, setIdleBob] = useState(0);
-
-  useEffect(() => {
-    if (isMoving) return;
-    const interval = setInterval(() => setIdleBob(prev => (prev === 0 ? -2 : 0)), 1500);
-    return () => clearInterval(interval);
-  }, [isMoving]);
-
-  useEffect(() => { if (isMoving) setIdleBob(0); }, [isMoving]);
 
   const figure = HABBO_FIGURE[id] ?? HABBO_FIGURE['1'];
   const action = isMoving ? 'wlk' : 'std';
@@ -301,21 +274,19 @@ function HabboAvatar({ id, direction, isMoving }: { id: string; direction: numbe
     `?figure=${figure}&direction=${habboDir}&head_direction=${habboDir}` +
     `&gesture=std&action=${action}&size=b&headonly=0`;
 
-  const bobStyle: React.CSSProperties = {
-    transform: `translateY(${idleBob}px)`,
-    transition: 'transform 0.7s ease-in-out',
-    display: 'block',
-  };
-
+  // PERF FIX 3b: idle bob via CSS animation — elimina 13 setIntervals que forçavam setState
   const groundShadow = (
     <div style={{
       position: 'absolute', bottom: -2, left: '50%', transform: 'translateX(-50%)',
       width: 28, height: 10,
       background: 'radial-gradient(ellipse, rgba(0,0,0,0.38) 0%, transparent 70%)',
-      borderRadius: '100%',
-      pointerEvents: 'none',
+      borderRadius: '100%', pointerEvents: 'none',
     }} />
   );
+
+  const idleStyle: React.CSSProperties = !isMoving ? {
+    animation: 'idleBob 3s ease-in-out infinite',
+  } : {};
 
   if (!imgFailed) {
     return (
@@ -326,7 +297,7 @@ function HabboAvatar({ id, direction, isMoving }: { id: string; direction: numbe
           alt={id}
           width={64}
           height={110}
-          style={{ ...bobStyle, imageRendering: 'pixelated' }}
+          style={{ display: 'block', imageRendering: 'pixelated', ...idleStyle }}
           onError={() => setImgFailed(true)}
         />
       </div>
@@ -334,60 +305,55 @@ function HabboAvatar({ id, direction, isMoving }: { id: string; direction: numbe
   }
 
   return (
-    <div style={{ bobStyle, position: 'relative' } as React.CSSProperties}>
+    <div style={{ position: 'relative' }}>
       {groundShadow}
-      <div style={bobStyle}>
+      <div style={idleStyle}>
         <HabboAvatarSVGFallback id={id} direction={direction} />
       </div>
     </div>
   );
-}
+});
 
 const ISO_CURSOR_KEYFRAMES = `
 @keyframes iso-pulse {
-  0%   { opacity: 0.85; transform: scaleX(1)   scaleY(1);   }
-  50%  { opacity: 0.45; transform: scaleX(1.08) scaleY(1.08); }
-  100% { opacity: 0.85; transform: scaleX(1)   scaleY(1);   }
+  0%,100% { opacity: 0.85; transform: scaleX(1) scaleY(1); }
+  50%     { opacity: 0.45; transform: scaleX(1.08) scaleY(1.08); }
 }
 @keyframes iso-ring {
-  0%   { opacity: 0.6; transform: scaleX(1)    scaleY(1);    }
-  50%  { opacity: 0.1; transform: scaleX(1.3)  scaleY(1.3);  }
-  100% { opacity: 0;   transform: scaleX(1.5)  scaleY(1.5);  }
+  0%   { opacity: 0.6; transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0;   transform: scaleX(1.5) scaleY(1.5); }
+}
+@keyframes idleBob {
+  0%,100% { transform: translateY(0px); }
+  50%     { transform: translateY(-2px); }
 }
 `;
 
-// FIX C: IsoCursor sem key dinâmico — recebe pos como prop, sem unmount/mount
 function IsoCursor({ pos }: { pos: { x: number; y: number } }) {
   return (
-    <div
-      style={{
-        position: 'absolute',
-        left: pos.x - TILE_W / 2,
-        top: pos.y - TILE_H / 2,
-        width: TILE_W,
-        height: TILE_H,
-        pointerEvents: 'none',
-        zIndex: 99999,
-      }}
-    >
+    <div style={{
+      position: 'absolute',
+      left: pos.x - TILE_W / 2,
+      top: pos.y - TILE_H / 2,
+      width: TILE_W, height: TILE_H,
+      pointerEvents: 'none',
+      zIndex: 99999,
+    }}>
       <div style={{
-        position: 'absolute',
-        inset: 0,
+        position: 'absolute', inset: 0,
         clipPath: 'polygon(50% 2px, calc(100% - 2px) 50%, 50% calc(100% - 2px), 2px 50%)',
         backgroundColor: 'rgba(74,158,255,0.30)',
         animation: 'iso-pulse 1s ease-in-out infinite',
       }} />
       <div style={{
-        position: 'absolute',
-        inset: 1,
+        position: 'absolute', inset: 1,
         clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
         backgroundColor: 'transparent',
         outline: '2px solid rgba(74,158,255,0.85)',
         outlineOffset: '-2px',
       }} />
       <div style={{
-        position: 'absolute',
-        inset: 0,
+        position: 'absolute', inset: 0,
         clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
         border: '2px solid rgba(74,158,255,0.6)',
         animation: 'iso-ring 1s ease-out infinite',
@@ -396,51 +362,55 @@ function IsoCursor({ pos }: { pos: { x: number; y: number } }) {
   );
 }
 
+// ─── helpers inline para o useMemo dos tiles ──────────────────────────────────
+const _isWalkable = (v: number) => [1,2,3,6,7].includes(v);
+const _isWall     = (v: number) => [4,5,8,9,10].includes(v);
+const _isFloor    = (v: number) => [1,2,3,6,7].includes(v);
+
 export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
-  const width = map[0].length;
-  const height = map.length;
+  const mapH = map.length;
+  const mapW = map[0].length;
 
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragMoved, setDragMoved] = useState(false);
+  const [isDragging, setIsDragging]     = useState(false);
+  const [dragMoved, setDragMoved]       = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
 
-  // FIX B: hover só em dispositivos não-touch
   const [hoverTile, setHoverTile] = useState<{ x: number; y: number } | null>(null);
 
   const [movingUsers, setMovingUsers] = useState<Set<string>>(new Set());
   const prevPositions = useRef<Record<string, { x: number; y: number }>>({});
-  const walkTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const walkTimers    = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const [windowSize, setWindowSize] = useState({ width: 1024, height: 768 });
 
+  // Injeta keyframes uma única vez
   useEffect(() => {
     const id = 'iso-cursor-styles';
     if (!document.getElementById(id)) {
-      const style = document.createElement('style');
-      style.id = id;
-      style.textContent = ISO_CURSOR_KEYFRAMES;
-      document.head.appendChild(style);
+      const s = document.createElement('style');
+      s.id = id; s.textContent = ISO_CURSOR_KEYFRAMES;
+      document.head.appendChild(s);
     }
   }, []);
 
   useEffect(() => {
     setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const onResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   useEffect(() => {
     users.forEach(u => {
-      const prev = prevPositions.current[u.id];
+      const prev  = prevPositions.current[u.id];
       const moved = prev && (prev.x !== u.x || prev.y !== u.y);
       prevPositions.current[u.id] = { x: u.x, y: u.y };
       if (moved) {
-        setMovingUsers(prev => new Set(prev).add(u.id));
+        setMovingUsers(p => new Set(p).add(u.id));
         if (walkTimers.current[u.id]) clearTimeout(walkTimers.current[u.id]);
         walkTimers.current[u.id] = setTimeout(() => {
-          setMovingUsers(prev => { const n = new Set(prev); n.delete(u.id); return n; });
+          setMovingUsers(p => { const n = new Set(p); n.delete(u.id); return n; });
           delete walkTimers.current[u.id];
         }, 800);
       }
@@ -449,247 +419,285 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   }, [users]);
 
   useEffect(() => {
-    const handleGlobalMouseMove = (e: MouseEvent) => {
+    const onMove = (e: MouseEvent) => {
       if (!isDragging) return;
       setDragMoved(true);
       setCameraOffset({ x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y });
     };
-    const handleGlobalMouseUp = () => setIsDragging(false);
+    const onUp = () => setIsDragging(false);
     if (isDragging) {
-      window.addEventListener('mousemove', handleGlobalMouseMove);
-      window.addEventListener('mouseup', handleGlobalMouseUp);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
     }
-    return () => {
-      window.removeEventListener('mousemove', handleGlobalMouseMove);
-      window.removeEventListener('mouseup', handleGlobalMouseUp);
-    };
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
   }, [isDragging]);
 
-  const offsetX = windowSize.width / 2;
-  const offsetY = windowSize.height / 2 - (height * TILE_H) / 2;
+  const offsetX = windowSize.width  / 2;
+  const offsetY = windowSize.height / 2 - (mapH * TILE_H) / 2;
 
+  // getScreenPos permanece useCallback — usado pelos avatares em cada render
   const getScreenPos = useCallback((x: number, y: number) => ({
     x: offsetX + (x - y) * (TILE_W / 2) + cameraOffset.x,
     y: offsetY + (x + y) * (TILE_H / 2) + cameraOffset.y,
   }), [offsetX, offsetY, cameraOffset]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragMoved(false);
-    dragStart.current = { x: e.clientX - cameraOffset.x, y: e.clientY - cameraOffset.y };
-  };
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setIsDragging(true);
-    setDragMoved(false);
-    dragStart.current = { x: e.touches[0].clientX - cameraOffset.x, y: e.touches[0].clientY - cameraOffset.y };
-  };
-  const handleTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault();
-    if (!isDragging) return;
-    setDragMoved(true);
-    setCameraOffset({ x: e.touches[0].clientX - dragStart.current.x, y: e.touches[0].clientY - dragStart.current.y });
-  };
-  const handleTouchEnd = () => setIsDragging(false);
-  const handleTileClick = (x: number, y: number) => { if (!dragMoved) onTileClick(x, y); };
+  // ─── PERF FIX 1: tiles memoizados ────────────────────────────────────────────
+  // Recalcula APENAS quando map, cameraOffset ou windowSize mudam.
+  // hoverTile e isDragging NÃO estão nas deps — tile hover é tratado separado.
+  const tiles = useMemo(() => {
+    const result: React.ReactNode[] = [];
+    for (let y = 0; y < mapH; y++) {
+      for (let x = 0; x < mapW; x++) {
+        const val = map[y][x];
+        if (val === 0) continue;
+        const colors = getTileColors(val, x, y);
+        if (!colors) continue;
+        const px = offsetX + (x - y) * (TILE_W / 2) + cameraOffset.x;
+        const py = offsetY + (x + y) * (TILE_H / 2) + cameraOffset.y;
+        const walkable = _isWalkable(val);
+        const wall     = _isWall(val);
+        const baseZ    = tileZ(x, y);
 
-  const isWalkable = (val: number) => [1, 2, 3, 6, 7].includes(val);
-  const isWall     = (val: number) => [4, 5, 8, 9, 10].includes(val);
-  const isFloor    = (v: number)   => [1, 2, 3, 6, 7].includes(v);
+        if (wall && val >= 8) {
+          const isWindow   = val === 9;
+          const hasWallUp  = [8,9,10].includes(map[y-1]?.[x] ?? 0);
+          const hasWallDn  = [8,9,10].includes(map[y+1]?.[x] ?? 0);
+          result.push(
+            <div key={`t-${x}-${y}`} className="absolute pointer-events-none" style={{
+              left: px - TILE_W/2, top: py - colors.h,
+              width: TILE_W, height: TILE_H + colors.h, zIndex: baseZ - 1,
+            }}>
+              <div className="absolute w-full h-[32px] top-0 left-0" style={{
+                clipPath: 'polygon(50% 0%,100% 50%,50% 100%,0% 50%)',
+                backgroundColor: colors.top,
+              }} />
+              {!hasWallUp && (
+                <div className="absolute w-[32px] left-0" style={{
+                  height: colors.h+16, top: 16,
+                  clipPath: 'polygon(0% 0%,100% 16px,100% 100%,0% calc(100% - 16px))',
+                  backgroundColor: colors.left,
+                }}>
+                  {isWindow && (<>
+                    <div style={{ position:'absolute',left:2,top:'12%',width:12,height:colors.h*0.35,backgroundColor:'#334155',borderRadius:1,opacity:0.6 }} />
+                    <div style={{ position:'absolute',left:2,top:'55%',width:12,height:colors.h*0.32,backgroundColor:'#334155',borderRadius:1,opacity:0.6 }} />
+                    <div style={{ position:'absolute',left:3,top:'13%',width:10,height:colors.h*0.33,background:'linear-gradient(135deg,#BFDBFE,#93C5FD)',borderRadius:1,opacity:0.6 }} />
+                    <div style={{ position:'absolute',left:3,top:'56%',width:10,height:colors.h*0.3,background:'linear-gradient(135deg,#BFDBFE,#93C5FD)',borderRadius:1,opacity:0.5 }} />
+                    <div style={{ position:'absolute',left:4,top:'14%',width:3,height:colors.h*0.08,backgroundColor:'white',borderRadius:1,opacity:0.5 }} />
+                  </>)}
+                  <div style={{ position:'absolute',bottom:0,left:0,width:'100%',height:6,backgroundColor:'rgba(0,0,0,0.2)' }} />
+                </div>
+              )}
+              {!hasWallDn && (
+                <div className="absolute w-[32px] left-[32px]" style={{
+                  height: colors.h+16, top: 16,
+                  clipPath: 'polygon(0% 16px,100% 0%,100% calc(100% - 16px),0% 100%)',
+                  backgroundColor: colors.right,
+                }}>
+                  {isWindow && (<>
+                    <div style={{ position:'absolute',right:2,top:'12%',width:12,height:colors.h*0.35,backgroundColor:'#334155',borderRadius:1,opacity:0.5 }} />
+                    <div style={{ position:'absolute',right:2,top:'55%',width:12,height:colors.h*0.32,backgroundColor:'#334155',borderRadius:1,opacity:0.5 }} />
+                    <div style={{ position:'absolute',right:3,top:'13%',width:10,height:colors.h*0.33,background:'linear-gradient(135deg,#93C5FD,#60A5FA)',borderRadius:1,opacity:0.5 }} />
+                    <div style={{ position:'absolute',right:3,top:'56%',width:10,height:colors.h*0.3,background:'linear-gradient(135deg,#93C5FD,#60A5FA)',borderRadius:1,opacity:0.4 }} />
+                  </>)}
+                  <div style={{ position:'absolute',bottom:0,right:0,width:'100%',height:6,backgroundColor:'rgba(0,0,0,0.15)' }} />
+                </div>
+              )}
+              <div className="absolute w-full" style={{ bottom:0,height:8,background:'linear-gradient(to bottom,transparent,rgba(0,0,0,0.22))',pointerEvents:'none' }} />
+            </div>
+          );
+          continue;
+        }
 
-  const tiles: React.ReactNode[] = [];
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const val = map[y][x];
-      if (val === 0) continue;
-      const colors = getTileColors(val, x, y);
-      if (!colors) continue;
-      const pos = getScreenPos(x, y);
-      const walkable = isWalkable(val);
-      const wall = isWall(val);
-      const baseZ = tileZ(x, y);
-
-      if (wall && val >= 8) {
-        const isWindow = val === 9;
-        const hasWallUp   = [8,9,10].includes(map[y-1]?.[x] ?? 0);
-        const hasWallDown = [8,9,10].includes(map[y+1]?.[x] ?? 0);
-        tiles.push(
-          <div key={`tile-${x}-${y}`} className="absolute pointer-events-none" style={{
-            left: pos.x - TILE_W / 2, top: pos.y - colors.h,
-            width: TILE_W, height: TILE_H + colors.h,
-            zIndex: baseZ - 1,
-          }}>
-            <div className="absolute w-full h-[32px] top-0 left-0" style={{
-              clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-              backgroundColor: colors.top,
-            }} />
-            {!hasWallUp && (
-              <div className="absolute w-[32px] left-0" style={{
-                height: colors.h + 16, top: 16,
-                clipPath: 'polygon(0% 0%, 100% 16px, 100% 100%, 0% calc(100% - 16px))',
-                backgroundColor: colors.left, position: 'absolute',
-              }}>
-                {isWindow && (<>
-                  <div style={{ position:'absolute', left:2, top:'12%', width:12, height:colors.h*0.35, backgroundColor:'#334155', borderRadius:1, opacity:0.6 }} />
-                  <div style={{ position:'absolute', left:2, top:'55%', width:12, height:colors.h*0.32, backgroundColor:'#334155', borderRadius:1, opacity:0.6 }} />
-                  <div style={{ position:'absolute', left:3, top:'13%', width:10, height:colors.h*0.33, background:'linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%)', borderRadius:1, opacity:0.6 }} />
-                  <div style={{ position:'absolute', left:3, top:'56%', width:10, height:colors.h*0.3, background:'linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%)', borderRadius:1, opacity:0.5 }} />
-                  <div style={{ position:'absolute', left:4, top:'14%', width:3, height:colors.h*0.08, backgroundColor:'white', borderRadius:1, opacity:0.5 }} />
-                </>)}
-                <div style={{ position:'absolute', bottom:0, left:0, width:'100%', height:6, backgroundColor:'rgba(0,0,0,0.2)' }} />
-              </div>
-            )}
-            {!hasWallDown && (
-              <div className="absolute w-[32px] left-[32px]" style={{
-                height: colors.h + 16, top: 16,
-                clipPath: 'polygon(0% 16px, 100% 0%, 100% calc(100% - 16px), 0% 100%)',
-                backgroundColor: colors.right,
-              }}>
-                {isWindow && (<>
-                  <div style={{ position:'absolute', right:2, top:'12%', width:12, height:colors.h*0.35, backgroundColor:'#334155', borderRadius:1, opacity:0.5 }} />
-                  <div style={{ position:'absolute', right:2, top:'55%', width:12, height:colors.h*0.32, backgroundColor:'#334155', borderRadius:1, opacity:0.5 }} />
-                  <div style={{ position:'absolute', right:3, top:'13%', width:10, height:colors.h*0.33, background:'linear-gradient(135deg, #93C5FD 0%, #60A5FA 100%)', borderRadius:1, opacity:0.5 }} />
-                  <div style={{ position:'absolute', right:3, top:'56%', width:10, height:colors.h*0.3, background:'linear-gradient(135deg, #93C5FD 0%, #60A5FA 100%)', borderRadius:1, opacity:0.4 }} />
-                </>)}
-                <div style={{ position:'absolute', bottom:0, right:0, width:'100%', height:6, backgroundColor:'rgba(0,0,0,0.15)' }} />
-              </div>
-            )}
-            <div className="absolute w-full" style={{ bottom:0, height:8, background:'linear-gradient(to bottom, transparent, rgba(0,0,0,0.22))', pointerEvents:'none' }} />
-          </div>
-        );
-        continue;
-      }
-
-      tiles.push(
-        <div
-          key={`tile-${x}-${y}`}
-          onMouseUp={() => walkable && handleTileClick(x, y)}
-          // FIX B: handlers de hover zerados em touch — evita re-render em cascata no iOS
-          onMouseEnter={IS_TOUCH ? undefined : () => walkable && setHoverTile({ x, y })}
-          onMouseLeave={IS_TOUCH ? undefined : () => setHoverTile(null)}
-          className={`absolute ${walkable && !isDragging ? 'cursor-pointer' : ''} group`}
-          style={{ left: pos.x - TILE_W / 2, top: pos.y - colors.h, width: TILE_W, height: TILE_H + colors.h, zIndex: baseZ }}
-        >
-          <div className="absolute w-full h-[32px] top-0 left-0" style={{
-            clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-            backgroundColor: colors.top,
-          }}>
-            <div className="absolute inset-0" style={{
-              clipPath: 'polygon(50% 0%, 75% 25%, 50% 50%, 25% 25%)',
-              backgroundColor: colors.accent,
-            }} />
-          </div>
-          {colors.h > 0 && (
-            <div className="absolute w-[32px] left-0" style={{
-              height: colors.h + 16, top: 16,
-              clipPath: 'polygon(0% 0%, 100% 16px, 100% 100%, 0% calc(100% - 16px))',
-              backgroundColor: colors.left,
-            }} />
-          )}
-          {colors.h > 0 && (
-            <div className="absolute w-[32px] left-[32px]" style={{
-              height: colors.h + 16, top: 16,
-              clipPath: 'polygon(0% 16px, 100% 0%, 100% calc(100% - 16px), 0% 100%)',
-              backgroundColor: colors.right,
-            }} />
-          )}
-          {val === 3 && (
-            <div className="absolute inset-0" style={{
-              background: 'radial-gradient(ellipse at 50% 50%, rgba(100,180,255,0.06) 0%, rgba(0,0,50,0.12) 100%)',
-              clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-            }} />
-          )}
-        </div>
-      );
-    }
-  }
-
-  const floorEdges: React.ReactNode[] = [];
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const val = map[y][x];
-      if (!isFloor(val)) continue;
-      const pos = getScreenPos(x, y);
-      const z = tileZ(x, y) + 10;
-      const rightVal = map[y]?.[x+1] ?? 0;
-      if (!isFloor(rightVal) && rightVal !== 4 && rightVal !== 5) {
-        floorEdges.push(
-          <div key={`edge-r-${x}-${y}`} className="absolute pointer-events-none" style={{
-            left: pos.x + TILE_W/4 - 1, top: pos.y - TILE_H/4,
-            width: 3, height: TILE_H/2 + 10,
-            backgroundColor: '#0F172A',
-            transform: 'skewY(26.57deg)',
-            zIndex: z,
-          }} />
-        );
-      }
-      const bottomVal = map[y+1]?.[x] ?? 0;
-      if (!isFloor(bottomVal) && bottomVal !== 4 && bottomVal !== 5) {
-        floorEdges.push(
-          <div key={`edge-b-${x}-${y}`} className="absolute pointer-events-none" style={{
-            left: pos.x - TILE_W/4 - 1, top: pos.y - TILE_H/4,
-            width: 3, height: TILE_H/2 + 10,
-            backgroundColor: '#1E293B',
-            transform: 'skewY(-26.57deg)',
-            zIndex: z,
-          }} />
-        );
-      }
-    }
-  }
-
-  // FIX C: cursor sem key dinâmico — apenas move via prop, sem unmount/mount por tile
-  const cursorPos = hoverTile && !isDragging ? getScreenPos(hoverTile.x, hoverTile.y) : null;
-
-  // FIX C: furniShadows memoizado — recalcula só quando map ou cameraOffset mudam
-  const furniShadows = useMemo(() => {
-    const isWallFn = (val: number) => [4, 5, 8, 9, 10].includes(val);
-    return furniture
-      .filter(f => CASTS_SHADOW.has(f.type) && !isWallFn(map[f.y]?.[f.x] ?? 0))
-      .map(f => {
-        const sx = f.x + 1;
-        const sy = f.y + 1;
-        if ((map[sy]?.[sx] ?? 0) === 0) return null;
-        const pos = {
-          x: offsetX + (sx - sy) * (TILE_W / 2) + cameraOffset.x,
-          y: offsetY + (sx + sy) * (TILE_H / 2) + cameraOffset.y,
-        };
-        return (
+        result.push(
           <div
-            key={`shadow-${f.id}`}
-            className="absolute pointer-events-none"
-            style={{
-              left: pos.x - TILE_W / 2,
-              top: pos.y - TILE_H / 2 - 4,
-              width: TILE_W,
-              height: TILE_H + 8,
-              background: 'linear-gradient(135deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.08) 40%, transparent 70%)',
-              clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-              zIndex: tileZ(sx, sy) + 5,
-            }}
-          />
+            key={`t-${x}-${y}`}
+            data-tx={x} data-ty={y} data-walkable={walkable ? '1' : ''}
+            className={`absolute ${walkable ? 'cursor-pointer' : ''} group`}
+            style={{ left: px - TILE_W/2, top: py - colors.h, width: TILE_W, height: TILE_H + colors.h, zIndex: baseZ }}
+          >
+            <div className="absolute w-full h-[32px] top-0 left-0" style={{
+              clipPath: 'polygon(50% 0%,100% 50%,50% 100%,0% 50%)',
+              backgroundColor: colors.top,
+            }}>
+              <div className="absolute inset-0" style={{
+                clipPath: 'polygon(50% 0%,75% 25%,50% 50%,25% 25%)',
+                backgroundColor: colors.accent,
+              }} />
+            </div>
+            {colors.h > 0 && (
+              <div className="absolute w-[32px] left-0" style={{
+                height: colors.h+16, top: 16,
+                clipPath: 'polygon(0% 0%,100% 16px,100% 100%,0% calc(100% - 16px))',
+                backgroundColor: colors.left,
+              }} />
+            )}
+            {colors.h > 0 && (
+              <div className="absolute w-[32px] left-[32px]" style={{
+                height: colors.h+16, top: 16,
+                clipPath: 'polygon(0% 16px,100% 0%,100% calc(100% - 16px),0% 100%)',
+                backgroundColor: colors.right,
+              }} />
+            )}
+            {val === 3 && (
+              <div className="absolute inset-0" style={{
+                background: 'radial-gradient(ellipse at 50% 50%,rgba(100,180,255,0.06) 0%,rgba(0,0,50,0.12) 100%)',
+                clipPath: 'polygon(50% 0%,100% 50%,50% 100%,0% 50%)',
+              }} />
+            )}
+          </div>
+        );
+      }
+    }
+    return result;
+  }, [map, cameraOffset, offsetX, offsetY, mapH, mapW]);
+
+  // ─── PERF FIX 1b: floorEdges memoizados ──────────────────────────────────────
+  const floorEdges = useMemo(() => {
+    const result: React.ReactNode[] = [];
+    for (let y = 0; y < mapH; y++) {
+      for (let x = 0; x < mapW; x++) {
+        const val = map[y][x];
+        if (!_isFloor(val)) continue;
+        const px = offsetX + (x - y) * (TILE_W/2) + cameraOffset.x;
+        const py = offsetY + (x + y) * (TILE_H/2) + cameraOffset.y;
+        const z  = tileZ(x, y) + 10;
+        const rv = map[y]?.[x+1] ?? 0;
+        if (!_isFloor(rv) && rv !== 4 && rv !== 5) {
+          result.push(<div key={`er-${x}-${y}`} className="absolute pointer-events-none" style={{
+            left: px + TILE_W/4 - 1, top: py - TILE_H/4,
+            width: 3, height: TILE_H/2 + 10,
+            backgroundColor: '#0F172A', transform: 'skewY(26.57deg)', zIndex: z,
+          }} />);
+        }
+        const bv = map[y+1]?.[x] ?? 0;
+        if (!_isFloor(bv) && bv !== 4 && bv !== 5) {
+          result.push(<div key={`eb-${x}-${y}`} className="absolute pointer-events-none" style={{
+            left: px - TILE_W/4 - 1, top: py - TILE_H/4,
+            width: 3, height: TILE_H/2 + 10,
+            backgroundColor: '#1E293B', transform: 'skewY(-26.57deg)', zIndex: z,
+          }} />);
+        }
+      }
+    }
+    return result;
+  }, [map, cameraOffset, offsetX, offsetY, mapH, mapW]);
+
+  // ─── PERF FIX 2: furniNodes memoizados ───────────────────────────────────────
+  const furniNodes = useMemo(() => {
+    return furniture.map((f: Furniture) => {
+      if (_isWall(map[f.y]?.[f.x] ?? 0)) return null;
+      const px = offsetX + (f.x - f.y) * (TILE_W/2) + cameraOffset.x;
+      const py = offsetY + (f.x + f.y) * (TILE_H/2) + cameraOffset.y;
+      const bonus = FURNI_Z_BONUS[f.type] ?? 2;
+      return (
+        <FurniSprite
+          key={f.id}
+          type={f.type}
+          pos={{ x: px, y: py }}
+          color={f.color}
+          direction={f.direction}
+          tileX={f.x}
+          tileY={f.y}
+          zBonus={bonus}
+          label={f.label}
+        />
+      );
+    });
+  }, [map, cameraOffset, offsetX, offsetY]);
+
+  // ─── PERF FIX 2b: furniShadows memoizados ────────────────────────────────────
+  const furniShadows = useMemo(() => {
+    return furniture
+      .filter(f => CASTS_SHADOW.has(f.type) && !_isWall(map[f.y]?.[f.x] ?? 0))
+      .map(f => {
+        const sx = f.x + 1, sy = f.y + 1;
+        if ((map[sy]?.[sx] ?? 0) === 0) return null;
+        const px = offsetX + (sx - sy) * (TILE_W/2) + cameraOffset.x;
+        const py = offsetY + (sx + sy) * (TILE_H/2) + cameraOffset.y;
+        return (
+          <div key={`sh-${f.id}`} className="absolute pointer-events-none" style={{
+            left: px - TILE_W/2, top: py - TILE_H/2 - 4,
+            width: TILE_W, height: TILE_H + 8,
+            background: 'linear-gradient(135deg,rgba(0,0,0,0.22) 0%,rgba(0,0,0,0.08) 40%,transparent 70%)',
+            clipPath: 'polygon(50% 0%,100% 50%,50% 100%,0% 50%)',
+            zIndex: tileZ(sx, sy) + 5,
+          }} />
         );
       });
   }, [map, cameraOffset, offsetX, offsetY]);
 
+  // ─── Event handlers ───────────────────────────────────────────────────────────
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    setIsDragging(true); setDragMoved(false);
+    dragStart.current = { x: e.clientX - cameraOffset.x, y: e.clientY - cameraOffset.y };
+  }, [cameraOffset]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    setIsDragging(true); setDragMoved(false);
+    dragStart.current = { x: e.touches[0].clientX - cameraOffset.x, y: e.touches[0].clientY - cameraOffset.y };
+  }, [cameraOffset]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    if (!isDragging) return;
+    setDragMoved(true);
+    setCameraOffset({ x: e.touches[0].clientX - dragStart.current.x, y: e.touches[0].clientY - dragStart.current.y });
+  }, [isDragging]);
+
+  const handleTouchEnd = useCallback(() => setIsDragging(false), []);
+
+  // ─── Hover via event delegation — não depende de re-render de tiles ───────────
+  // PERF FIX: ao invés de onMouseEnter em cada tile, um único handler no container
+  const handleContainerMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (IS_TOUCH || isDragging) return;
+    const el = (e.target as HTMLElement).closest('[data-tx]') as HTMLElement | null;
+    if (!el) { setHoverTile(null); return; }
+    const tx = Number(el.dataset.tx);
+    const ty = Number(el.dataset.ty);
+    const walkable = el.dataset.walkable === '1';
+    if (walkable) setHoverTile(prev => prev?.x === tx && prev?.y === ty ? prev : { x: tx, y: ty });
+    else setHoverTile(null);
+  }, [isDragging]);
+
+  const handleContainerMouseLeave = useCallback(() => setHoverTile(null), []);
+
+  const handleContainerMouseUp = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (dragMoved) return;
+    const el = (e.target as HTMLElement).closest('[data-tx]') as HTMLElement | null;
+    if (!el) return;
+    const tx = Number(el.dataset.tx);
+    const ty = Number(el.dataset.ty);
+    if (el.dataset.walkable === '1') onTileClick(tx, ty);
+  }, [dragMoved, onTileClick]);
+
+  const cursorPos = hoverTile && !isDragging ? getScreenPos(hoverTile.x, hoverTile.y) : null;
+
   return (
     <div className="absolute inset-0 overflow-hidden">
+      {/* Banner topo */}
       <div className="absolute top-0 left-0 right-0 z-[99999] flex items-center justify-center pointer-events-none" style={{ height: 32 }}>
         <div className="px-4 py-1 font-pixel text-[9px] text-white tracking-wider" style={{
-          background: 'linear-gradient(180deg, rgba(10,20,40,0.92) 0%, rgba(5,15,35,0.88) 100%)',
-          border: '1px solid rgba(74,158,255,0.4)',
-          borderTop: 'none',
-          borderRadius: '0 0 6px 6px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+          background: 'linear-gradient(180deg,rgba(10,20,40,0.92),rgba(5,15,35,0.88))',
+          border: '1px solid rgba(74,158,255,0.4)', borderTop: 'none',
+          borderRadius: '0 0 6px 6px', boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
           textShadow: '0 1px 2px rgba(0,0,0,0.9)',
-        }}>
-          🏢 BOARD ROOM — Senior Scout 360
-        </div>
+        }}>🏢 BOARD ROOM — Senior Scout 360</div>
       </div>
 
+      {/* Container principal de drag */}
+      {/* PERF FIX 4+5: will-change + translateZ promove layer GPU durante drag */}
       <div
         className={`absolute inset-0 overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-        style={{ backgroundColor: '#87CEEB', touchAction: 'none' }}
+        style={{
+          backgroundColor: '#87CEEB',
+          touchAction: 'none',
+          willChange: isDragging ? 'transform' : 'auto',
+          transform: 'translateZ(0)',
+        }}
         onMouseDown={handleMouseDown}
+        onMouseMove={handleContainerMouseMove}
+        onMouseLeave={handleContainerMouseLeave}
+        onMouseUp={handleContainerMouseUp}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -698,31 +706,13 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
 
         <div className="absolute w-full pointer-events-none" style={{
           bottom: 0, height: '38%',
-          background: 'linear-gradient(to bottom, transparent 0%, rgba(20,30,50,0.55) 100%)',
+          background: 'linear-gradient(to bottom,transparent 0%,rgba(20,30,50,0.55) 100%)',
         }} />
 
         {tiles}
         {floorEdges}
         {furniShadows}
-
-        {furniture.map((f: Furniture) => {
-          if (isWall(map[f.y]?.[f.x] ?? 0)) return null;
-          const pos = getScreenPos(f.x, f.y);
-          const bonus = FURNI_Z_BONUS[f.type] ?? 2;
-          return (
-            <FurniSprite
-              key={f.id}
-              type={f.type}
-              pos={pos}
-              color={f.color}
-              direction={f.direction}
-              tileX={f.x}
-              tileY={f.y}
-              zBonus={bonus}
-              label={f.label}
-            />
-          );
-        })}
+        {furniNodes}
 
         {users.map(user => {
           const pos = getScreenPos(user.x, user.y);
@@ -732,32 +722,23 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
               key={user.id}
               className="absolute flex flex-col items-center pointer-events-none"
               style={{
-                left: pos.x,
-                top: pos.y - 8,
+                left: pos.x, top: pos.y - 8,
                 transform: 'translate(-50%, -100%)',
                 zIndex: avatarZ(user.x, user.y),
                 transition: 'left 0.3s ease-out, top 0.3s ease-out',
               }}
             >
-              <div
-                className="mb-0.5 px-1.5 py-px font-pixel text-[8px] font-bold text-white whitespace-nowrap"
-                style={{
-                  background: 'linear-gradient(180deg, #1a4a8a 0%, #0e2d5e 100%)',
-                  border: '1px solid #4a9eff',
-                  borderRadius: '2px',
-                  boxShadow: '0 1px 0 #07193a',
-                  letterSpacing: '0.03em',
-                  textShadow: '0 1px 1px rgba(0,0,0,0.9)',
-                }}
-              >
-                {user.name}
-              </div>
+              <div className="mb-0.5 px-1.5 py-px font-pixel text-[8px] font-bold text-white whitespace-nowrap" style={{
+                background: 'linear-gradient(180deg,#1a4a8a,#0e2d5e)',
+                border: '1px solid #4a9eff', borderRadius: '2px',
+                boxShadow: '0 1px 0 #07193a', letterSpacing: '0.03em',
+                textShadow: '0 1px 1px rgba(0,0,0,0.9)',
+              }}>{user.name}</div>
               <HabboAvatar id={user.id} direction={user.direction} isMoving={isMoving} />
             </div>
           );
         })}
 
-        {/* FIX C: cursor estável — sem key dinâmico, posição via prop */}
         {cursorPos && <IsoCursor pos={cursorPos} />}
       </div>
     </div>
