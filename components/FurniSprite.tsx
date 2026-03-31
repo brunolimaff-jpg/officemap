@@ -29,7 +29,6 @@ const SIZE: Record<string, { w: number; h: number }> = {
   coffee_table:   { w: 64,  h: 40  },
   cabinet:        { w: 40,  h: 72  },
   mug:            { w: 20,  h: 24  },
-  // Novos tipos
   glass_wall:     { w: 64,  h: 96  },
   sign:           { w: 72,  h: 56  },
   monitor_dual:   { w: 64,  h: 56  },
@@ -347,49 +346,32 @@ function MugSVG({ color = '#F59E0B' }: { color: string }) {
 
 // ─── NOVOS SVGs ───────────────────────────────────────────────────────────────
 
-// Parede de vidro — painéis translúcidos azulados com moldura metálica
 function GlassWallSVG({ flip }: { flip: boolean }) {
   return (
     <svg width="64" height="96" viewBox="0 0 64 96" fill="none" style={{ transform: flip ? 'scaleX(-1)' : undefined, imageRendering: 'pixelated' }}>
-      {/* Moldura lateral esquerda */}
       <polygon points="2,48 8,50 8,90 2,88" fill="#334155" />
-      {/* Moldura lateral direita */}
       <polygon points="62,36 56,38 56,78 62,76" fill="#1E293B" />
-      {/* Moldura topo */}
       <polygon points="2,48 32,32 62,36 32,52" fill="#475569" />
-      {/* Painel de vidro — face frontal esquerda */}
       <polygon points="8,52 32,40 32,80 8,90" fill="#BFDBFE" fillOpacity="0.22" stroke="#93C5FD" strokeWidth="0.5" />
-      {/* Painel de vidro — face frontal direita */}
       <polygon points="56,40 32,40 32,80 56,78" fill="#BFDBFE" fillOpacity="0.14" stroke="#93C5FD" strokeWidth="0.5" />
-      {/* Reflexo diagonal no painel esquerdo */}
       <line x1="12" y1="54" x2="28" y2="46" stroke="white" strokeWidth="1.5" strokeOpacity="0.18" />
       <line x1="12" y1="62" x2="22" y2="57" stroke="white" strokeWidth="1" strokeOpacity="0.12" />
-      {/* Reflexo no painel direito */}
       <line x1="38" y1="44" x2="50" y2="48" stroke="white" strokeWidth="1.5" strokeOpacity="0.12" />
-      {/* Trilho inferior */}
       <polygon points="2,88 32,76 62,76 32,88" fill="#475569" />
-      {/* Sombra */}
       <ellipse cx="32" cy="93" rx="18" ry="3" fill="black" fillOpacity="0.12" />
     </svg>
   );
 }
 
-// Placa/Sign — letreiro estilo Habbo Corp com texto
 function SignSVG({ label = 'SCOUT 360' }: { label: string }) {
   return (
     <svg width="72" height="56" viewBox="0 0 72 56" fill="none" style={{ imageRendering: 'pixelated' }}>
-      {/* Suporte */}
       <line x1="20" y1="46" x2="18" y2="54" stroke="#1E293B" strokeWidth="2.5" strokeLinecap="round" />
       <line x1="52" y1="38" x2="52" y2="46" stroke="#1E293B" strokeWidth="2.5" strokeLinecap="round" />
-      {/* Face lateral esquerda */}
       <polygon points="2,28 36,44 36,52 2,36" fill="#1D4ED8" />
-      {/* Face lateral direita */}
       <polygon points="70,20 36,36 36,44 70,28" fill="#1E40AF" />
-      {/* Face frontal */}
       <polygon points="36,12 70,20 36,36 2,28" fill="#2563EB" />
-      {/* Faixa de destaque no topo */}
       <polygon points="36,12 70,20 70,22 36,14" fill="#60A5FA" fillOpacity="0.4" />
-      {/* Texto em SVG — estilo pixel */}
       <text
         x="36" y="28"
         textAnchor="middle"
@@ -402,22 +384,18 @@ function SignSVG({ label = 'SCOUT 360' }: { label: string }) {
         opacity="0.95"
         transform="skewX(-8) translate(0, -2)"
       >{label}</text>
-      {/* Brilho */}
       <polygon points="36,12 52,16 46,20 30,16" fill="white" fillOpacity="0.1" />
       <ellipse cx="36" cy="54" rx="16" ry="3" fill="black" fillOpacity="0.15" />
     </svg>
   );
 }
 
-// Monitor duplo — dois monitores na mesma estação
 function MonitorDualSVG({ flip }: { flip: boolean }) {
   return (
     <svg width="64" height="56" viewBox="0 0 64 56" fill="none" style={{ transform: flip ? 'scaleX(-1)' : undefined, imageRendering: 'pixelated' }}>
-      {/* Monitor esquerdo — corpo */}
       <polygon points="2,24 18,30 18,42 2,36" fill="#1E293B" />
       <polygon points="32,18 18,24 18,36 32,30" fill="#0F172A" />
       <polygon points="18,12 32,18 18,24 2,18" fill="#334155" />
-      {/* Tela esquerda — verde (dados/terminal) */}
       <polygon points="4,22 16,27 16,38 4,33" fill="#052E16" opacity="0.95" />
       <polygon points="30,18 16,23 16,34 30,29" fill="#14532D" opacity="0.95" />
       <polygon points="18,13 30,18 16,23 4,18" fill="#16A34A" opacity="0.9" />
@@ -425,20 +403,16 @@ function MonitorDualSVG({ flip }: { flip: boolean }) {
       <line x1="6" y1="27" x2="12" y2="29" stroke="#4ADE80" strokeWidth="0.8" opacity="0.5" />
       <line x1="6" y1="30" x2="14" y2="33" stroke="#4ADE80" strokeWidth="0.8" opacity="0.6" />
       <line x1="6" y1="33" x2="10" y2="34" stroke="#4ADE80" strokeWidth="0.8" opacity="0.4" />
-      {/* Monitor direito — corpo */}
       <polygon points="32,18 48,24 48,36 32,30" fill="#1E293B" />
       <polygon points="62,12 48,18 48,30 62,24" fill="#0F172A" />
       <polygon points="48,6 62,12 48,18 32,12" fill="#334155" />
-      {/* Tela direita — azul (dashboard) */}
       <polygon points="34,18 46,23 46,33 34,28" fill="#0C1A3A" opacity="0.95" />
       <polygon points="60,13 46,18 46,28 60,23" fill="#0F2051" opacity="0.95" />
       <polygon points="48,8 60,13 46,18 34,13" fill="#1D4ED8" opacity="0.9" />
       <polygon points="48,8 56,11 52,14 44,11" fill="white" fillOpacity="0.1" />
-      {/* Barras de gráfico */}
       <rect x="36" y="26" width="2" height="5" fill="#3B82F6" opacity="0.9" transform="skewY(-14)" />
       <rect x="40" y="24" width="2" height="7" fill="#60A5FA" opacity="0.8" transform="skewY(-14)" />
       <rect x="44" y="25" width="2" height="6" fill="#93C5FD" opacity="0.7" transform="skewY(-14)" />
-      {/* Haste e base */}
       <line x1="32" y1="42" x2="32" y2="48" stroke="#334155" strokeWidth="2.5" />
       <polygon points="24,47 32,50 40,47 40,49 32,52 24,49" fill="#475569" />
       <ellipse cx="32" cy="52" rx="12" ry="2.5" fill="black" fillOpacity="0.18" />
@@ -446,209 +420,153 @@ function MonitorDualSVG({ flip }: { flip: boolean }) {
   );
 }
 
-// Geladeira — eletrodoméstico alto, branco/cinza
 function FridgeSVG() {
   return (
     <svg width="40" height="88" viewBox="0 0 40 88" fill="none" style={{ imageRendering: 'pixelated' }}>
-      {/* Corpo principal */}
       <polygon points="2,36 20,46 20,84 2,74" fill="#475569" />
       <polygon points="38,28 20,38 20,76 38,66" fill="#64748B" />
       <polygon points="20,20 38,30 20,40 2,30" fill="#94A3B8" />
-      {/* Divisória freezer/geladeira */}
       <line x1="2" y1="52" x2="20" y2="59" stroke="#334155" strokeWidth="2" />
       <line x1="38" y1="44" x2="20" y2="51" stroke="#334155" strokeWidth="2" />
-      {/* Puxador freezer */}
       <line x1="5" y1="42" x2="5" y2="50" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" />
       <line x1="35" y1="34" x2="35" y2="42" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" />
-      {/* Puxador geladeira */}
       <line x1="5" y1="60" x2="5" y2="70" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" />
       <line x1="35" y1="52" x2="35" y2="62" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" />
-      {/* Reflexo lateral */}
       <polygon points="22,38 28,40 28,74 22,70" fill="white" fillOpacity="0.06" />
-      {/* Topo brilho */}
       <polygon points="20,20 38,30 36,31 18,21" fill="white" fillOpacity="0.12" />
       <ellipse cx="20" cy="84" rx="12" ry="3" fill="black" fillOpacity="0.18" />
     </svg>
   );
 }
 
-// Cafeteira profissional — cromada com LED
 function CoffeeMachineSVG() {
   return (
     <svg width="36" height="64" viewBox="0 0 36 64" fill="none" style={{ imageRendering: 'pixelated' }}>
-      {/* Base */}
       <polygon points="2,46 18,54 18,60 2,52" fill="#1E293B" />
       <polygon points="34,40 18,48 18,54 34,46" fill="#263448" />
       <polygon points="18,36 34,42 18,50 2,44" fill="#334155" />
-      {/* Corpo principal */}
       <polygon points="4,24 18,30 18,44 4,38" fill="#374151" />
       <polygon points="32,18 18,24 18,38 32,32" fill="#4B5563" />
       <polygon points="18,14 32,20 18,26 4,20" fill="#6B7280" />
-      {/* Painel de controle */}
       <polygon points="8,22 16,25 16,31 8,28" fill="#111827" />
       <ellipse cx="10" cy="25" rx="1.5" ry="1" fill="#22C55E" opacity="0.9" />
       <ellipse cx="13" cy="26.5" rx="1.5" ry="1" fill="#EF4444" opacity="0.7" />
-      {/* Saída do café */}
       <line x1="14" y1="32" x2="14" y2="38" stroke="#4B5563" strokeWidth="2" />
       <polygon points="10,36 14,38 18,36 18,38 14,40 10,38" fill="#374151" />
-      {/* Reservatório superior */}
       <polygon points="18,4 28,8 18,12 8,8" fill="#1E3A5F" opacity="0.9" />
       <polygon points="18,4 28,8 28,14 18,10" fill="#1E40AF" opacity="0.7" />
       <polygon points="8,8 18,4 18,10 8,14" fill="#1D4ED8" opacity="0.6" />
-      {/* Topo brilho */}
       <polygon points="18,14 32,20 30,21 16,15" fill="white" fillOpacity="0.08" />
       <ellipse cx="18" cy="60" rx="10" ry="3" fill="black" fillOpacity="0.18" />
     </svg>
   );
 }
 
-// Micro-ondas — compacto, porta com visor
 function MicrowaveSVG() {
   return (
     <svg width="40" height="48" viewBox="0 0 40 48" fill="none" style={{ imageRendering: 'pixelated' }}>
-      {/* Corpo */}
       <polygon points="2,24 20,32 20,44 2,36" fill="#374151" />
       <polygon points="38,18 20,26 20,38 38,30" fill="#4B5563" />
       <polygon points="20,14 38,20 20,28 2,22" fill="#6B7280" />
-      {/* Visor da porta */}
       <polygon points="4,24 14,28 14,38 4,34" fill="#111827" />
       <polygon points="14,24 4,20 4,24 14,28" fill="#1F2937" />
-      {/* Reflexo no visor */}
       <polygon points="6,24 10,26 10,28 6,26" fill="#22D3EE" fillOpacity="0.2" />
-      {/* Painel de controle lateral */}
       <polygon points="30,20 36,22 36,32 30,30" fill="#1F2937" />
       <ellipse cx="32" cy="24" rx="1.5" ry="1" fill="#22C55E" opacity="0.9" />
       <ellipse cx="32" cy="27" rx="1.5" ry="1" fill="#F59E0B" opacity="0.8" />
       <ellipse cx="32" cy="30" rx="1.5" ry="1" fill="#EF4444" opacity="0.6" />
-      {/* Alça da porta */}
       <line x1="14" y1="27" x2="14" y2="35" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
-      {/* Topo brilho */}
       <polygon points="20,14 38,20 36,21 18,15" fill="white" fillOpacity="0.1" />
       <ellipse cx="20" cy="44" rx="12" ry="3" fill="black" fillOpacity="0.15" />
     </svg>
   );
 }
 
-// Mesa de pool/ping-pong — grande, verde com bordas
 function PoolTableSVG() {
   return (
     <svg width="96" height="80" viewBox="0 0 96 80" fill="none" style={{ imageRendering: 'pixelated' }}>
-      {/* Pernas */}
       <line x1="10" y1="50" x2="8" y2="70" stroke="#3D2B1F" strokeWidth="3" strokeLinecap="round" />
       <line x1="86" y1="42" x2="86" y2="62" stroke="#3D2B1F" strokeWidth="3" strokeLinecap="round" />
       <line x1="20" y1="56" x2="18" y2="72" stroke="#3D2B1F" strokeWidth="3" strokeLinecap="round" />
       <line x1="76" y1="48" x2="76" y2="64" stroke="#3D2B1F" strokeWidth="3" strokeLinecap="round" />
-      {/* Borda lateral esquerda */}
       <polygon points="4,36 48,58 48,68 4,46" fill="#3D2B1F" />
-      {/* Borda lateral direita */}
       <polygon points="92,28 48,50 48,60 92,38" fill="#2D1F16" />
-      {/* Feltro verde — topo */}
       <polygon points="48,14 88,32 48,54 8,36" fill="#166534" />
-      {/* Feltro — detalhe mais claro no centro */}
       <polygon points="48,18 84,34 48,50 12,34" fill="#15803D" />
-      {/* Linhas da mesa */}
       <line x1="48" y1="18" x2="48" y2="50" stroke="white" strokeWidth="0.8" strokeOpacity="0.3" />
       <ellipse cx="48" cy="34" rx="8" ry="4" fill="none" stroke="white" strokeWidth="0.8" strokeOpacity="0.25" />
-      {/* Buracos nos cantos */}
       <ellipse cx="14" cy="36" rx="2.5" ry="1.5" fill="#052E16" />
       <ellipse cx="82" cy="32" rx="2.5" ry="1.5" fill="#052E16" />
       <ellipse cx="48" cy="54" rx="2.5" ry="1.5" fill="#052E16" />
       <ellipse cx="48" cy="18" rx="2.5" ry="1.5" fill="#052E16" />
-      {/* Bola branca */}
       <ellipse cx="40" cy="38" rx="3" ry="2" fill="#F8FAFC" />
-      {/* Bola colorida */}
       <ellipse cx="56" cy="30" rx="3" ry="2" fill="#EF4444" />
-      {/* Borda topo */}
       <polygon points="8,36 48,14 88,32 48,18" fill="#4A3728" />
       <ellipse cx="48" cy="72" rx="24" ry="5" fill="black" fillOpacity="0.18" />
     </svg>
   );
 }
 
-// Ar-condicionado — unidade de parede, horizontal
 function AcUnitSVG() {
   return (
     <svg width="48" height="40" viewBox="0 0 48 40" fill="none" style={{ imageRendering: 'pixelated' }}>
-      {/* Corpo */}
       <polygon points="2,20 24,28 24,36 2,28" fill="#334155" />
       <polygon points="46,14 24,22 24,30 46,22" fill="#475569" />
       <polygon points="24,8 46,16 24,24 2,16" fill="#94A3B8" />
-      {/* Grade de ventilação — face frontal */}
       <line x1="4" y1="22" x2="22" y2="27" stroke="#1E293B" strokeWidth="1" />
       <line x1="4" y1="25" x2="22" y2="30" stroke="#1E293B" strokeWidth="1" />
       <line x1="4" y1="28" x2="22" y2="33" stroke="#1E293B" strokeWidth="1" />
-      {/* Grade direita */}
       <line x1="26" y1="22" x2="44" y2="16" stroke="#1E293B" strokeWidth="1" strokeOpacity="0.7" />
       <line x1="26" y1="25" x2="44" y2="19" stroke="#1E293B" strokeWidth="1" strokeOpacity="0.5" />
-      {/* LED indicador */}
       <ellipse cx="42" cy="17" rx="2" ry="1.2" fill="#22D3EE" opacity="0.9" />
-      {/* Saída de ar — fluxo */}
       <line x1="4" y1="18" x2="0" y2="20" stroke="#BFDBFE" strokeWidth="1" strokeOpacity="0.4" />
       <line x1="4" y1="20" x2="0" y2="23" stroke="#BFDBFE" strokeWidth="1" strokeOpacity="0.3" />
-      {/* Topo brilho */}
       <polygon points="24,8 46,16 44,17 22,9" fill="white" fillOpacity="0.12" />
     </svg>
   );
 }
 
-// Armário de funcionário — locker duplo com portas
 function LockerSVG() {
   return (
     <svg width="40" height="80" viewBox="0 0 40 80" fill="none" style={{ imageRendering: 'pixelated' }}>
-      {/* Corpo */}
       <polygon points="2,34 20,44 20,76 2,66" fill="#1E3A5F" />
       <polygon points="38,26 20,36 20,68 38,58" fill="#1E40AF" />
       <polygon points="20,18 38,28 20,38 2,28" fill="#2563EB" />
-      {/* Divisória entre lockers */}
       <line x1="2" y1="50" x2="20" y2="57" stroke="#1D4ED8" strokeWidth="1.5" />
       <line x1="38" y1="42" x2="20" y2="49" stroke="#1D4ED8" strokeWidth="1.5" />
-      {/* Travas/dobradiças locker superior */}
       <ellipse cx="7" cy="40" rx="1.5" ry="1" fill="#93C5FD" opacity="0.9" />
       <ellipse cx="33" cy="32" rx="1.5" ry="1" fill="#93C5FD" opacity="0.7" />
-      {/* Ventilação locker superior */}
       <line x1="10" y1="36" x2="16" y2="38" stroke="#1D4ED8" strokeWidth="0.8" />
       <line x1="10" y1="38" x2="16" y2="40" stroke="#1D4ED8" strokeWidth="0.8" />
-      {/* Travas locker inferior */}
       <ellipse cx="7" cy="58" rx="1.5" ry="1" fill="#93C5FD" opacity="0.9" />
       <ellipse cx="33" cy="50" rx="1.5" ry="1" fill="#93C5FD" opacity="0.7" />
-      {/* Ventilação locker inferior */}
       <line x1="10" y1="60" x2="16" y2="62" stroke="#1D4ED8" strokeWidth="0.8" />
       <line x1="10" y1="62" x2="16" y2="64" stroke="#1D4ED8" strokeWidth="0.8" />
-      {/* Topo brilho */}
       <polygon points="20,18 38,28 36,29 18,19" fill="white" fillOpacity="0.1" />
       <ellipse cx="20" cy="76" rx="12" ry="3" fill="black" fillOpacity="0.18" />
     </svg>
   );
 }
 
-// TV Screen — tela em suporte com gráfico de barras
 function TvScreenSVG({ label = '' }: { label: string }) {
   return (
     <svg width="56" height="72" viewBox="0 0 56 72" fill="none" style={{ imageRendering: 'pixelated' }}>
-      {/* Suporte */}
       <line x1="20" y1="56" x2="18" y2="68" stroke="#374151" strokeWidth="2.5" strokeLinecap="round" />
       <line x1="36" y1="50" x2="36" y2="62" stroke="#374151" strokeWidth="2.5" strokeLinecap="round" />
       <polygon points="12,66 28,72 44,66 44,68 28,74 12,68" fill="#4B5563" />
-      {/* Moldura */}
       <polygon points="2,32 28,44 28,56 2,44" fill="#1E293B" />
       <polygon points="54,24 28,36 28,48 54,36" fill="#111827" />
       <polygon points="28,14 54,24 28,36 2,24" fill="#374151" />
-      {/* Tela */}
       <polygon points="4,30 26,40 26,52 4,42" fill="#0C1A3A" />
       <polygon points="52,24 26,34 26,46 52,36" fill="#0F2051" />
       <polygon points="28,16 52,25 26,35 4,26" fill="#1E3A8A" />
-      {/* Gráfico de barras na tela */}
       <rect x="7" y="38" width="3" height="9" fill="#3B82F6" opacity="0.9" transform="skewY(-20)" />
       <rect x="12" y="36" width="3" height="11" fill="#60A5FA" opacity="0.8" transform="skewY(-20)" />
       <rect x="17" y="37" width="3" height="10" fill="#93C5FD" opacity="0.7" transform="skewY(-20)" />
       <rect x="22" y="35" width="3" height="12" fill="#2563EB" opacity="0.9" transform="skewY(-20)" />
-      {/* Linha de tendência */}
       <polyline points="8,43 13,41 18,42 23,40" stroke="#FCD34D" strokeWidth="1" fill="none" opacity="0.8" />
-      {/* Reflexo tela */}
       <polygon points="28,16 40,20 34,24 22,20" fill="white" fillOpacity="0.07" />
-      {/* Topo brilho moldura */}
       <polygon points="28,14 54,24 52,25 26,15" fill="white" fillOpacity="0.08" />
-      {/* Label na moldura inferior se fornecido */}
       {label ? (
         <text x="28" y="54" textAnchor="middle" dominantBaseline="middle" fill="#93C5FD" fontSize="5" fontFamily="monospace" opacity="0.8" transform="skewX(-10)">{label}</text>
       ) : null}
@@ -660,8 +578,11 @@ function TvScreenSVG({ label = '' }: { label: string }) {
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function FurniSprite({ type, pos, color = '#64748B', direction = 2, tileX, tileY, zBonus = 2, label = '' }: FurniSpriteProps) {
-  const [usePng, setUsePng] = useState(true);
-  const zIndex = Math.floor((tileX + tileY) * 10 + zBonus);
+  const [usePng, setUsePng] = useState(false);
+
+  // FIX A: zIndex sincronizado com fórmula do RoomView: (x+y)*200 + 20 + bonus*20
+  const zIndex = (tileX + tileY) * 200 + 20 + zBonus * 20;
+
   const size = SIZE[type] ?? { w: 64, h: 64 };
   const { w, h } = size;
   const flip = direction === 0 || direction === 6;
@@ -723,7 +644,6 @@ export default function FurniSprite({ type, pos, color = '#64748B', direction = 
     case 'coffee_table':   return <div style={svgStyle}><CoffeeTableSVG color={color} /></div>;
     case 'cabinet':        return <div style={svgStyle}><CabinetSVG color={color} /></div>;
     case 'mug':            return <div style={svgStyle}><MugSVG color={color} /></div>;
-    // Novos tipos
     case 'glass_wall':     return <div style={svgStyle}><GlassWallSVG flip={flip} /></div>;
     case 'sign':           return <div style={svgStyle}><SignSVG label={label || 'SCOUT 360'} /></div>;
     case 'monitor_dual':   return <div style={svgStyle}><MonitorDualSVG flip={flip} /></div>;
