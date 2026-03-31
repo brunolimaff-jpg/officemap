@@ -217,6 +217,9 @@ export const furniture: Furniture[] = [
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 13 ESPECIALISTAS — Board Room do Senior Scout 360
+// Figure strings únicas — cada especialista tem aparência visual distinta
+// Formato: PARTE-ESTILO-COR (Habbo Imager)
+// hd=cabeça/pele | hr=cabelo | ch=camisa | lg=calça | sh=sapato | cc=casaco | ea=óculos
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const specialists: Specialist[] = [
@@ -228,6 +231,8 @@ export const specialists: Specialist[] = [
     specialty: 'visão de produto, plataforma, adoção enterprise, copilots',
     tone: 'visionário, estratégico, orientado a adoção real',
     color: '#0078D4',
+    // Terno azul Microsoft, cabelo escuro curto, pele tom médio, executivo sênior
+    figure: 'hd-180-2.hr-3163-61.ch-3030-110.lg-3023-110.sh-906-110.cc-3007-110',
   },
   {
     id: 'uncle_bob',
@@ -237,6 +242,8 @@ export const specialists: Specialist[] = [
     specialty: 'arquitetura, SOLID, Clean Code, débito técnico',
     tone: 'rigoroso, direto, veta soluções ruins sem cerimônia',
     color: '#DC2626',
+    // Cabelo branco curto, óculos, camisa vermelha, calça escura, professor clássico
+    figure: 'hd-180-10.hr-890-61.ch-3030-62.lg-3023-92.sh-906-92.ea-1406-62',
   },
   {
     id: 'karpathy',
@@ -246,6 +253,8 @@ export const specialists: Specialist[] = [
     specialty: 'prompts, sistemas de IA, anti-alucinação, pipeline de prompts',
     tone: 'analítico, detalhista, orientado a evidências',
     color: '#7C3AED',
+    // Hoodie roxo casual, cabelo escuro liso, jovem pesquisador IA
+    figure: 'hd-180-1.hr-3163-92.ch-3114-113.lg-3023-92.sh-3114-92',
   },
   {
     id: 'rogati',
@@ -255,6 +264,8 @@ export const specialists: Specialist[] = [
     specialty: 'qualidade de dados, entity resolution, validação, freshness',
     tone: 'cética construtiva, pergunta antes de afirmar',
     color: '#059669',
+    // Visual feminino profissional, cabelo castanho ondulado, blazer verde
+    figure: 'hd-600-2.hr-3012-33.ch-3030-78.lg-3023-78.sh-906-78',
   },
   {
     id: 'osmani',
@@ -264,6 +275,8 @@ export const specialists: Specialist[] = [
     specialty: 'performance percebida, mobile-first, loading, web vitals',
     tone: 'empático, visual, orientado ao usuário final',
     color: '#F59E0B',
+    // Visual casual tech, óculos redondos, camisa amarela, cabelo curto
+    figure: 'hd-180-3.hr-3163-30.ch-3030-82.lg-3023-82.sh-906-82.ea-3168-82',
   },
   {
     id: 'whittaker',
@@ -273,6 +286,8 @@ export const specialists: Specialist[] = [
     specialty: 'edge cases, erros, LGPD, robustez, attack surfaces',
     tone: 'questionador, preventivo, não deixa passar nada',
     color: '#EF4444',
+    // Terno vermelho, expressão séria, cabelo escuro, QA inspector
+    figure: 'hd-180-4.hr-3163-16.ch-3030-62.lg-3023-62.sh-906-62.cc-3007-62',
   },
   {
     id: 'dixon',
@@ -282,6 +297,8 @@ export const specialists: Specialist[] = [
     specialty: 'Challenger Sale, ROI, MEDDPICC, JOLT Effect',
     tone: 'pragmático, orientado a negócio, fala em impacto real',
     color: '#06B6D4',
+    // Terno executivo azul-ciano, gravata, visual vendas corporativo
+    figure: 'hd-180-5.hr-3163-61.ch-3030-110.lg-3023-110.sh-906-110.cc-3007-110',
   },
   {
     id: 'dodds',
@@ -291,6 +308,8 @@ export const specialists: Specialist[] = [
     specialty: 'TypeScript, React, Next.js, código completo, testes',
     tone: 'executor, objetivo, entrega sem atalhos',
     color: '#EC4899',
+    // Dev casual, moletom rosa/magenta, calça jeans, jovem desenvolvedor
+    figure: 'hd-180-1.hr-3012-16.ch-3114-75.lg-3023-90.sh-3114-75',
   },
   {
     id: 'rauch',
@@ -300,6 +319,8 @@ export const specialists: Specialist[] = [
     specialty: 'serverless, Vercel, APIs externas, retry, cache',
     tone: 'sistemático, preventivo, pensa em escala',
     color: '#171717',
+    // Todo preto — visual Vercel/dark mode, moletom preto, calça preta
+    figure: 'hd-180-1.hr-3163-16.ch-3114-16.lg-3023-16.sh-3114-16',
   },
   {
     id: 'rodrigues',
@@ -309,6 +330,8 @@ export const specialists: Specialist[] = [
     specialty: 'agronegócio brasileiro, sazonalidade, regulação, cooperativas',
     tone: 'experiente, prático, corrige estereótipos com vivência',
     color: '#16A34A',
+    // Terno verde agro, cabelo grisalho, visual ministerial sênior brasileiro
+    figure: 'hd-180-7.hr-890-16.ch-3030-78.lg-3023-78.sh-906-78.cc-3007-78',
   },
   {
     id: 'kozyrkov',
@@ -318,6 +341,8 @@ export const specialists: Specialist[] = [
     specialty: 'Score PORTA, validação estatística, backtesting, confiança',
     tone: 'analítica, questionadora, baseada em dados',
     color: '#8B5CF6',
+    // Visual científico feminino, cabelo loiro, blazer roxo, óculos
+    figure: 'hd-600-1.hr-3012-30.ch-3030-113.lg-3023-113.sh-906-113.ea-1406-82',
   },
   {
     id: 'cagan',
@@ -325,8 +350,10 @@ export const specialists: Specialist[] = [
     realPerson: 'Marty Cagan',
     role: 'Líder de Produto',
     specialty: 'product discovery, priorização, métricas, roadmap',
-    tone: 'focado, elimina desperdício, "apaixone-se pelo problema"',
+    tone: 'focado, elimina desperdício, \"apaixone-se pelo problema\"',
     color: '#F97316',
+    // Casual product manager, camisa laranja, cabelo grisalho, sem gravata
+    figure: 'hd-180-8.hr-890-33.ch-3030-82.lg-3023-82.sh-906-82',
   },
   {
     id: 'grove',
@@ -334,8 +361,10 @@ export const specialists: Specialist[] = [
     realPerson: 'Andy Grove',
     role: 'Verificador de Realidade',
     specialty: 'viabilidade interna, adoção, budget, realidade operacional',
-    tone: 'confrontador construtivo, fala por último, "só os paranoicos sobrevivem"',
+    tone: 'confrontador construtivo, fala por último, \"só os paranoicos sobrevivem\"',
     color: '#64748B',
+    // Terno cinza conservador, óculos, cabelo branco, executivo sênior Intel
+    figure: 'hd-180-10.hr-890-61.ch-3030-92.lg-3023-92.sh-906-92.cc-3007-92.ea-1406-61',
   },
 ];
 
