@@ -8,6 +8,7 @@ interface RoomViewProps {
   users: User[];
   map: number[][];
   onTileClick: (x: number, y: number) => void;
+  cameraOffsetRef?: React.MutableRefObject<{ x: number; y: number }>;
 }
 
 const TILE_W = 64;
@@ -77,7 +78,6 @@ const CASTS_SHADOW = new Set([
   'fridge', 'locker', 'tv_screen', 'monitor_dual',
 ]);
 
-// ─── CityscapeSVG — memoizado, nunca re-renderiza ─────────────────────────────
 const CityscapeSVG = memo(function CityscapeSVG() {
   return (
     <svg
@@ -133,7 +133,6 @@ const CityscapeSVG = memo(function CityscapeSVG() {
   );
 });
 
-// ─── shadeColor helper ────────────────────────────────────────────────────────
 function shadeColor(hex: string, amount: number): string {
   try {
     const h = hex.replace('#', '');
@@ -262,7 +261,6 @@ function HabboAvatarSVGFallback({ id, direction }: { id: string; direction: numb
   );
 }
 
-// PERF FIX 3: memo() em HabboAvatar — evita re-render nos 13 avatares durante drag
 const HabboAvatar = memo(function HabboAvatar({ id, direction, isMoving }: { id: string; direction: number; isMoving: boolean }) {
   const [imgFailed, setImgFailed] = useState(false);
 
@@ -274,7 +272,6 @@ const HabboAvatar = memo(function HabboAvatar({ id, direction, isMoving }: { id:
     `?figure=${figure}&direction=${habboDir}&head_direction=${habboDir}` +
     `&gesture=std&action=${action}&size=b&headonly=0`;
 
-  // PERF FIX 3b: idle bob via CSS animation — elimina 13 setIntervals que forçavam setState
   const groundShadow = (
     <div style={{
       position: 'absolute', bottom: -2, left: '50%', transform: 'translateX(-50%)',
@@ -329,16 +326,21 @@ const ISO_CURSOR_KEYFRAMES = `
 }
 `;
 
-function IsoCursor({ pos }: { pos: { x: number; y: number } }) {
+// ─── IsoCursor imperativo — movido via DOM, zero re-render React ──────────────
+const IsoCursorImperative = memo(function IsoCursorImperative(
+  { elRef }: { elRef: React.RefObject<HTMLDivElement | null> }
+) {
   return (
-    <div style={{
-      position: 'absolute',
-      left: pos.x - TILE_W / 2,
-      top: pos.y - TILE_H / 2,
-      width: TILE_W, height: TILE_H,
-      pointerEvents: 'none',
-      zIndex: 99999,
-    }}>
+    <div
+      ref={elRef}
+      style={{
+        position: 'absolute',
+        display: 'none',
+        width: TILE_W, height: TILE_H,
+        pointerEvents: 'none',
+        zIndex: 99999,
+      }}
+    >
       <div style={{
         position: 'absolute', inset: 0,
         clipPath: 'polygon(50% 2px, calc(100% - 2px) 50%, 50% calc(100% - 2px), 2px 50%)',
@@ -360,9 +362,8 @@ function IsoCursor({ pos }: { pos: { x: number; y: number } }) {
       }} />
     </div>
   );
-}
+});
 
-// ─── helpers inline para o useMemo dos tiles ──────────────────────────────────
 const _isWalkable = (v: number) => [1,2,3,6,7].includes(v);
 const _isWall     = (v: number) => [4,5,8,9,10].includes(v);
 const _isFloor    = (v: number) => [1,2,3,6,7].includes(v);
@@ -371,12 +372,17 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const mapH = map.length;
   const mapW = map[0].length;
 
-  const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging]     = useState(false);
-  const [dragMoved, setDragMoved]       = useState(false);
-  const dragStart = useRef({ x: 0, y: 0 });
+  // ─── PERF CORE: cameraOffset como ref — drag não dispara nenhum setState ─────
+  const cameraOffsetRef = useRef({ x: 0, y: 0 });
+  const sceneRef        = useRef<HTMLDivElement>(null);
+  const cursorRef       = useRef<HTMLDivElement>(null);
 
-  const [hoverTile, setHoverTile] = useState<{ x: number; y: number } | null>(null);
+  const isDraggingRef = useRef(false);
+  const dragMovedRef  = useRef(false);
+  const dragStart     = useRef({ x: 0, y: 0 });
+
+  // Usado apenas para disparar re-render dos avatares ao soltar o drag
+  const [, forceAvatarUpdate] = useState(0);
 
   const [movingUsers, setMovingUsers] = useState<Set<string>>(new Set());
   const prevPositions = useRef<Record<string, { x: number; y: number }>>({});
@@ -384,7 +390,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
 
   const [windowSize, setWindowSize] = useState({ width: 1024, height: 768 });
 
-  // Injeta keyframes uma única vez
   useEffect(() => {
     const id = 'iso-cursor-styles';
     if (!document.getElementById(id)) {
@@ -418,32 +423,25 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     return () => { Object.values(walkTimers.current).forEach(t => clearTimeout(t)); };
   }, [users]);
 
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      setDragMoved(true);
-      setCameraOffset({ x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y });
-    };
-    const onUp = () => setIsDragging(false);
-    if (isDragging) {
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('mouseup', onUp);
-    }
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-  }, [isDragging]);
-
   const offsetX = windowSize.width  / 2;
   const offsetY = windowSize.height / 2 - (mapH * TILE_H) / 2;
 
-  // getScreenPos permanece useCallback — usado pelos avatares em cada render
-  const getScreenPos = useCallback((x: number, y: number) => ({
-    x: offsetX + (x - y) * (TILE_W / 2) + cameraOffset.x,
-    y: offsetY + (x + y) * (TILE_H / 2) + cameraOffset.y,
-  }), [offsetX, offsetY, cameraOffset]);
+  // ─── Aplica pan via DOM direto — zero React re-render durante drag ────────────
+  const applySceneTransform = useCallback(() => {
+    if (!sceneRef.current) return;
+    const { x, y } = cameraOffsetRef.current;
+    sceneRef.current.style.transform = `translate(${x}px, ${y}px)`;
+  }, []);
 
-  // ─── PERF FIX 1: tiles memoizados ────────────────────────────────────────────
-  // Recalcula APENAS quando map, cameraOffset ou windowSize mudam.
-  // hoverTile e isDragging NÃO estão nas deps — tile hover é tratado separado.
+  // getScreenPos lê do ref — estável, não depende de state
+  const getScreenPos = useCallback((x: number, y: number) => ({
+    x: offsetX + (x - y) * (TILE_W / 2) + cameraOffsetRef.current.x,
+    y: offsetY + (x + y) * (TILE_H / 2) + cameraOffsetRef.current.y,
+  }), [offsetX, offsetY]);
+
+  // ─── Tiles: calculados sem cameraOffset — apenas posição base no mapa ─────────
+  // A translação da câmera é aplicada no container pai (sceneRef) via transform.
+  // Tiles só recalculam quando o mapa ou windowSize mudam.
   const tiles = useMemo(() => {
     const result: React.ReactNode[] = [];
     for (let y = 0; y < mapH; y++) {
@@ -452,8 +450,8 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         if (val === 0) continue;
         const colors = getTileColors(val, x, y);
         if (!colors) continue;
-        const px = offsetX + (x - y) * (TILE_W / 2) + cameraOffset.x;
-        const py = offsetY + (x + y) * (TILE_H / 2) + cameraOffset.y;
+        const px = offsetX + (x - y) * (TILE_W / 2);
+        const py = offsetY + (x + y) * (TILE_H / 2);
         const walkable = _isWalkable(val);
         const wall     = _isWall(val);
         const baseZ    = tileZ(x, y);
@@ -549,17 +547,16 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
       }
     }
     return result;
-  }, [map, cameraOffset, offsetX, offsetY, mapH, mapW]);
+  }, [map, offsetX, offsetY, mapH, mapW]);
 
-  // ─── PERF FIX 1b: floorEdges memoizados ──────────────────────────────────────
   const floorEdges = useMemo(() => {
     const result: React.ReactNode[] = [];
     for (let y = 0; y < mapH; y++) {
       for (let x = 0; x < mapW; x++) {
         const val = map[y][x];
         if (!_isFloor(val)) continue;
-        const px = offsetX + (x - y) * (TILE_W/2) + cameraOffset.x;
-        const py = offsetY + (x + y) * (TILE_H/2) + cameraOffset.y;
+        const px = offsetX + (x - y) * (TILE_W/2);
+        const py = offsetY + (x + y) * (TILE_H/2);
         const z  = tileZ(x, y) + 10;
         const rv = map[y]?.[x+1] ?? 0;
         if (!_isFloor(rv) && rv !== 4 && rv !== 5) {
@@ -580,15 +577,17 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
       }
     }
     return result;
-  }, [map, cameraOffset, offsetX, offsetY, mapH, mapW]);
+  }, [map, offsetX, offsetY, mapH, mapW]);
 
-  // ─── PERF FIX 2: furniNodes memoizados ───────────────────────────────────────
+  // ─── furniNodes: pos removida — FurniSprite recebe apenas primitivos estáveis
+  // cameraOffset não está mais nas deps → nunca recalcula durante drag
   const furniNodes = useMemo(() => {
     return furniture.map((f: Furniture) => {
       if (_isWall(map[f.y]?.[f.x] ?? 0)) return null;
-      const px = offsetX + (f.x - f.y) * (TILE_W/2) + cameraOffset.x;
-      const py = offsetY + (f.x + f.y) * (TILE_H/2) + cameraOffset.y;
       const bonus = FURNI_Z_BONUS[f.type] ?? 2;
+      // px/py base sem cameraOffset — o container pai (sceneRef) carrega o offset
+      const px = offsetX + (f.x - f.y) * (TILE_W/2);
+      const py = offsetY + (f.x + f.y) * (TILE_H/2);
       return (
         <FurniSprite
           key={f.id}
@@ -603,17 +602,16 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         />
       );
     });
-  }, [map, cameraOffset, offsetX, offsetY]);
+  }, [map, offsetX, offsetY]);
 
-  // ─── PERF FIX 2b: furniShadows memoizados ────────────────────────────────────
   const furniShadows = useMemo(() => {
     return furniture
       .filter(f => CASTS_SHADOW.has(f.type) && !_isWall(map[f.y]?.[f.x] ?? 0))
       .map(f => {
         const sx = f.x + 1, sy = f.y + 1;
         if ((map[sy]?.[sx] ?? 0) === 0) return null;
-        const px = offsetX + (sx - sy) * (TILE_W/2) + cameraOffset.x;
-        const py = offsetY + (sx + sy) * (TILE_H/2) + cameraOffset.y;
+        const px = offsetX + (sx - sy) * (TILE_W/2);
+        const py = offsetY + (sx + sy) * (TILE_H/2);
         return (
           <div key={`sh-${f.id}`} className="absolute pointer-events-none" style={{
             left: px - TILE_W/2, top: py - TILE_H/2 - 4,
@@ -624,57 +622,105 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
           }} />
         );
       });
-  }, [map, cameraOffset, offsetX, offsetY]);
+  }, [map, offsetX, offsetY]);
 
-  // ─── Event handlers ───────────────────────────────────────────────────────────
+  // ─── Drag handlers — escrevem no ref, chamam applySceneTransform via DOM ──────
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    setIsDragging(true); setDragMoved(false);
-    dragStart.current = { x: e.clientX - cameraOffset.x, y: e.clientY - cameraOffset.y };
-  }, [cameraOffset]);
+    isDraggingRef.current = true;
+    dragMovedRef.current  = false;
+    dragStart.current = {
+      x: e.clientX - cameraOffsetRef.current.x,
+      y: e.clientY - cameraOffsetRef.current.y,
+    };
+  }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    setIsDragging(true); setDragMoved(false);
-    dragStart.current = { x: e.touches[0].clientX - cameraOffset.x, y: e.touches[0].clientY - cameraOffset.y };
-  }, [cameraOffset]);
+    isDraggingRef.current = true;
+    dragMovedRef.current  = false;
+    dragStart.current = {
+      x: e.touches[0].clientX - cameraOffsetRef.current.x,
+      y: e.touches[0].clientY - cameraOffsetRef.current.y,
+    };
+  }, []);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
-    if (!isDragging) return;
-    setDragMoved(true);
-    setCameraOffset({ x: e.touches[0].clientX - dragStart.current.x, y: e.touches[0].clientY - dragStart.current.y });
-  }, [isDragging]);
+    if (!isDraggingRef.current) return;
+    dragMovedRef.current = true;
+    cameraOffsetRef.current = {
+      x: e.touches[0].clientX - dragStart.current.x,
+      y: e.touches[0].clientY - dragStart.current.y,
+    };
+    applySceneTransform();
+  }, [applySceneTransform]);
 
-  const handleTouchEnd = useCallback(() => setIsDragging(false), []);
+  const handleTouchEnd = useCallback(() => {
+    isDraggingRef.current = false;
+    forceAvatarUpdate(n => n + 1);
+  }, []);
 
-  // ─── Hover via event delegation — não depende de re-render de tiles ───────────
-  // PERF FIX: ao invés de onMouseEnter em cada tile, um único handler no container
+  // ─── mousemove global — só durante drag, via ref, zero setState ───────────────
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      dragMovedRef.current = true;
+      cameraOffsetRef.current = {
+        x: e.clientX - dragStart.current.x,
+        y: e.clientY - dragStart.current.y,
+      };
+      applySceneTransform();
+    };
+    const onUp = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      // Força update dos avatares uma única vez ao soltar
+      forceAvatarUpdate(n => n + 1);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [applySceneTransform]);
+
+  // ─── Hover via event delegation — cursor movido via DOM, zero setState ────────
   const handleContainerMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (IS_TOUCH || isDragging) return;
+    if (IS_TOUCH || isDraggingRef.current) {
+      if (cursorRef.current) cursorRef.current.style.display = 'none';
+      return;
+    }
     const el = (e.target as HTMLElement).closest('[data-tx]') as HTMLElement | null;
-    if (!el) { setHoverTile(null); return; }
+    if (!el || el.dataset.walkable !== '1') {
+      if (cursorRef.current) cursorRef.current.style.display = 'none';
+      return;
+    }
     const tx = Number(el.dataset.tx);
     const ty = Number(el.dataset.ty);
-    const walkable = el.dataset.walkable === '1';
-    if (walkable) setHoverTile(prev => prev?.x === tx && prev?.y === ty ? prev : { x: tx, y: ty });
-    else setHoverTile(null);
-  }, [isDragging]);
+    const px = offsetX + (tx - ty) * (TILE_W / 2);
+    const py = offsetY + (tx + ty) * (TILE_H / 2);
+    if (cursorRef.current) {
+      cursorRef.current.style.display = 'block';
+      cursorRef.current.style.left = `${px - TILE_W / 2}px`;
+      cursorRef.current.style.top  = `${py - TILE_H / 2}px`;
+    }
+  }, [offsetX, offsetY]);
 
-  const handleContainerMouseLeave = useCallback(() => setHoverTile(null), []);
+  const handleContainerMouseLeave = useCallback(() => {
+    if (cursorRef.current) cursorRef.current.style.display = 'none';
+  }, []);
 
   const handleContainerMouseUp = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (dragMoved) return;
+    if (dragMovedRef.current) return;
     const el = (e.target as HTMLElement).closest('[data-tx]') as HTMLElement | null;
     if (!el) return;
     const tx = Number(el.dataset.tx);
     const ty = Number(el.dataset.ty);
     if (el.dataset.walkable === '1') onTileClick(tx, ty);
-  }, [dragMoved, onTileClick]);
-
-  const cursorPos = hoverTile && !isDragging ? getScreenPos(hoverTile.x, hoverTile.y) : null;
+  }, [onTileClick]);
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {/* Banner topo */}
       <div className="absolute top-0 left-0 right-0 z-[99999] flex items-center justify-center pointer-events-none" style={{ height: 32 }}>
         <div className="px-4 py-1 font-pixel text-[9px] text-white tracking-wider" style={{
           background: 'linear-gradient(180deg,rgba(10,20,40,0.92),rgba(5,15,35,0.88))',
@@ -684,15 +730,12 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         }}>🏢 BOARD ROOM — Senior Scout 360</div>
       </div>
 
-      {/* Container principal de drag */}
-      {/* PERF FIX 4+5: will-change + translateZ promove layer GPU durante drag */}
+      {/* Container de input — captura eventos, cursor visual */}
       <div
-        className={`absolute inset-0 overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        className={`absolute inset-0 overflow-hidden ${isDraggingRef.current ? 'cursor-grabbing' : 'cursor-grab'}`}
         style={{
           backgroundColor: '#87CEEB',
           touchAction: 'none',
-          willChange: isDragging ? 'transform' : 'auto',
-          transform: 'translateZ(0)',
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleContainerMouseMove}
@@ -709,37 +752,49 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
           background: 'linear-gradient(to bottom,transparent 0%,rgba(20,30,50,0.55) 100%)',
         }} />
 
-        {tiles}
-        {floorEdges}
-        {furniShadows}
-        {furniNodes}
+        {/* ─── Scene: pan aplicado aqui via transform — único elemento que move ── */}
+        <div
+          ref={sceneRef}
+          style={{
+            position: 'absolute',
+            top: 0, left: 0,
+            willChange: 'transform',
+            transform: 'translate(0px, 0px)',
+          }}
+        >
+          {tiles}
+          {floorEdges}
+          {furniShadows}
+          {furniNodes}
 
-        {users.map(user => {
-          const pos = getScreenPos(user.x, user.y);
-          const isMoving = movingUsers.has(user.id);
-          return (
-            <div
-              key={user.id}
-              className="absolute flex flex-col items-center pointer-events-none"
-              style={{
-                left: pos.x, top: pos.y - 8,
-                transform: 'translate(-50%, -100%)',
-                zIndex: avatarZ(user.x, user.y),
-                transition: 'left 0.3s ease-out, top 0.3s ease-out',
-              }}
-            >
-              <div className="mb-0.5 px-1.5 py-px font-pixel text-[8px] font-bold text-white whitespace-nowrap" style={{
-                background: 'linear-gradient(180deg,#1a4a8a,#0e2d5e)',
-                border: '1px solid #4a9eff', borderRadius: '2px',
-                boxShadow: '0 1px 0 #07193a', letterSpacing: '0.03em',
-                textShadow: '0 1px 1px rgba(0,0,0,0.9)',
-              }}>{user.name}</div>
-              <HabboAvatar id={user.id} direction={user.direction} isMoving={isMoving} />
-            </div>
-          );
-        })}
+          {/* Cursor iso — movido via DOM imperativo, dentro da scene */}
+          <IsoCursorImperative elRef={cursorRef} />
 
-        {cursorPos && <IsoCursor pos={cursorPos} />}
+          {users.map(user => {
+            const pos = getScreenPos(user.x, user.y);
+            const isMoving = movingUsers.has(user.id);
+            return (
+              <div
+                key={user.id}
+                className="absolute flex flex-col items-center pointer-events-none"
+                style={{
+                  left: pos.x, top: pos.y - 8,
+                  transform: 'translate(-50%, -100%)',
+                  zIndex: avatarZ(user.x, user.y),
+                  transition: 'left 0.3s ease-out, top 0.3s ease-out',
+                }}
+              >
+                <div className="mb-0.5 px-1.5 py-px font-pixel text-[8px] font-bold text-white whitespace-nowrap" style={{
+                  background: 'linear-gradient(180deg,#1a4a8a,#0e2d5e)',
+                  border: '1px solid #4a9eff', borderRadius: '2px',
+                  boxShadow: '0 1px 0 #07193a', letterSpacing: '0.03em',
+                  textShadow: '0 1px 1px rgba(0,0,0,0.9)',
+                }}>{user.name}</div>
+                <HabboAvatar id={user.id} direction={user.direction} isMoving={isMoving} />
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

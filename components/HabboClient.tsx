@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, memo, useRef } from 'react';
 import RoomView from './RoomView';
 import BottomBar from './BottomBar';
 import ChatBubbles from './ChatBubbles';
@@ -36,27 +36,45 @@ const SPECIALIST_COLORS: Record<string, string> = {
 
 const WALKABLE = new Set([1, 2, 3, 6, 7]);
 
+const INITIAL_USERS: User[] = [
+  { id: '1', name: 'Bruno', x: 14, y: 13, direction: 4, figure: 'hr-115-42.hd-190-1.ch-210-66.lg-270-82.sh-290-91' },
+  ...specialists.map((s, i) => {
+    const pos = specialistDeskPositions[s.id];
+    return {
+      id: s.id,
+      name: s.name,
+      x: pos.x,
+      y: pos.y,
+      direction: pos.direction,
+      figure: `hr-893-45.hd-180-${(i % 5) + 1}.ch-210-66.lg-270-82.sh-290-91`,
+    };
+  }),
+];
+
+// ─── RoomView isolado com memo — nunca re-renderiza por mensagem/janela ────────
+const MemoRoomView = memo(RoomView, (prev, next) => {
+  // Re-renderiza apenas se users ou map mudarem de verdade
+  if (prev.map !== next.map) return false;
+  if (prev.onTileClick !== next.onTileClick) return false;
+  if (prev.users.length !== next.users.length) return false;
+  for (let i = 0; i < prev.users.length; i++) {
+    const p = prev.users[i], n = next.users[i];
+    if (p.x !== n.x || p.y !== n.y || p.direction !== n.direction || p.id !== n.id) return false;
+  }
+  return true; // props iguais → não re-renderiza
+});
+
 export default function HabboClient() {
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen]       = useState(false);
   const [isConvocationOpen, setIsConvocationOpen] = useState(false);
-  const [isChatLogOpen, setIsChatLogOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isChatLogOpen, setIsChatLogOpen]       = useState(false);
+  const [messages, setMessages]                 = useState<ChatMessage[]>([]);
+  const [users, setUsers]                       = useState<User[]>(INITIAL_USERS);
+
   const { sessions, currentSessionId, saveSession, updateCurrentSession, loadSession, startNewSession } = useChatHistory();
 
-  const [users, setUsers] = useState<User[]>([
-    { id: '1', name: 'Bruno', x: 14, y: 13, direction: 4, figure: 'hr-115-42.hd-190-1.ch-210-66.lg-270-82.sh-290-91' },
-    ...specialists.map((s, i) => {
-      const pos = specialistDeskPositions[s.id];
-      return {
-        id: s.id,
-        name: s.name,
-        x: pos.x,
-        y: pos.y,
-        direction: pos.direction,
-        figure: `hr-893-45.hd-180-${(i % 5) + 1}.ch-210-66.lg-270-82.sh-290-91`,
-      };
-    }),
-  ]);
+  // ─── cameraOffsetRef compartilhado com ChatBubbles para posição correta ───────
+  const cameraOffsetRef = useRef({ x: 0, y: 0 });
 
   const presentUsers = users.map(u => ({
     id: u.id,
@@ -64,23 +82,25 @@ export default function HabboClient() {
     color: SPECIALIST_COLORS[u.id] ?? '#64748B',
   }));
 
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = useCallback((text: string) => {
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
       userId: '1',
       text,
       timestamp: Date.now(),
     };
-    const newMessages = [...messages, newMessage];
-    setMessages(newMessages);
-    if (!currentSessionId) {
-      saveSession(newMessages, ['Bruno']);
-    } else {
-      updateCurrentSession(newMessages);
-    }
-  };
+    setMessages(prev => {
+      const newMessages = [...prev, newMessage];
+      if (!currentSessionId) {
+        saveSession(newMessages, ['Bruno']);
+      } else {
+        updateCurrentSession(newMessages);
+      }
+      return newMessages;
+    });
+  }, [currentSessionId, saveSession, updateCurrentSession]);
 
-  const handleMoveUser = (x: number, y: number) => {
+  const handleMoveUser = useCallback((x: number, y: number) => {
     const tileType = officeMap[y]?.[x];
     if (!WALKABLE.has(tileType)) return;
     setUsers(prev =>
@@ -98,36 +118,34 @@ export default function HabboClient() {
         return { ...u, x, y, direction: dir };
       })
     );
-  };
+  }, []);
 
-  const handleLoadSession = (id: string) => {
+  const handleLoadSession = useCallback((id: string) => {
     const loadedMessages = loadSession(id);
     setMessages(loadedMessages);
     setIsHistoryOpen(false);
-  };
+  }, [loadSession]);
 
-  const handleNewSession = () => {
+  const handleNewSession = useCallback(() => {
     startNewSession();
     setMessages([]);
     setIsHistoryOpen(false);
-  };
+  }, [startNewSession]);
 
-  const handleSummon = (selectedIds: string[]) => {
-    setUsers(prev =>
-      prev.map(u => {
+  const handleSummon = useCallback((selectedIds: string[]) => {
+    setUsers(prev => {
+      const withSpecialists = prev.map(u => {
         const index = selectedIds.indexOf(u.id);
         if (index !== -1) {
           const pos = meetingPositions[index % meetingPositions.length];
           return { ...u, x: pos.x, y: pos.y, direction: pos.dir };
         }
         return u;
-      })
-    );
-    setUsers(prev =>
-      prev.map(u =>
+      });
+      return withSpecialists.map(u =>
         u.id === '1' ? { ...u, x: 14, y: 10, direction: 0 } : u
-      )
-    );
+      );
+    });
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
       userId: 'system',
@@ -136,20 +154,18 @@ export default function HabboClient() {
     };
     setMessages(prev => [...prev, newMessage]);
     setIsChatLogOpen(true);
-  };
+  }, []);
 
   return (
-    // Frame TV preto ao redor do room — estilo Habbo
     <div className="w-full h-screen overflow-hidden bg-black relative font-sans select-none">
-      {/* Borda interna tipo frame de TV */}
       <div
         className="absolute inset-0 pointer-events-none z-40"
         style={{
           boxShadow: 'inset 0 0 0 4px #111, inset 0 0 0 6px #222, inset 0 0 24px rgba(0,0,0,0.7)',
         }}
       />
-      <RoomView users={users} map={officeMap} onTileClick={handleMoveUser} />
-      <ChatBubbles messages={messages} users={users} />
+      <MemoRoomView users={users} map={officeMap} onTileClick={handleMoveUser} />
+      <ChatBubbles messages={messages} users={users} cameraOffsetRef={cameraOffsetRef} />
       {isHistoryOpen && (
         <HistoryWindow
           onClose={() => setIsHistoryOpen(false)}
@@ -173,9 +189,9 @@ export default function HabboClient() {
       )}
       <BottomBar
         onSendMessage={handleSendMessage}
-        onToggleHistory={() => setIsHistoryOpen(!isHistoryOpen)}
-        onToggleConvocation={() => setIsConvocationOpen(!isConvocationOpen)}
-        onToggleChatLog={() => setIsChatLogOpen(!isChatLogOpen)}
+        onToggleHistory={() => setIsHistoryOpen(p => !p)}
+        onToggleConvocation={() => setIsConvocationOpen(p => !p)}
+        onToggleChatLog={() => setIsChatLogOpen(p => !p)}
         presentUsers={presentUsers}
       />
     </div>

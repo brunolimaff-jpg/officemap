@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChatMessage, User } from './HabboClient';
 
 interface ChatBubblesProps {
   messages: ChatMessage[];
   users: User[];
+  cameraOffsetRef?: React.RefObject<{ x: number; y: number }>;
 }
 
 interface ActiveBubble extends ChatMessage {
@@ -11,7 +12,6 @@ interface ActiveBubble extends ChatMessage {
   opacity: number;
 }
 
-// Cor de bubble única por userId — estilo Habbo
 const BUBBLE_COLORS: Record<string, { bg: string; text: string; border: string; nameColor: string }> = {
   '1':      { bg: '#FFFDE7', text: '#1A1A1A', border: '#F59E0B', nameColor: '#B45309' },
   carlos:   { bg: '#FEE2E2', text: '#1A1A1A', border: '#EF4444', nameColor: '#B91C1C' },
@@ -31,16 +31,18 @@ const TILE_W = 64;
 const TILE_H = 32;
 const AVATAR_HEAD_OFFSET = 95;
 
-export default function ChatBubbles({ messages, users }: ChatBubblesProps) {
+export default function ChatBubbles({ messages, users, cameraOffsetRef }: ChatBubblesProps) {
   const [activeBubbles, setActiveBubbles] = useState<ActiveBubble[]>([]);
-  const [winW, setWinW] = useState(1024);
-  const [winH, setWinH] = useState(768);
+  // Dimensões via ref para evitar re-render no resize
+  const winSizeRef = useRef({ w: typeof window !== 'undefined' ? window.innerWidth : 1024, h: typeof window !== 'undefined' ? window.innerHeight : 768 });
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    setWinW(window.innerWidth);
-    setWinH(window.innerHeight);
-    const onResize = () => { setWinW(window.innerWidth); setWinH(window.innerHeight); };
+    const onResize = () => {
+      winSizeRef.current = { w: window.innerWidth, h: window.innerHeight };
+      forceUpdate(n => n + 1);
+    };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
@@ -64,11 +66,14 @@ export default function ChatBubbles({ messages, users }: ChatBubblesProps) {
 
   const getAvatarScreenPos = (user: User) => {
     const mapHeight = 24;
+    const { w: winW, h: winH } = winSizeRef.current;
+    const camX = cameraOffsetRef?.current?.x ?? 0;
+    const camY = cameraOffsetRef?.current?.y ?? 0;
     const offsetX = winW / 2;
     const offsetY = winH / 2 - (mapHeight * TILE_H) / 2;
     return {
-      x: offsetX + (user.x - user.y) * (TILE_W / 2),
-      y: offsetY + (user.x + user.y) * (TILE_H / 2),
+      x: offsetX + (user.x - user.y) * (TILE_W / 2) + camX,
+      y: offsetY + (user.x + user.y) * (TILE_H / 2) + camY,
     };
   };
 
@@ -80,8 +85,8 @@ export default function ChatBubbles({ messages, users }: ChatBubblesProps) {
 
         const colors = BUBBLE_COLORS[bubble.userId] ?? DEFAULT_BUBBLE;
 
-        let xPos = winW / 2;
-        let yBase = winH - 200;
+        let xPos = winSizeRef.current.w / 2;
+        let yBase = winSizeRef.current.h - 200;
         if (user) {
           const screenPos = getAvatarScreenPos(user);
           xPos = screenPos.x;
@@ -104,7 +109,6 @@ export default function ChatBubbles({ messages, users }: ChatBubblesProps) {
               transition: 'top 0.4s ease-out, opacity 0.4s ease-out',
             }}
           >
-            {/* Bubble — estilo Habbo com sombra e borda dupla */}
             <div
               style={{
                 backgroundColor: colors.bg,
@@ -132,23 +136,18 @@ export default function ChatBubbles({ messages, users }: ChatBubblesProps) {
               )}
               <span>{text}</span>
             </div>
-
-            {/* Seta triangular — apontando para baixo (avatar) */}
             <div
               style={{
-                width: 0,
-                height: 0,
+                width: 0, height: 0,
                 borderLeft: '7px solid transparent',
                 borderRight: '7px solid transparent',
                 borderTop: `7px solid ${colors.border}`,
                 marginTop: '-1px',
               }}
             />
-            {/* Seta interna (preenchimento) */}
             <div
               style={{
-                width: 0,
-                height: 0,
+                width: 0, height: 0,
                 borderLeft: '5px solid transparent',
                 borderRight: '5px solid transparent',
                 borderTop: `5px solid ${colors.bg}`,
