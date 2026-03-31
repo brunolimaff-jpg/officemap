@@ -13,27 +13,24 @@ interface RoomViewProps {
 const TILE_W = 64;
 const TILE_H = 32;
 
-// ─── Figure codes Habbo Imager por especialista ────────────────────────────────
-// Formato: hd-SKIN-HAIRCOLOR.hr-HAIRSTYLE-COLOR.ch-SHIRT-COLOR.lg-PANTS-COLOR.sh-SHOES-COLOR
-// Cores mapeadas para personalidade de cada especialista
+// ─── Figure codes Habbo Imager por especialista ───────────────────────────────
 const HABBO_FIGURE: Record<string, string> = {
-  satya:      'hd-180-2.hr-100-61.ch-210-1341.lg-280-1341.sh-290-1341',  // Azul Microsoft
-  uncle_bob:  'hd-180-1.hr-3163-8.ch-230-1408.lg-280-1408.sh-290-62',   // Vermelho intenso, cabelo grisalho
-  karpathy:   'hd-180-7.hr-890-45.ch-210-1342.lg-280-1342.sh-290-62',   // Roxo/violeta
-  rogati:     'hd-180-10.hr-3049-45.ch-210-1057.lg-280-1057.sh-290-62', // Verde, cabelo escuro
-  osmani:     'hd-180-2.hr-100-45.ch-210-1408.lg-280-82.sh-290-62',     // Amarelo/âmbar
-  whittaker:  'hd-180-1.hr-3546-35.ch-210-1408.lg-280-1408.sh-290-62',  // Vermelho, ruivo
-  dixon:      'hd-180-1.hr-100-45.ch-210-1057.lg-280-82.sh-290-62',     // Ciano
-  dodds:      'hd-180-1.hr-3163-45.ch-210-1343.lg-280-1343.sh-290-62',  // Rosa/pink
-  rauch:      'hd-180-7.hr-100-45.ch-210-1408.lg-280-1408.sh-290-62',   // Preto total
-  rodrigues:  'hd-180-3.hr-3163-45.ch-210-1057.lg-280-1057.sh-290-62',  // Verde agro
-  kozyrkov:   'hd-180-1.hr-3546-35.ch-210-1342.lg-280-1342.sh-290-62',  // Lilás/violeta
-  cagan:      'hd-180-1.hr-3163-8.ch-210-1408.lg-280-82.sh-290-62',     // Laranja, cabelo grisalho
-  grove:      'hd-180-1.hr-3163-0.ch-210-82.lg-280-82.sh-290-62',       // Cinza sóbrio, cabelo branco
-  '1':        'hd-180-3.hr-890-45.ch-210-66.lg-270-82.sh-290-91',       // Bruno — neutro
+  satya:      'hd-180-2.hr-100-61.ch-210-1341.lg-280-1341.sh-290-1341',
+  uncle_bob:  'hd-180-1.hr-3163-8.ch-230-1408.lg-280-1408.sh-290-62',
+  karpathy:   'hd-180-7.hr-890-45.ch-210-1342.lg-280-1342.sh-290-62',
+  rogati:     'hd-180-10.hr-3049-45.ch-210-1057.lg-280-1057.sh-290-62',
+  osmani:     'hd-180-2.hr-100-45.ch-210-1408.lg-280-82.sh-290-62',
+  whittaker:  'hd-180-1.hr-3546-35.ch-210-1408.lg-280-1408.sh-290-62',
+  dixon:      'hd-180-1.hr-100-45.ch-210-1057.lg-280-82.sh-290-62',
+  dodds:      'hd-180-1.hr-3163-45.ch-210-1343.lg-280-1343.sh-290-62',
+  rauch:      'hd-180-7.hr-100-45.ch-210-1408.lg-280-1408.sh-290-62',
+  rodrigues:  'hd-180-3.hr-3163-45.ch-210-1057.lg-280-1057.sh-290-62',
+  kozyrkov:   'hd-180-1.hr-3546-35.ch-210-1342.lg-280-1342.sh-290-62',
+  cagan:      'hd-180-1.hr-3163-8.ch-210-1408.lg-280-82.sh-290-62',
+  grove:      'hd-180-1.hr-3163-0.ch-210-82.lg-280-82.sh-290-62',
+  '1':        'hd-180-3.hr-890-45.ch-210-66.lg-270-82.sh-290-91',
 };
 
-// Skin tone index do Habbo (1-6 aprox)
 const getTileColors = (val: number, x: number, y: number) => {
   const isLight = (x + y) % 2 === 0;
   switch (val) {
@@ -61,6 +58,16 @@ const getTileColors = (val: number, x: number, y: number) => {
   }
 };
 
+// ─── Z-ordering: fórmula isométrica precisa ───────────────────────────────────
+// Multiplicar por 200 garante espaço para todos os layers por tile:
+//   +0   = tile base
+//   +10  = floor edge
+//   +20  = furni (por zBonus 0-7, cada um +20)
+//   +200 = avatar (sempre acima dos móveis do mesmo tile)
+const tileZ    = (x: number, y: number) => (x + y) * 200;
+const furniZ   = (x: number, y: number, bonus: number) => (x + y) * 200 + 20 + bonus * 20;
+const avatarZ  = (x: number, y: number) => (x + y) * 200 + 180;
+
 const FURNI_Z_BONUS: Record<string, number> = {
   rug: 0, chair: 1, trash: 1, divider: 1, locker: 1,
   desk: 2, sofa: 2, couch: 2, coffee_table: 2, pool_table: 2,
@@ -70,7 +77,14 @@ const FURNI_Z_BONUS: Record<string, number> = {
   computer: 6, monitor_dual: 6, mug: 7,
 };
 
-// ─── Cityscape — memoizado para não re-renderizar em resize ──────────────────
+// ─── Móveis com sombra projetada isométrica ───────────────────────────────────
+// Tipos altos que projetam sombra no tile adjacente SE (sudeste)
+const CASTS_SHADOW = new Set([
+  'bookshelf', 'whiteboard', 'lamp', 'glass_wall', 'cabinet',
+  'fridge', 'locker', 'tv_screen', 'monitor_dual',
+]);
+
+// ─── Cityscape — memoizado ────────────────────────────────────────────────────
 const CityscapeSVG = memo(function CityscapeSVG() {
   return (
     <svg
@@ -145,14 +159,7 @@ const CityscapeSVG = memo(function CityscapeSVG() {
   );
 });
 
-// ─── Avatar com Habbo Imager + fallback SVG pixel art ────────────────────────
-//
-// ESTRATÉGIA:
-//   1. Tenta carregar PNG do Habbo Imager (sem auth, uso pessoal)
-//   2. onError → cai para o SVG pixel art já existente (sempre funcional)
-//   3. Idle breathing: translateY de -2px a cada 1.5s via CSS transition
-//   4. action=sit quando direction é "sentado" (definido por quem chama)
-//
+// ─── AVATAR_TRAITS (para fallback SVG) ───────────────────────────────────────
 const AVATAR_TRAITS: Record<string, { hair: string; skin: string; shirt: string; pants: string; hairStyle: number }> = {
   satya:      { hair: '#1A1A2E', skin: '#C68642', shirt: '#0078D4', pants: '#1E293B', hairStyle: 0 },
   uncle_bob:  { hair: '#D4D4D4', skin: '#F5C99A', shirt: '#DC2626', pants: '#1E293B', hairStyle: 1 },
@@ -252,7 +259,6 @@ function HabboAvatarSVGFallback({ id, direction }: { id: string; direction: numb
   const t = AVATAR_TRAITS[id] ?? AVATAR_TRAITS['1'];
   const facingLeft = direction >= 5 && direction <= 7;
   const facingBack = direction === 0 || direction === 1 || direction === 7;
-
   const P: Record<string, string> = {
     '.': 'transparent', ' ': 'transparent',
     'O': 'rgba(0,0,0,0.4)',
@@ -263,15 +269,12 @@ function HabboAvatarSVGFallback({ id, direction }: { id: string; direction: numb
     'K': '#1F2937', 'k': '#111827',
     'E': '#FFFFFF', 'B': '#111827'
   };
-
   const sprite = facingBack ? HABBO_ISO_SPRITES.back : HABBO_ISO_SPRITES.front;
-
   return (
     <div style={{ position: 'relative', width: 34, height: 60, transform: facingLeft ? 'scaleX(-1)' : undefined }}>
       <div style={{
         position: 'absolute', bottom: -4, left: '50%', transform: 'translateX(-50%)',
-        width: 18, height: 8, background: 'rgba(0,0,0,0.3)', borderRadius: '50%',
-        filter: 'blur(2px)'
+        width: 18, height: 8, background: 'rgba(0,0,0,0.3)', borderRadius: '50%', filter: 'blur(2px)'
       }} />
       <svg width="42" height="60" viewBox="0 0 21 30" fill="none" style={{ imageRendering: 'pixelated', display: 'block' }}>
         {sprite.map((row, ry) =>
@@ -285,85 +288,126 @@ function HabboAvatarSVGFallback({ id, direction }: { id: string; direction: numb
   );
 }
 
-// ─── HabboAvatar principal — Imager primeiro, SVG como fallback ──────────────
+// ─── HabboAvatar — Imager + idle breathing + fallback ────────────────────────
 function HabboAvatar({ id, direction, isMoving }: { id: string; direction: number; isMoving: boolean }) {
   const [imgFailed, setImgFailed] = useState(false);
-  // Idle breathing: translateY oscila entre 0 e -2px a cada 1.5s
   const [idleBob, setIdleBob] = useState(0);
 
   useEffect(() => {
-    // Só faz idle quando parado
     if (isMoving) return;
-    const interval = setInterval(() => {
-      setIdleBob(prev => (prev === 0 ? -2 : 0));
-    }, 1500);
-    return () => clearInterval(interval); // cleanup correto — fix P3
+    const interval = setInterval(() => setIdleBob(prev => (prev === 0 ? -2 : 0)), 1500);
+    return () => clearInterval(interval);
   }, [isMoving]);
 
-  // Quando começa a andar, reseta o bob
-  useEffect(() => {
-    if (isMoving) setIdleBob(0);
-  }, [isMoving]);
+  useEffect(() => { if (isMoving) setIdleBob(0); }, [isMoving]);
 
   const figure = HABBO_FIGURE[id] ?? HABBO_FIGURE['1'];
-  // action=wlk quando movendo, std quando parado
   const action = isMoving ? 'wlk' : 'std';
-  // Habbo Imager aceita direction 0-7 diretamente
   const habboDir = direction % 8;
   const imagerUrl =
     `https://www.habbo.com/habbo-imaging/avatarimage` +
-    `?figure=${figure}` +
-    `&direction=${habboDir}` +
-    `&head_direction=${habboDir}` +
-    `&gesture=std` +
-    `&action=${action}` +
-    `&size=b` +
-    `&headonly=0`;
+    `?figure=${figure}&direction=${habboDir}&head_direction=${habboDir}` +
+    `&gesture=std&action=${action}&size=b&headonly=0`;
 
-  const avatarStyle: React.CSSProperties = {
+  const bobStyle: React.CSSProperties = {
     transform: `translateY(${idleBob}px)`,
-    transition: idleBob !== 0 ? 'transform 0.7s ease-in-out' : 'transform 0.7s ease-in-out',
+    transition: 'transform 0.7s ease-in-out',
     display: 'block',
   };
+
+  // ─── Sombra radial no chão (presente em ambos os caminhos) ────────────────
+  const groundShadow = (
+    <div style={{
+      position: 'absolute', bottom: -2, left: '50%', transform: 'translateX(-50%)',
+      width: 28, height: 10,
+      background: 'radial-gradient(ellipse, rgba(0,0,0,0.38) 0%, transparent 70%)',
+      borderRadius: '100%',
+      pointerEvents: 'none',
+    }} />
+  );
 
   if (!imgFailed) {
     return (
       <div style={{ position: 'relative' }}>
-        {/* Sombra no chão */}
-        <div style={{
-          position: 'absolute', bottom: -2, left: '50%', transform: 'translateX(-50%)',
-          width: 24, height: 8, background: 'radial-gradient(ellipse, rgba(0,0,0,0.35) 0%, transparent 70%)',
-          borderRadius: '100%',
-        }} />
+        {groundShadow}
         <img
           src={imagerUrl}
           alt={id}
           width={64}
           height={110}
-          style={{
-            ...avatarStyle,
-            imageRendering: 'pixelated',
-          }}
+          style={{ ...bobStyle, imageRendering: 'pixelated' }}
           onError={() => setImgFailed(true)}
         />
       </div>
     );
   }
 
-  // Fallback SVG pixel art — sempre funcional, zero dependência externa
   return (
-    <div style={{ ...avatarStyle, position: 'relative' }}>
-      <HabboAvatarSVGFallback id={id} direction={direction} />
+    <div style={{ bobStyle, position: 'relative' } as React.CSSProperties}>
+      {groundShadow}
+      <div style={bobStyle}>
+        <HabboAvatarSVGFallback id={id} direction={direction} />
+      </div>
     </div>
   );
 }
 
-const AVATAR_COLORS: Record<string, string> = {
-  satya: '#0078D4', uncle_bob: '#DC2626', karpathy: '#7C3AED', rogati: '#059669',
-  osmani: '#F59E0B', whittaker: '#EF4444', dixon: '#06B6D4', dodds: '#EC4899',
-  rauch: '#171717', rodrigues: '#16A34A', kozyrkov: '#8B5CF6', cagan: '#F97316',
-  grove: '#64748B', '1': '#4A90E2',
-};
+// ─── Cursor isométrico de destino — losango pulsante ─────────────────────────
+// Injetado uma única vez no <head> via useEffect no RoomView
+const ISO_CURSOR_KEYFRAMES = `
+@keyframes iso-pulse {
+  0%   { opacity: 0.85; transform: scaleX(1)   scaleY(1);   }
+  50%  { opacity: 0.45; transform: scaleX(1.08) scaleY(1.08); }
+  100% { opacity: 0.85; transform: scaleX(1)   scaleY(1);   }
+}
+@keyframes iso-ring {
+  0%   { opacity: 0.6; transform: scaleX(1)    scaleY(1);    }
+  50%  { opacity: 0.1; transform: scaleX(1.3)  scaleY(1.3);  }
+  100% { opacity: 0;   transform: scaleX(1.5)  scaleY(1.5);  }
+}
+`;
+
+function IsoCursor({ pos }: { pos: { x: number; y: number } }) {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: pos.x - TILE_W / 2,
+        top: pos.y - TILE_H / 2,
+        width: TILE_W,
+        height: TILE_H,
+        pointerEvents: 'none',
+        zIndex: 99999,
+      }}
+    >
+      {/* Losango preenchido pulsante */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        clipPath: 'polygon(50% 2px, calc(100% - 2px) 50%, 50% calc(100% - 2px), 2px 50%)',
+        backgroundColor: 'rgba(74,158,255,0.30)',
+        animation: 'iso-pulse 1s ease-in-out infinite',
+      }} />
+      {/* Borda do losango */}
+      <div style={{
+        position: 'absolute',
+        inset: 1,
+        clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+        backgroundColor: 'transparent',
+        outline: '2px solid rgba(74,158,255,0.85)',
+        outlineOffset: '-2px',
+      }} />
+      {/* Anel expansivo — ondulação que some */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+        border: '2px solid rgba(74,158,255,0.6)',
+        animation: 'iso-ring 1s ease-out infinite',
+      }} />
+    </div>
+  );
+}
 
 export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const width = map[0].length;
@@ -374,13 +418,27 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const [dragMoved, setDragMoved] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
 
-  // ─── Walk animation + isMoving por usuário ─────────────────────────────────
+  // ─── Hover tile para cursor isométrico ────────────────────────────────────
+  const [hoverTile, setHoverTile] = useState<{ x: number; y: number } | null>(null);
+
+  // ─── Walk animation ───────────────────────────────────────────────────────
   const [movingUsers, setMovingUsers] = useState<Set<string>>(new Set());
   const prevPositions = useRef<Record<string, { x: number; y: number }>>({});
-  // Timers de walk — ref para cleanup correto
   const walkTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const [windowSize, setWindowSize] = useState({ width: 1024, height: 768 });
+
+  // Injeta keyframes do cursor uma única vez
+  useEffect(() => {
+    const id = 'iso-cursor-styles';
+    if (!document.getElementById(id)) {
+      const style = document.createElement('style');
+      style.id = id;
+      style.textContent = ISO_CURSOR_KEYFRAMES;
+      document.head.appendChild(style);
+    }
+  }, []);
+
   useEffect(() => {
     setWindowSize({ width: window.innerWidth, height: window.innerHeight });
     const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -388,38 +446,21 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Detecta movimento e seta isMoving com cleanup garantido
   useEffect(() => {
     users.forEach(u => {
       const prev = prevPositions.current[u.id];
       const moved = prev && (prev.x !== u.x || prev.y !== u.y);
       prevPositions.current[u.id] = { x: u.x, y: u.y };
-
       if (moved) {
-        // Marca como movendo
         setMovingUsers(prev => new Set(prev).add(u.id));
-
-        // Cancela timer anterior se existir
-        if (walkTimers.current[u.id]) {
-          clearTimeout(walkTimers.current[u.id]);
-        }
-
-        // Para de mover após 800ms (duração da animação de walk)
+        if (walkTimers.current[u.id]) clearTimeout(walkTimers.current[u.id]);
         walkTimers.current[u.id] = setTimeout(() => {
-          setMovingUsers(prev => {
-            const next = new Set(prev);
-            next.delete(u.id);
-            return next;
-          });
+          setMovingUsers(prev => { const n = new Set(prev); n.delete(u.id); return n; });
           delete walkTimers.current[u.id];
         }, 800);
       }
     });
-
-    // Cleanup ao desmontar — fix P3 definitivo
-    return () => {
-      Object.values(walkTimers.current).forEach(t => clearTimeout(t));
-    };
+    return () => { Object.values(walkTimers.current).forEach(t => clearTimeout(t)); };
   }, [users]);
 
   useEffect(() => {
@@ -458,7 +499,7 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     dragStart.current = { x: e.touches[0].clientX - cameraOffset.x, y: e.touches[0].clientY - cameraOffset.y };
   };
   const handleTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault(); // fix iOS scroll competindo com drag — P10
+    e.preventDefault();
     if (!isDragging) return;
     setDragMoved(true);
     setCameraOffset({ x: e.touches[0].clientX - dragStart.current.x, y: e.touches[0].clientY - dragStart.current.y });
@@ -467,8 +508,10 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const handleTileClick = (x: number, y: number) => { if (!dragMoved) onTileClick(x, y); };
 
   const isWalkable = (val: number) => [1, 2, 3, 6, 7].includes(val);
-  const isWall = (val: number) => [4, 5, 8, 9, 10].includes(val);
+  const isWall     = (val: number) => [4, 5, 8, 9, 10].includes(val);
+  const isFloor    = (v: number)   => [1, 2, 3, 6, 7].includes(v);
 
+  // ─── Render tiles ─────────────────────────────────────────────────────────
   const tiles: React.ReactNode[] = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -479,74 +522,54 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
       const pos = getScreenPos(x, y);
       const walkable = isWalkable(val);
       const wall = isWall(val);
+      const baseZ = tileZ(x, y);
 
       if (wall && val >= 8) {
         const isWindow = val === 9;
-        const hasWallLeft  = [8,9,10].includes(map[y]?.[x-1] ?? 0);
-        const hasWallRight = [8,9,10].includes(map[y]?.[x+1] ?? 0);
-        const hasWallUp    = [8,9,10].includes(map[y-1]?.[x] ?? 0);
-        const hasWallDown  = [8,9,10].includes(map[y+1]?.[x] ?? 0);
-
+        const hasWallUp   = [8,9,10].includes(map[y-1]?.[x] ?? 0);
+        const hasWallDown = [8,9,10].includes(map[y+1]?.[x] ?? 0);
         tiles.push(
-          <div
-            key={`tile-${x}-${y}`}
-            className="absolute pointer-events-none"
-            style={{
-              left: pos.x - TILE_W / 2,
-              top: pos.y - colors.h,
-              width: TILE_W,
-              height: TILE_H + colors.h,
-              zIndex: (x + y) * 10 - 1,
-            }}
-          >
+          <div key={`tile-${x}-${y}`} className="absolute pointer-events-none" style={{
+            left: pos.x - TILE_W / 2, top: pos.y - colors.h,
+            width: TILE_W, height: TILE_H + colors.h,
+            zIndex: baseZ - 1,
+          }}>
             <div className="absolute w-full h-[32px] top-0 left-0" style={{
               clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
               backgroundColor: colors.top,
             }} />
             {!hasWallUp && (
               <div className="absolute w-[32px] left-0" style={{
-                height: colors.h + 16,
-                top: 16,
+                height: colors.h + 16, top: 16,
                 clipPath: 'polygon(0% 0%, 100% 16px, 100% 100%, 0% calc(100% - 16px))',
-                backgroundColor: colors.left,
-                position: 'absolute',
+                backgroundColor: colors.left, position: 'absolute',
               }}>
-                {isWindow && (
-                  <>
-                    <div style={{ position:'absolute', left:2, top:'12%', width:12, height:colors.h*0.35, backgroundColor:'#334155', borderRadius:1, opacity:0.6 }} />
-                    <div style={{ position:'absolute', left:2, top:'55%', width:12, height:colors.h*0.32, backgroundColor:'#334155', borderRadius:1, opacity:0.6 }} />
-                    <div style={{ position:'absolute', left:3, top:'13%', width:10, height:colors.h*0.33, background:'linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%)', borderRadius:1, opacity:0.6 }} />
-                    <div style={{ position:'absolute', left:3, top:'56%', width:10, height:colors.h*0.3, background:'linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%)', borderRadius:1, opacity:0.5 }} />
-                    <div style={{ position:'absolute', left:4, top:'14%', width:3, height:colors.h*0.08, backgroundColor:'white', borderRadius:1, opacity:0.5 }} />
-                  </>
-                )}
+                {isWindow && (<>
+                  <div style={{ position:'absolute', left:2, top:'12%', width:12, height:colors.h*0.35, backgroundColor:'#334155', borderRadius:1, opacity:0.6 }} />
+                  <div style={{ position:'absolute', left:2, top:'55%', width:12, height:colors.h*0.32, backgroundColor:'#334155', borderRadius:1, opacity:0.6 }} />
+                  <div style={{ position:'absolute', left:3, top:'13%', width:10, height:colors.h*0.33, background:'linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%)', borderRadius:1, opacity:0.6 }} />
+                  <div style={{ position:'absolute', left:3, top:'56%', width:10, height:colors.h*0.3, background:'linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%)', borderRadius:1, opacity:0.5 }} />
+                  <div style={{ position:'absolute', left:4, top:'14%', width:3, height:colors.h*0.08, backgroundColor:'white', borderRadius:1, opacity:0.5 }} />
+                </>)}
                 <div style={{ position:'absolute', bottom:0, left:0, width:'100%', height:6, backgroundColor:'rgba(0,0,0,0.2)' }} />
               </div>
             )}
             {!hasWallDown && (
               <div className="absolute w-[32px] left-[32px]" style={{
-                height: colors.h + 16,
-                top: 16,
+                height: colors.h + 16, top: 16,
                 clipPath: 'polygon(0% 16px, 100% 0%, 100% calc(100% - 16px), 0% 100%)',
                 backgroundColor: colors.right,
               }}>
-                {isWindow && (
-                  <>
-                    <div style={{ position:'absolute', right:2, top:'12%', width:12, height:colors.h*0.35, backgroundColor:'#334155', borderRadius:1, opacity:0.5 }} />
-                    <div style={{ position:'absolute', right:2, top:'55%', width:12, height:colors.h*0.32, backgroundColor:'#334155', borderRadius:1, opacity:0.5 }} />
-                    <div style={{ position:'absolute', right:3, top:'13%', width:10, height:colors.h*0.33, background:'linear-gradient(135deg, #93C5FD 0%, #60A5FA 100%)', borderRadius:1, opacity:0.5 }} />
-                    <div style={{ position:'absolute', right:3, top:'56%', width:10, height:colors.h*0.3, background:'linear-gradient(135deg, #93C5FD 0%, #60A5FA 100%)', borderRadius:1, opacity:0.4 }} />
-                  </>
-                )}
+                {isWindow && (<>
+                  <div style={{ position:'absolute', right:2, top:'12%', width:12, height:colors.h*0.35, backgroundColor:'#334155', borderRadius:1, opacity:0.5 }} />
+                  <div style={{ position:'absolute', right:2, top:'55%', width:12, height:colors.h*0.32, backgroundColor:'#334155', borderRadius:1, opacity:0.5 }} />
+                  <div style={{ position:'absolute', right:3, top:'13%', width:10, height:colors.h*0.33, background:'linear-gradient(135deg, #93C5FD 0%, #60A5FA 100%)', borderRadius:1, opacity:0.5 }} />
+                  <div style={{ position:'absolute', right:3, top:'56%', width:10, height:colors.h*0.3, background:'linear-gradient(135deg, #93C5FD 0%, #60A5FA 100%)', borderRadius:1, opacity:0.4 }} />
+                </>)}
                 <div style={{ position:'absolute', bottom:0, right:0, width:'100%', height:6, backgroundColor:'rgba(0,0,0,0.15)' }} />
               </div>
             )}
-            <div className="absolute w-full" style={{
-              bottom: 0,
-              height: 8,
-              background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.22))',
-              pointerEvents: 'none',
-            }} />
+            <div className="absolute w-full" style={{ bottom:0, height:8, background:'linear-gradient(to bottom, transparent, rgba(0,0,0,0.22))', pointerEvents:'none' }} />
           </div>
         );
         continue;
@@ -556,14 +579,10 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         <div
           key={`tile-${x}-${y}`}
           onMouseUp={() => walkable && handleTileClick(x, y)}
+          onMouseEnter={() => walkable && setHoverTile({ x, y })}
+          onMouseLeave={() => setHoverTile(null)}
           className={`absolute ${walkable && !isDragging ? 'cursor-pointer' : ''} group`}
-          style={{
-            left: pos.x - TILE_W / 2,
-            top: pos.y - colors.h,
-            width: TILE_W,
-            height: TILE_H + colors.h,
-            zIndex: (x + y) * 10,
-          }}
+          style={{ left: pos.x - TILE_W / 2, top: pos.y - colors.h, width: TILE_W, height: TILE_H + colors.h, zIndex: baseZ }}
         >
           <div className="absolute w-full h-[32px] top-0 left-0" style={{
             clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
@@ -573,30 +592,22 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
               clipPath: 'polygon(50% 0%, 75% 25%, 50% 50%, 25% 25%)',
               backgroundColor: colors.accent,
             }} />
-            {walkable && (
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-75" style={{
-                clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-                backgroundColor: 'rgba(255,255,255,0.14)',
-              }} />
-            )}
           </div>
           {colors.h > 0 && (
             <div className="absolute w-[32px] left-0" style={{
-              height: colors.h + 16,
-              top: 16,
+              height: colors.h + 16, top: 16,
               clipPath: 'polygon(0% 0%, 100% 16px, 100% 100%, 0% calc(100% - 16px))',
               backgroundColor: colors.left,
             }} />
           )}
           {colors.h > 0 && (
             <div className="absolute w-[32px] left-[32px]" style={{
-              height: colors.h + 16,
-              top: 16,
+              height: colors.h + 16, top: 16,
               clipPath: 'polygon(0% 16px, 100% 0%, 100% calc(100% - 16px), 0% 100%)',
               backgroundColor: colors.right,
             }} />
           )}
-          {(val === 3) && (
+          {val === 3 && (
             <div className="absolute inset-0" style={{
               background: 'radial-gradient(ellipse at 50% 50%, rgba(100,180,255,0.06) 0%, rgba(0,0,50,0.12) 100%)',
               clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
@@ -607,14 +618,14 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     }
   }
 
+  // ─── Floor edges ──────────────────────────────────────────────────────────
   const floorEdges: React.ReactNode[] = [];
-  const isFloor = (v: number) => [1,2,3,6,7].includes(v);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const val = map[y][x];
       if (!isFloor(val)) continue;
       const pos = getScreenPos(x, y);
-      const z = (x + y) * 10 + 1;
+      const z = tileZ(x, y) + 10;
       const rightVal = map[y]?.[x+1] ?? 0;
       if (!isFloor(rightVal) && rightVal !== 4 && rightVal !== 5) {
         floorEdges.push(
@@ -642,10 +653,42 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     }
   }
 
+  // ─── Cursor de destino ────────────────────────────────────────────────────
+  const cursorNode = hoverTile && !isDragging
+    ? <IsoCursor key={`cursor-${hoverTile.x}-${hoverTile.y}`} pos={getScreenPos(hoverTile.x, hoverTile.y)} />
+    : null;
+
+  // ─── Sombras projetadas de móveis altos ───────────────────────────────────
+  // Projetada no tile adjacente SE — a luz vem do NW no padrão isométrico Habbo
+  const furniShadows: React.ReactNode[] = furniture
+    .filter(f => CASTS_SHADOW.has(f.type) && !isWall(map[f.y]?.[f.x] ?? 0))
+    .map(f => {
+      // Tile sombra = f.x + 1, f.y + 1 (diagonal SE)
+      const sx = f.x + 1;
+      const sy = f.y + 1;
+      if ((map[sy]?.[sx] ?? 0) === 0) return null;
+      const pos = getScreenPos(sx, sy);
+      return (
+        <div
+          key={`shadow-${f.id}`}
+          className="absolute pointer-events-none"
+          style={{
+            left: pos.x - TILE_W / 2,
+            top: pos.y - TILE_H / 2 - 4,
+            width: TILE_W,
+            height: TILE_H + 8,
+            // Gradiente diagonal que simula projeção isométrica NW → SE
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.08) 40%, transparent 70%)',
+            clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+            zIndex: tileZ(sx, sy) + 5,
+          }}
+        />
+      );
+    });
+
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {/* Barra superior */}
-      <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-center pointer-events-none" style={{ height: 32 }}>
+      <div className="absolute top-0 left-0 right-0 z-[99999] flex items-center justify-center pointer-events-none" style={{ height: 32 }}>
         <div className="px-4 py-1 font-pixel text-[9px] text-white tracking-wider" style={{
           background: 'linear-gradient(180deg, rgba(10,20,40,0.92) 0%, rgba(5,15,35,0.88) 100%)',
           border: '1px solid rgba(74,158,255,0.4)',
@@ -669,16 +712,15 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         <CityscapeSVG />
 
         <div className="absolute w-full pointer-events-none" style={{
-          bottom: 0,
-          height: '38%',
+          bottom: 0, height: '38%',
           background: 'linear-gradient(to bottom, transparent 0%, rgba(20,30,50,0.55) 100%)',
         }} />
 
         {tiles}
         {floorEdges}
+        {furniShadows}
 
         {furniture.map((f: Furniture) => {
-          // P11 — não renderiza furniture em tile de parede
           if (isWall(map[f.y]?.[f.x] ?? 0)) return null;
           const pos = getScreenPos(f.x, f.y);
           const bonus = FURNI_Z_BONUS[f.type] ?? 2;
@@ -700,7 +742,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         {users.map(user => {
           const pos = getScreenPos(user.x, user.y);
           const isMoving = movingUsers.has(user.id);
-
           return (
             <div
               key={user.id}
@@ -709,12 +750,10 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                 left: pos.x,
                 top: pos.y - 8,
                 transform: 'translate(-50%, -100%)',
-                // Z preciso: posição isométrica * 100 para espaço suficiente
-                zIndex: (user.x + user.y) * 100 + 8,
+                zIndex: avatarZ(user.x, user.y),
                 transition: 'left 0.3s ease-out, top 0.3s ease-out',
               }}
             >
-              {/* Nameplate estilo Habbo */}
               <div
                 className="mb-0.5 px-1.5 py-px font-pixel text-[8px] font-bold text-white whitespace-nowrap"
                 style={{
@@ -728,12 +767,13 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
               >
                 {user.name}
               </div>
-
-              {/* Avatar — Habbo Imager + idle breathing + fallback SVG */}
               <HabboAvatar id={user.id} direction={user.direction} isMoving={isMoving} />
             </div>
           );
         })}
+
+        {/* Cursor losango — renderizado por cima de tudo */}
+        {cursorNode}
       </div>
     </div>
   );
