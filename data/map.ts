@@ -63,3 +63,23 @@ export const officeMap = [
   // Linha 24 — void
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ];
+
+// ─── Sprint 3: Collision layer — tiles intranspossíveis por móveis fixos ────────
+// Formato: [col, row] — mesma grade que officeMap
+// BFS e isWalkable já bloqueiam tiles 4/5/8/9/10.
+// blockedTiles cobre tiles tipo 1/2/3/6/7 que tenham móveis grandes fixos.
+// Uso: passar ao isWalkable como segundo parâmetro (ver lib/isoEngine.ts v2)
+export const blockedTiles: Array<[number, number]> = [
+  // Paredes de divisória internas (meia-parede tipo 4) já bloqueiam via tile
+  // Móveis grandes no open space que obstruem passagem
+  [3,  12], [3,  13],  // mesa lounge lado esquerdo
+  [5,  12], [5,  13],  // mesa lounge lado direito
+  [9,   4], [9,   5],  // mesa boardroom centro
+  [12,  4], [12,  5],  // mesa boardroom lado
+  [19, 12], [19, 13],  // mesa open space centro
+  [22, 12], [22, 13],  // mesa open space direita
+  [25,  3], [25,  4],  // mesa diretoria esq
+  [28,  3], [28,  4],  // mesa diretoria dir
+  [4,  20], [5,  20],  // sofá lounge
+  [16, 20], [17, 20],  // balcão copa
+];

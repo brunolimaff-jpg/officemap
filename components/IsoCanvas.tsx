@@ -13,30 +13,40 @@ interface IsoCanvasProps {
   onTileClick: (x: number, y: number) => void;
   /** escala CSS aplicada ao canvas — adapta ao container */
   scale: number;
+  /** tiles destacados como zona de proximidade (WorkAdventure-style) */
+  proximityTiles?: Array<{ x: number; y: number }>;
 }
 
 // ─── Desenha um tile isométrico (losango + faces 3D) ──────────────────────────
 function drawTile(
   ctx: CanvasRenderingContext2D,
   px: number, py: number,
-  colors: { top: string; left: string; right: string; h: number },
+  colors: { top: string; left: string; right: string; h: number; border?: string },
+  highlight?: boolean,
 ) {
   const hw = TILE_W / 2;  // 32
   const hh = TILE_H / 2;  // 16
-  const { top, left, right, h } = colors;
+  const { top, left, right, h, border = 'rgba(0,0,0,0.10)' } = colors;
 
-  // Face superior (losango)
+  // Face superior (losango) — opcionalmente com glow de proximidade
   ctx.beginPath();
   ctx.moveTo(px,      py);
   ctx.lineTo(px + hw, py + hh);
   ctx.lineTo(px,      py + TILE_H);
   ctx.lineTo(px - hw, py + hh);
   ctx.closePath();
-  ctx.fillStyle = top;
+  if (highlight) {
+    // Pulso visual de zona de proximidade (WorkAdventure-style)
+    const grad = ctx.createRadialGradient(px, py + hh, 2, px, py + hh, hw);
+    grad.addColorStop(0, 'rgba(74,158,255,0.30)');
+    grad.addColorStop(1, top);
+    ctx.fillStyle = grad;
+  } else {
+    ctx.fillStyle = top;
+  }
   ctx.fill();
 
   if (h > 4) {
-    // Face esquerda
     ctx.beginPath();
     ctx.moveTo(px - hw, py + hh);
     ctx.lineTo(px,      py + TILE_H);
@@ -46,7 +56,6 @@ function drawTile(
     ctx.fillStyle = left;
     ctx.fill();
 
-    // Face direita
     ctx.beginPath();
     ctx.moveTo(px,      py + TILE_H);
     ctx.lineTo(px + hw, py + hh);
@@ -56,7 +65,6 @@ function drawTile(
     ctx.fillStyle = right;
     ctx.fill();
   } else {
-    // Piso fino: só linha de borda sutil
     ctx.beginPath();
     ctx.moveTo(px - hw, py + hh);
     ctx.lineTo(px,      py + TILE_H);
@@ -76,15 +84,15 @@ function drawTile(
     ctx.fill();
   }
 
-  // Borda sutil
+  // Borda — usa cor customizada por tipo (Sprint 1)
   ctx.beginPath();
   ctx.moveTo(px,      py);
   ctx.lineTo(px + hw, py + hh);
   ctx.lineTo(px,      py + TILE_H);
   ctx.lineTo(px - hw, py + hh);
   ctx.closePath();
-  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
-  ctx.lineWidth = 0.5;
+  ctx.strokeStyle = highlight ? 'rgba(74,158,255,0.45)' : border;
+  ctx.lineWidth = highlight ? 1.0 : 0.5;
   ctx.stroke();
 }
 
@@ -98,7 +106,6 @@ function drawFurniture(
   const hh  = TILE_H / 2;
   const color = furniture.color ?? '#64748B';
 
-  // Altura visual por tipo
   const heights: Record<string, number> = {
     desk: 18, chair: 14, monitor_dual: 22, computer: 20,
     table: 16, sofa: 20, bookshelf: 36, cabinet: 28,
@@ -110,7 +117,6 @@ function drawFurniture(
   };
   const fh = heights[furniture.type] ?? 16;
 
-  // Paleta de cores derivada da cor principal
   const darken = (hex: string, amt: number) => {
     const n = parseInt(hex.replace('#',''), 16);
     const r = Math.max(0, ((n >> 16) & 0xff) - amt);
@@ -123,7 +129,6 @@ function drawFurniture(
   const leftColor  = darken(color, 40);
   const rightColor = darken(color, 60);
 
-  // Face superior
   ctx.beginPath();
   ctx.moveTo(px,      py - fh);
   ctx.lineTo(px + hw, py - fh + hh);
@@ -133,7 +138,6 @@ function drawFurniture(
   ctx.fillStyle = topColor;
   ctx.fill();
 
-  // Face esquerda
   ctx.beginPath();
   ctx.moveTo(px - hw, py - fh + hh);
   ctx.lineTo(px,      py - fh + TILE_H);
@@ -143,7 +147,6 @@ function drawFurniture(
   ctx.fillStyle = leftColor;
   ctx.fill();
 
-  // Face direita
   ctx.beginPath();
   ctx.moveTo(px,      py - fh + TILE_H);
   ctx.lineTo(px + hw, py - fh + hh);
@@ -153,7 +156,6 @@ function drawFurniture(
   ctx.fillStyle = rightColor;
   ctx.fill();
 
-  // Borda
   ctx.strokeStyle = 'rgba(0,0,0,0.25)';
   ctx.lineWidth = 0.7;
   ctx.beginPath();
@@ -165,10 +167,12 @@ function drawFurniture(
   ctx.stroke();
 }
 
-export default function IsoCanvas({ map, furniture, onTileClick, scale }: IsoCanvasProps) {
+export default function IsoCanvas({ map, furniture, onTileClick, scale, proximityTiles = [] }: IsoCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // ─── Renderiza mapa + móveis ──────────────────────────────────────────────
+  // Converte proximityTiles em Set para lookup O(1)
+  const proximitySet = new Set(proximityTiles.map(t => `${t.x},${t.y}`));
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -177,7 +181,6 @@ export default function IsoCanvas({ map, furniture, onTileClick, scale }: IsoCan
 
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
-    // 1. Tiles — varredura diagonal para z-order correto (painter's algorithm)
     for (let diag = 0; diag < map.length + (map[0]?.length ?? 0); diag++) {
       for (let y = 0; y < map.length; y++) {
         const x = diag - y;
@@ -187,28 +190,25 @@ export default function IsoCanvas({ map, furniture, onTileClick, scale }: IsoCan
         const colors = TILE_COLORS[tileType];
         if (!colors) continue;
         const { px, py } = tileToScreen(x, y);
-        drawTile(ctx, px, py, colors);
+        const highlight = proximitySet.has(`${x},${y}`);
+        drawTile(ctx, px, py, colors, highlight);
       }
     }
 
-    // 2. Móveis — também em ordem diagonal
     const furnitureSorted = [...furniture].sort(
       (a, b) => (a.x + a.y) - (b.x + b.y)
     );
     for (const f of furnitureSorted) {
       const { px, py } = tileToScreen(f.x, f.y);
-      // py aponta para o centro-topo do tile; avatar senta no centro do tile
       drawFurniture(ctx, px, py + TILE_H, f);
     }
-  }, [map, furniture]);
+  }, [map, furniture, proximitySet]);
 
-  // ─── Clique → tile ────────────────────────────────────────────────────────
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect  = canvas.getBoundingClientRect();
-      // Ajusta para a escala CSS aplicada
       const rawX  = (e.clientX - rect.left)  / scale;
       const rawY  = (e.clientY - rect.top)   / scale;
       const { x, y } = screenToTile(rawX, rawY);
