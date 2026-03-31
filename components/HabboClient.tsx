@@ -8,6 +8,7 @@ import ChatLogWindow from './ChatLogWindow';
 import { specialists, specialistDeskPositions, meetingPositions } from '@/data/specialists';
 import { officeMap } from '@/data/map';
 import { useChatHistory } from '@/hooks/useChatHistory';
+import type { AvatarStatus } from '@/types';
 
 export interface ChatMessage {
   id: string;
@@ -23,6 +24,7 @@ export interface User {
   y: number;
   direction: number;
   figure: string;
+  avatarStatus: AvatarStatus;
 }
 
 export { officeMap };
@@ -37,7 +39,7 @@ const SPECIALIST_COLORS: Record<string, string> = {
 const WALKABLE = new Set([1, 2, 3, 6, 7]);
 
 const INITIAL_USERS: User[] = [
-  { id: '1', name: 'Bruno', x: 14, y: 13, direction: 4, figure: 'hr-115-42.hd-190-1.ch-210-66.lg-270-82.sh-290-91' },
+  { id: '1', name: 'Bruno', x: 14, y: 13, direction: 4, figure: 'hr-115-42.hd-190-1.ch-210-66.lg-270-82.sh-290-91', avatarStatus: 'walking' },
   ...specialists.map((s, i) => {
     const pos = specialistDeskPositions[s.id];
     return {
@@ -47,34 +49,52 @@ const INITIAL_USERS: User[] = [
       y: pos.y,
       direction: pos.direction,
       figure: `hr-893-45.hd-180-${(i % 5) + 1}.ch-210-66.lg-270-82.sh-290-91`,
+      avatarStatus: 'idle' as AvatarStatus,
     };
   }),
 ];
 
 // ─── RoomView isolado com memo — nunca re-renderiza por mensagem/janela ────────
 const MemoRoomView = memo(RoomView, (prev, next) => {
-  // Re-renderiza apenas se users ou map mudarem de verdade
   if (prev.map !== next.map) return false;
   if (prev.onTileClick !== next.onTileClick) return false;
   if (prev.users.length !== next.users.length) return false;
   for (let i = 0; i < prev.users.length; i++) {
     const p = prev.users[i], n = next.users[i];
-    if (p.x !== n.x || p.y !== n.y || p.direction !== n.direction || p.id !== n.id) return false;
+    if (
+      p.x !== n.x ||
+      p.y !== n.y ||
+      p.direction !== n.direction ||
+      p.id !== n.id ||
+      p.avatarStatus !== n.avatarStatus
+    ) return false;
   }
-  return true; // props iguais → não re-renderiza
+  return true;
 });
 
 export default function HabboClient() {
-  const [isHistoryOpen, setIsHistoryOpen]       = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen]         = useState(false);
   const [isConvocationOpen, setIsConvocationOpen] = useState(false);
-  const [isChatLogOpen, setIsChatLogOpen]       = useState(false);
-  const [messages, setMessages]                 = useState<ChatMessage[]>([]);
-  const [users, setUsers]                       = useState<User[]>(INITIAL_USERS);
+  const [isChatLogOpen, setIsChatLogOpen]         = useState(false);
+  const [messages, setMessages]                   = useState<ChatMessage[]>([]);
+  const [users, setUsers]                         = useState<User[]>(INITIAL_USERS);
 
   const { sessions, currentSessionId, saveSession, updateCurrentSession, loadSession, startNewSession } = useChatHistory();
 
-  // ─── cameraOffsetRef compartilhado com ChatBubbles para posição correta ───────
   const cameraOffsetRef = useRef({ x: 0, y: 0 });
+
+  // ─── Helpers de status ────────────────────────────────────────────────────────
+  const setAvatarStatus = useCallback((userId: string, status: AvatarStatus) => {
+    setUsers(prev =>
+      prev.map(u => u.id === userId ? { ...u, avatarStatus: status } : u)
+    );
+  }, []);
+
+  const resetSpecialistsToIdle = useCallback(() => {
+    setUsers(prev =>
+      prev.map(u => u.id !== '1' ? { ...u, avatarStatus: 'idle' } : u)
+    );
+  }, []);
 
   const presentUsers = users.map(u => ({
     id: u.id,
@@ -89,6 +109,22 @@ export default function HabboClient() {
       text,
       timestamp: Date.now(),
     };
+
+    // Simula especialista "falando" ao responder — usa o primeiro especialista
+    // como ativo, ou todos se for convocação em grupo
+    const activeSpecialists = users.filter(u => u.id !== '1' && u.avatarStatus === 'summoned');
+    const targets = activeSpecialists.length > 0 ? activeSpecialists : [users[1]].filter(Boolean);
+
+    targets.forEach(u => setAvatarStatus(u.id, 'speaking'));
+
+    // Restaura para idle após tempo proporcional ao texto (~50ms/char, mín 2s, máx 8s)
+    const delay = Math.min(Math.max(text.length * 50, 2000), 8000);
+    setTimeout(() => {
+      targets.forEach(u =>
+        setUsers(prev => prev.map(p => p.id === u.id ? { ...p, avatarStatus: u.avatarStatus === 'speaking' ? 'idle' : p.avatarStatus } : p))
+      );
+    }, delay);
+
     setMessages(prev => {
       const newMessages = [...prev, newMessage];
       if (!currentSessionId) {
@@ -98,7 +134,7 @@ export default function HabboClient() {
       }
       return newMessages;
     });
-  }, [currentSessionId, saveSession, updateCurrentSession]);
+  }, [currentSessionId, saveSession, updateCurrentSession, users, setAvatarStatus]);
 
   const handleMoveUser = useCallback((x: number, y: number) => {
     const tileType = officeMap[y]?.[x];
@@ -115,7 +151,7 @@ export default function HabboClient() {
         else if (x > u.x && y < u.y) dir = 1;
         else if (x < u.x && y > u.y) dir = 5;
         else if (x < u.x && y < u.y) dir = 7;
-        return { ...u, x, y, direction: dir };
+        return { ...u, x, y, direction: dir, avatarStatus: 'walking' };
       })
     );
   }, []);
@@ -130,7 +166,8 @@ export default function HabboClient() {
     startNewSession();
     setMessages([]);
     setIsHistoryOpen(false);
-  }, [startNewSession]);
+    resetSpecialistsToIdle();
+  }, [startNewSession, resetSpecialistsToIdle]);
 
   const handleSummon = useCallback((selectedIds: string[]) => {
     setUsers(prev => {
@@ -138,9 +175,10 @@ export default function HabboClient() {
         const index = selectedIds.indexOf(u.id);
         if (index !== -1) {
           const pos = meetingPositions[index % meetingPositions.length];
-          return { ...u, x: pos.x, y: pos.y, direction: pos.dir };
+          return { ...u, x: pos.x, y: pos.y, direction: pos.dir, avatarStatus: 'summoned' as AvatarStatus };
         }
-        return u;
+        // Especialistas não convocados voltam a ficar idle
+        return u.id !== '1' ? { ...u, avatarStatus: 'idle' as AvatarStatus } : u;
       });
       return withSpecialists.map(u =>
         u.id === '1' ? { ...u, x: 14, y: 10, direction: 0 } : u
