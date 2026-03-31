@@ -30,6 +30,8 @@ export interface Specialist {
   tone: string;
   color: string;
   realPerson: string;
+  /** Figure string única para o Habbo Imager — ex: 'hd-180-2.hr-3163-61.ch-3030-110...' */
+  figure?: string;
 }
 
 export type FurnitureType =

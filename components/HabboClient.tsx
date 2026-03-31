@@ -37,6 +37,23 @@ const SPECIALIST_COLORS: Record<string, string> = {
   grove: '#64748B', '1': '#4A90E2',
 };
 
+// Figure fallback por especialista — usado se s.figure não estiver definido
+const SPECIALIST_FIGURE_FALLBACK: Record<string, string> = {
+  satya:     'hd-180-2.hr-3163-61.ch-3030-110.lg-3023-110.sh-906-110.cc-3007-110',
+  uncle_bob: 'hd-180-10.hr-890-61.ch-3030-62.lg-3023-92.sh-906-92.ea-1406-62',
+  karpathy:  'hd-180-1.hr-3163-92.ch-3114-113.lg-3023-92.sh-3114-92',
+  rogati:    'hd-600-2.hr-3012-33.ch-3030-78.lg-3023-78.sh-906-78',
+  osmani:    'hd-180-3.hr-3163-30.ch-3030-82.lg-3023-82.sh-906-82.ea-3168-82',
+  whittaker: 'hd-180-4.hr-3163-16.ch-3030-62.lg-3023-62.sh-906-62.cc-3007-62',
+  dixon:     'hd-180-5.hr-3163-61.ch-3030-110.lg-3023-110.sh-906-110.cc-3007-110',
+  dodds:     'hd-180-1.hr-3012-16.ch-3114-75.lg-3023-90.sh-3114-75',
+  rauch:     'hd-180-1.hr-3163-16.ch-3114-16.lg-3023-16.sh-3114-16',
+  rodrigues: 'hd-180-7.hr-890-16.ch-3030-78.lg-3023-78.sh-906-78.cc-3007-78',
+  kozyrkov:  'hd-600-1.hr-3012-30.ch-3030-113.lg-3023-113.sh-906-113.ea-1406-82',
+  cagan:     'hd-180-8.hr-890-33.ch-3030-82.lg-3023-82.sh-906-82',
+  grove:     'hd-180-10.hr-890-61.ch-3030-92.lg-3023-92.sh-906-92.cc-3007-92.ea-1406-61',
+};
+
 const STEP_MS = 160;
 
 const INITIAL_USERS: User[] = [
@@ -46,7 +63,7 @@ const INITIAL_USERS: User[] = [
     figure: 'hr-115-42.hd-190-1.ch-210-66.lg-270-82.sh-290-91',
     avatarStatus: 'idle',
   },
-  ...specialists.map((s, i) => {
+  ...specialists.map((s) => {
     const pos = specialistDeskPositions[s.id];
     return {
       id: s.id,
@@ -54,7 +71,8 @@ const INITIAL_USERS: User[] = [
       x: pos.x,
       y: pos.y,
       direction: pos.direction,
-      figure: `hr-893-45.hd-180-${(i % 5) + 1}.ch-210-66.lg-270-82.sh-290-91`,
+      // Usa figure única do especialista; cai no fallback se não definida
+      figure: s.figure ?? SPECIALIST_FIGURE_FALLBACK[s.id] ?? 'hd-180-1.hr-3163-61.ch-3030-66.lg-3023-66.sh-906-66',
       avatarStatus: 'idle' as AvatarStatus,
     };
   }),
