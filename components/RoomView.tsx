@@ -2,8 +2,10 @@
 import { useEffect, useRef, useState } from 'react';
 import IsoCanvas from './IsoCanvas';
 import HabboAvatar from './HabboAvatar';
+import FurniSprite from './FurniSprite';
 import TileBackground from './TileBackground';
 import { CANVAS_W, CANVAS_H, tileToScreen } from '@/lib/isoEngine';
+import { officeFurniture } from '@/data/furniture';
 import type { User } from '@/components/HabboClient';
 
 interface RoomViewProps {
@@ -33,7 +35,6 @@ export default function RoomView({
     return () => ro.disconnect();
   }, []);
 
-  const scaledW = Math.round(CANVAS_W * scale);
   const scaledH = Math.round(CANVAS_H * scale);
 
   return (
@@ -53,7 +54,7 @@ export default function RoomView({
           height: CANVAS_H,
         }}
       >
-        {/* Camada 0: tiles reais da spritesheet */}
+        {/* Camada 0: tiles da spritesheet */}
         <TileBackground width={CANVAS_W} height={CANVAS_H} />
 
         {/* Camada 1: malha isométrica clicável */}
@@ -64,7 +65,25 @@ export default function RoomView({
           proximityTiles={proximityTiles}
         />
 
-        {/* Camada 2: avatares */}
+        {/* Camada 2: móveis — z-order entre chão e avatares */}
+        {officeFurniture.map((f) => {
+          const { px, py } = tileToScreen(f.tileX, f.tileY);
+          return (
+            <FurniSprite
+              key={f.id}
+              type={f.type}
+              pos={{ x: px, y: py }}
+              color={f.color}
+              direction={f.direction}
+              tileX={f.tileX}
+              tileY={f.tileY}
+              zBonus={f.zBonus}
+              label={f.label}
+            />
+          );
+        })}
+
+        {/* Camada 3: avatares — sempre acima dos móveis */}
         {users.map((user) => {
           const { px, py } = tileToScreen(user.x, user.y);
           return (
