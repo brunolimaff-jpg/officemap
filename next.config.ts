@@ -9,7 +9,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Allow access to remote image placeholder.
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -17,7 +16,7 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'picsum.photos',
         port: '',
-        pathname: '/**', // This allows any path under the hostname
+        pathname: '/**',
       },
       {
         protocol: 'https',
@@ -25,11 +24,22 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      // Sulake CDN usado pelo Habbo Imager
+      {
+        protocol: 'https',
+        hostname: '*.habbo.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.sulake.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   webpack: (config, {dev}) => {
-    // HMR is disabled in AI Studio via DISABLE_HMR env var.
-    // Do not modify file watching is disabled to prevent flickering during agent edits.
     if (dev && process.env.DISABLE_HMR === 'true') {
       config.watchOptions = {
         ignored: /.*/,

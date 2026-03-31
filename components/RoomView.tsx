@@ -1,7 +1,8 @@
 'use client';
-import React, { useRef, useCallback, useEffect, useState, memo } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import IsoCanvas from './IsoCanvas';
 import FurniSprite from './FurniSprite';
+import { AvatarSprite } from './AvatarSprite';
 import { tileToScreen, TILE_H, CANVAS_W, CANVAS_H, zOrder } from '@/lib/isoEngine';
 import { furniture } from '@/data/specialists';
 import type { User } from './HabboClient';
@@ -12,6 +13,13 @@ interface RoomViewProps {
   map: number[][];
   onTileClick: (x: number, y: number) => void;
 }
+
+const SPECIALIST_COLORS: Record<string, string> = {
+  satya: '#0078D4', uncle_bob: '#DC2626', karpathy: '#7C3AED', rogati: '#059669',
+  osmani: '#F59E0B', whittaker: '#EF4444', dixon: '#06B6D4', dodds: '#EC4899',
+  rauch: '#171717', rodrigues: '#16A34A', kozyrkov: '#8B5CF6', cagan: '#F97316',
+  grove: '#64748B', '1': '#4A90E2',
+};
 
 function getHabboGestureParams(status: AvatarStatus): string {
   switch (status) {
@@ -40,8 +48,41 @@ function StatusBadge({ status }: { status: AvatarStatus }) {
   );
 }
 
-// ─── Mobília pré-calculada (posições não mudam em runtime) ────────────────────
-// Calculamos fora do componente para evitar recalcular a cada render.
+// Avatares com fallback SVG se o Habbo Imager falhar
+function HabboAvatar({
+  user, avatarH, habboDir, gesture,
+}: {
+  user: User;
+  avatarH: number;
+  habboDir: number;
+  gesture: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  const proxySrc =
+    `/api/avatar?figure=${encodeURIComponent(user.figure)}` +
+    `&direction=${habboDir}&head_direction=${habboDir}${gesture}&size=m`;
+
+  if (failed) {
+    return (
+      <AvatarSprite
+        color={SPECIALIST_COLORS[user.id] ?? '#64748B'}
+        role={undefined}
+      />
+    );
+  }
+
+  return (
+    <img
+      src={proxySrc}
+      alt={user.name}
+      style={{ height: avatarH, width: 'auto', imageRendering: 'pixelated' }}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+// Móveis pré-calculados fora do componente
 const furniWithPos = furniture.map(f => {
   const { px, py } = tileToScreen(f.x, f.y);
   return { ...f, pos: { x: px, y: py + TILE_H } };
@@ -68,14 +109,11 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const avatarStyle = useCallback(
     (user: User) => {
       const { px, py } = tileToScreen(user.x, user.y);
-      const footX = px;
-      const footY = py + TILE_H;
-      const isWalking = user.avatarStatus === 'walking';
       return {
-        left:   footX * scale,
-        top:    footY * scale,
+        left:   px * scale,
+        top:    (py + TILE_H) * scale,
         zIndex: zOrder(user.x, user.y) + 200,
-        transition: isWalking
+        transition: user.avatarStatus === 'walking'
           ? 'left 140ms linear, top 140ms linear'
           : 'left 60ms ease-out, top 60ms ease-out',
       };
@@ -105,20 +143,16 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         </div>
       </div>
 
-      {/* Container do canvas + sprites + avatares */}
+      {/* Container canvas + sprites + avatares */}
       <div
         ref={containerRef}
         className="absolute inset-0 overflow-hidden"
         style={{ paddingTop: 32 }}
       >
-        {/* Camada 1 — canvas isométrico: apenas tiles */}
-        <IsoCanvas
-          map={map}
-          onTileClick={onTileClick}
-          scale={scale}
-        />
+        {/* Camada 1 — tiles */}
+        <IsoCanvas map={map} onTileClick={onTileClick} scale={scale} />
 
-        {/* Camada 2 — móveis SVG: posicionados como HTML sobre o canvas */}
+        {/* Camada 2 — móveis */}
         <div
           className="absolute top-0 left-0 pointer-events-none"
           style={{
@@ -142,15 +176,12 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
           ))}
         </div>
 
-        {/* Camada 3 — avatares */}
+        {/* Camada 3 — avatares com fallback SVG */}
         {users.map((user) => {
           const st       = avatarStyle(user);
           const habboDir = user.direction % 8;
           const gesture  = getHabboGestureParams(user.avatarStatus);
-          const avatarSrc =
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${user.figure}` +
-            `&direction=${habboDir}&head_direction=${habboDir}${gesture}&size=m`;
-          const avatarH = Math.round(78 * scale);
+          const avatarH  = Math.round(78 * scale);
 
           return (
             <div
@@ -171,10 +202,11 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
               >
                 {user.name}
               </div>
-              <img
-                src={avatarSrc}
-                alt={user.name}
-                style={{ height: avatarH, width: 'auto', imageRendering: 'pixelated' }}
+              <HabboAvatar
+                user={user}
+                avatarH={avatarH}
+                habboDir={habboDir}
+                gesture={gesture}
               />
             </div>
           );
