@@ -1,16 +1,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // ISO ENGINE — Single source of truth para geometria isométrica
-// Padrão Habbo: losango 64×32px, profundidade 3D 8px
+// Padrão Habbo Corp: losango 64×32px, paredes sólidas brancas, piso claro
 // ═══════════════════════════════════════════════════════════════════════════
 
-export const TILE_W  = 64;   // largura do losango
-export const TILE_H  = 32;   // altura do losango
-export const TILE_D  = 8;    // espessura 3D lateral
+export const TILE_W  = 64;
+export const TILE_H  = 32;
+export const TILE_D  = 8;
 export const MAP_COLS = 32;
 export const MAP_ROWS = 25;
 
-// ORIGIN_Y elevado para 180 — garante que paredes h:96 na linha 1
-// nunca saiam acima de y=0 (margem = 180 - 96 = 84px)
 export const ORIGIN_X = (MAP_COLS * TILE_W) / 2;   // 1024
 export const ORIGIN_Y = 180;
 
@@ -41,7 +39,20 @@ export function zOrder(x: number, y: number): number {
 export const CANVAS_W = MAP_COLS * TILE_W + 200;           // 2248
 export const CANVAS_H = (MAP_ROWS + MAP_COLS) * (TILE_H / 2) + ORIGIN_Y + 200;
 
-// ─── Paleta Habbo-style — azul marinho profundo, bordas suaves ───────────────
+// ─── Paleta Habbo Corp ────────────────────────────────────────────────────────
+// Baseada no escritório modelo: piso azul-acinzentado claro, paredes brancas
+// sólidas, divisórias vidro translúcido, corredor cinza médio.
+//
+// tile 1  = piso principal (carpete azul-acinzentado claro)
+// tile 2  = piso boardroom (carpete azul royal ligeiramente mais escuro)
+// tile 3  = corredor (cinza claro)
+// tile 4  = parede sólida alta (bloco branco opaco, h=96)
+// tile 5  = meia-parede / divisória baixa (h=48)
+// tile 6  = piso lounge / madeira clara
+// tile 7  = piso alternativo (carpete cinza)
+// tile 8  = parede interna (bloco cinza médio, h=80)
+// tile 9  = parede de janela (bloco branco com janela cityscape, h=80)
+// tile 10 = coluna / pilar (bloco escuro alto, h=96)
 export const TILE_COLORS: Record<number, {
   top: string;
   left: string;
@@ -49,16 +60,18 @@ export const TILE_COLORS: Record<number, {
   h: number;
   border?: string;
 }> = {
-  1: { top: '#1a2e52', left: '#142244', right: '#0e1a35', h: 4,  border: 'rgba(74,158,255,0.12)' },
-  2: { top: '#1e3460', left: '#172850', right: '#10203e', h: 4,  border: 'rgba(74,158,255,0.18)' },
-  3: { top: '#0f1e3e', left: '#0a1530', right: '#060e20', h: 4,  border: 'rgba(30,100,200,0.20)' },
-  4: { top: '#6b7e95', left: '#4a5a70', right: '#344258', h: 48, border: 'rgba(0,0,0,0.15)' },
-  5: { top: '#556070', left: '#3d4d5e', right: '#2c3a4a', h: 16, border: 'rgba(0,0,0,0.12)' },
-  6: { top: '#3d2a14', left: '#2c1e0e', right: '#1e1409', h: 4,  border: 'rgba(180,100,30,0.20)' },
-  7: { top: '#2a3040', left: '#1e2535', right: '#141a28', h: 4,  border: 'rgba(74,130,200,0.15)' },
-  8: { top: '#2d3748', left: '#1a2535', right: '#0f1825', h: 80, border: 'rgba(0,0,0,0.20)' },
-  9: { top: '#1a3a6e', left: '#122c56', right: '#0b1e3e', h: 80, border: 'rgba(74,158,255,0.25)' },
-  10:{ top: '#1a2535', left: '#0f1825', right: '#080f18', h: 96, border: 'rgba(0,0,0,0.25)' },
+  // ── Pisos ─────────────────────────────────────────────────────────────────
+  1: { top: '#7B9EB8', left: '#5A7E9E', right: '#4A6E8E', h: 4,  border: 'rgba(255,255,255,0.18)' },
+  2: { top: '#6B8FAA', left: '#4A6E8E', right: '#3A5E7E', h: 4,  border: 'rgba(255,255,255,0.14)' },
+  3: { top: '#9BABB8', left: '#7A8E9E', right: '#6A7E8E', h: 4,  border: 'rgba(255,255,255,0.20)' },
+  6: { top: '#C4A882', left: '#A08060', right: '#8A6A48', h: 4,  border: 'rgba(255,255,255,0.15)' },
+  7: { top: '#8A9EAA', left: '#6A7E8E', right: '#5A6E7E', h: 4,  border: 'rgba(255,255,255,0.16)' },
+  // ── Paredes e divisórias ──────────────────────────────────────────────────
+  4: { top: '#E8E8E8', left: '#B8B8B8', right: '#D0D0D0', h: 96, border: 'rgba(0,0,0,0.12)' },
+  5: { top: '#D8DCE0', left: '#A8B0B8', right: '#C0C8D0', h: 48, border: 'rgba(0,0,0,0.10)' },
+  8: { top: '#CCCCCC', left: '#A0A0A0', right: '#B8B8B8', h: 80, border: 'rgba(0,0,0,0.12)' },
+  9: { top: '#E0E4E8', left: '#B0B8C0', right: '#C8D0D8', h: 80, border: 'rgba(0,0,0,0.10)' },
+  10:{ top: '#C8C8C8', left: '#909090', right: '#A8A8A8', h: 96, border: 'rgba(0,0,0,0.15)' },
 };
 
 // ─── Tiles onde avatar pode caminhar ─────────────────────────────────────────
