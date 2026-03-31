@@ -8,7 +8,6 @@ interface RoomViewProps {
   users: User[];
   map: number[][];
   onTileClick: (x: number, y: number) => void;
-  cameraOffsetRef?: React.MutableRefObject<{ x: number; y: number }>;
 }
 
 const TILE_W = 64;
@@ -61,7 +60,6 @@ const getTileColors = (val: number, x: number, y: number) => {
 };
 
 const tileZ   = (x: number, y: number) => (x + y) * 200;
-const furniZ  = (x: number, y: number, bonus: number) => (x + y) * 200 + 20 + bonus * 20;
 const avatarZ = (x: number, y: number) => (x + y) * 200 + 180;
 
 const FURNI_Z_BONUS: Record<string, number> = {
@@ -326,7 +324,6 @@ const ISO_CURSOR_KEYFRAMES = `
 }
 `;
 
-// ─── IsoCursor imperativo — movido via DOM, zero re-render React ──────────────
 const IsoCursorImperative = memo(function IsoCursorImperative(
   { elRef }: { elRef: React.RefObject<HTMLDivElement | null> }
 ) {
@@ -372,7 +369,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const mapH = map.length;
   const mapW = map[0].length;
 
-  // ─── PERF CORE: cameraOffset como ref — drag não dispara nenhum setState ─────
   const cameraOffsetRef = useRef({ x: 0, y: 0 });
   const sceneRef        = useRef<HTMLDivElement>(null);
   const cursorRef       = useRef<HTMLDivElement>(null);
@@ -381,13 +377,10 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const dragMovedRef  = useRef(false);
   const dragStart     = useRef({ x: 0, y: 0 });
 
-  // Usado apenas para disparar re-render dos avatares ao soltar o drag
   const [, forceAvatarUpdate] = useState(0);
-
   const [movingUsers, setMovingUsers] = useState<Set<string>>(new Set());
   const prevPositions = useRef<Record<string, { x: number; y: number }>>({});
   const walkTimers    = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-
   const [windowSize, setWindowSize] = useState({ width: 1024, height: 768 });
 
   useEffect(() => {
@@ -426,22 +419,20 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const offsetX = windowSize.width  / 2;
   const offsetY = windowSize.height / 2 - (mapH * TILE_H) / 2;
 
-  // ─── Aplica pan via DOM direto — zero React re-render durante drag ────────────
   const applySceneTransform = useCallback(() => {
     if (!sceneRef.current) return;
     const { x, y } = cameraOffsetRef.current;
     sceneRef.current.style.transform = `translate(${x}px, ${y}px)`;
   }, []);
 
-  // getScreenPos lê do ref — estável, não depende de state
-  const getScreenPos = useCallback((x: number, y: number) => ({
-    x: offsetX + (x - y) * (TILE_W / 2) + cameraOffsetRef.current.x,
-    y: offsetY + (x + y) * (TILE_H / 2) + cameraOffsetRef.current.y,
+  // ─── CORREÇÃO: avatares usam coordenadas locais da scene — SEM cameraOffset ───
+  // A scene inteira já translada via transform. Somar o offset aqui causava
+  // double-offset: avatares se moviam 2x ao arrastar o mapa.
+  const getLocalPos = useCallback((x: number, y: number) => ({
+    x: offsetX + (x - y) * (TILE_W / 2),
+    y: offsetY + (x + y) * (TILE_H / 2),
   }), [offsetX, offsetY]);
 
-  // ─── Tiles: calculados sem cameraOffset — apenas posição base no mapa ─────────
-  // A translação da câmera é aplicada no container pai (sceneRef) via transform.
-  // Tiles só recalculam quando o mapa ou windowSize mudam.
   const tiles = useMemo(() => {
     const result: React.ReactNode[] = [];
     for (let y = 0; y < mapH; y++) {
@@ -579,13 +570,10 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     return result;
   }, [map, offsetX, offsetY, mapH, mapW]);
 
-  // ─── furniNodes: pos removida — FurniSprite recebe apenas primitivos estáveis
-  // cameraOffset não está mais nas deps → nunca recalcula durante drag
   const furniNodes = useMemo(() => {
     return furniture.map((f: Furniture) => {
       if (_isWall(map[f.y]?.[f.x] ?? 0)) return null;
       const bonus = FURNI_Z_BONUS[f.type] ?? 2;
-      // px/py base sem cameraOffset — o container pai (sceneRef) carrega o offset
       const px = offsetX + (f.x - f.y) * (TILE_W/2);
       const py = offsetY + (f.x + f.y) * (TILE_H/2);
       return (
@@ -624,7 +612,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
       });
   }, [map, offsetX, offsetY]);
 
-  // ─── Drag handlers — escrevem no ref, chamam applySceneTransform via DOM ──────
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     isDraggingRef.current = true;
     dragMovedRef.current  = false;
@@ -659,7 +646,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     forceAvatarUpdate(n => n + 1);
   }, []);
 
-  // ─── mousemove global — só durante drag, via ref, zero setState ───────────────
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       if (!isDraggingRef.current) return;
@@ -673,7 +659,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     const onUp = () => {
       if (!isDraggingRef.current) return;
       isDraggingRef.current = false;
-      // Força update dos avatares uma única vez ao soltar
       forceAvatarUpdate(n => n + 1);
     };
     window.addEventListener('mousemove', onMove);
@@ -684,7 +669,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     };
   }, [applySceneTransform]);
 
-  // ─── Hover via event delegation — cursor movido via DOM, zero setState ────────
   const handleContainerMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (IS_TOUCH || isDraggingRef.current) {
       if (cursorRef.current) cursorRef.current.style.display = 'none';
@@ -730,13 +714,9 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         }}>🏢 BOARD ROOM — Senior Scout 360</div>
       </div>
 
-      {/* Container de input — captura eventos, cursor visual */}
       <div
-        className={`absolute inset-0 overflow-hidden ${isDraggingRef.current ? 'cursor-grabbing' : 'cursor-grab'}`}
-        style={{
-          backgroundColor: '#87CEEB',
-          touchAction: 'none',
-        }}
+        className="absolute inset-0 overflow-hidden cursor-grab active:cursor-grabbing"
+        style={{ backgroundColor: '#87CEEB', touchAction: 'none' }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleContainerMouseMove}
         onMouseLeave={handleContainerMouseLeave}
@@ -752,7 +732,7 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
           background: 'linear-gradient(to bottom,transparent 0%,rgba(20,30,50,0.55) 100%)',
         }} />
 
-        {/* ─── Scene: pan aplicado aqui via transform — único elemento que move ── */}
+        {/* Scene: transform do pan aplicado aqui — tudo dentro usa coordenadas locais */}
         <div
           ref={sceneRef}
           style={{
@@ -766,19 +746,19 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
           {floorEdges}
           {furniShadows}
           {furniNodes}
-
-          {/* Cursor iso — movido via DOM imperativo, dentro da scene */}
           <IsoCursorImperative elRef={cursorRef} />
 
           {users.map(user => {
-            const pos = getScreenPos(user.x, user.y);
+            // getLocalPos: sem cameraOffset — a scene já carrega o offset via transform
+            const pos = getLocalPos(user.x, user.y);
             const isMoving = movingUsers.has(user.id);
             return (
               <div
                 key={user.id}
                 className="absolute flex flex-col items-center pointer-events-none"
                 style={{
-                  left: pos.x, top: pos.y - 8,
+                  left: pos.x,
+                  top: pos.y - 8,
                   transform: 'translate(-50%, -100%)',
                   zIndex: avatarZ(user.x, user.y),
                   transition: 'left 0.3s ease-out, top 0.3s ease-out',
