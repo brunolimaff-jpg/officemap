@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo } from 'react';
 import { FurnitureType } from '@/types';
 
 interface FurniSpriteProps {
@@ -52,9 +52,11 @@ function shadeHex(hex: string, amount: number): string {
   } catch { return hex; }
 }
 
-// ─── SVGs existentes ──────────────────────────────────────────────────────────
+// ─── SVG components — todos memoizados individualmente ────────────────────────
+// FRENTE 2: conteúdo SVG separado do wrapper de posição.
+// O SVG nunca muda; só o wrapper pai recebe nova pos.
 
-function DeskSVG({ color = '#64748B', flip }: { color: string; flip: boolean }) {
+const DeskSVG = memo(function DeskSVG({ color = '#64748B', flip }: { color: string; flip: boolean }) {
   const dark = shadeHex(color, -40);
   const light = shadeHex(color, 30);
   const mid = shadeHex(color, -15);
@@ -73,9 +75,9 @@ function DeskSVG({ color = '#64748B', flip }: { color: string; flip: boolean }) 
       <ellipse cx="32" cy="68" rx="14" ry="4" fill="black" fillOpacity="0.18" />
     </svg>
   );
-}
+});
 
-function ChairSVG({ color = '#475569', flip }: { color: string; flip: boolean }) {
+const ChairSVG = memo(function ChairSVG({ color = '#475569', flip }: { color: string; flip: boolean }) {
   const dark = shadeHex(color, -40);
   const light = shadeHex(color, 20);
   return (
@@ -91,9 +93,9 @@ function ChairSVG({ color = '#475569', flip }: { color: string; flip: boolean })
       <ellipse cx="24" cy="52" rx="10" ry="3" fill="black" fillOpacity="0.15" />
     </svg>
   );
-}
+});
 
-function TableSVG() {
+const TableSVG = memo(function TableSVG() {
   return (
     <svg width="96" height="80" viewBox="0 0 96 80" fill="none" style={{ imageRendering: 'pixelated' }}>
       <line x1="10" y1="44" x2="8" y2="68" stroke="#0F172A" strokeWidth="3" strokeLinecap="round" />
@@ -109,9 +111,9 @@ function TableSVG() {
       <ellipse cx="48" cy="74" rx="20" ry="5" fill="black" fillOpacity="0.18" />
     </svg>
   );
-}
+});
 
-function SofaSVG({ color = '#475569', flip }: { color: string; flip: boolean }) {
+const SofaSVG = memo(function SofaSVG({ color = '#475569', flip }: { color: string; flip: boolean }) {
   const dark = shadeHex(color, -50);
   const light = shadeHex(color, 25);
   const mid = shadeHex(color, -20);
@@ -132,9 +134,9 @@ function SofaSVG({ color = '#475569', flip }: { color: string; flip: boolean }) 
       <ellipse cx="36" cy="62" rx="18" ry="4" fill="black" fillOpacity="0.18" />
     </svg>
   );
-}
+});
 
-function WhiteboardSVG() {
+const WhiteboardSVG = memo(function WhiteboardSVG() {
   return (
     <svg width="48" height="80" viewBox="0 0 48 80" fill="none" style={{ imageRendering: 'pixelated' }}>
       <line x1="16" y1="60" x2="14" y2="76" stroke="#374151" strokeWidth="2" strokeLinecap="round" />
@@ -151,9 +153,9 @@ function WhiteboardSVG() {
       <ellipse cx="24" cy="76" rx="12" ry="3" fill="black" fillOpacity="0.12" />
     </svg>
   );
-}
+});
 
-function PlantSVG() {
+const PlantSVG = memo(function PlantSVG() {
   return (
     <svg width="40" height="64" viewBox="0 0 40 64" fill="none" style={{ imageRendering: 'pixelated' }}>
       <polygon points="4,46 20,52 20,60 4,54" fill="#92400E" />
@@ -169,9 +171,9 @@ function PlantSVG() {
       <ellipse cx="20" cy="62" rx="10" ry="3" fill="black" fillOpacity="0.15" />
     </svg>
   );
-}
+});
 
-function DividerSVG() {
+const DividerSVG = memo(function DividerSVG() {
   return (
     <svg width="64" height="40" viewBox="0 0 64 40" fill="none" style={{ imageRendering: 'pixelated' }}>
       <polygon points="4,18 32,28 32,36 4,26" fill="#1E293B" />
@@ -181,9 +183,9 @@ function DividerSVG() {
       <polygon points="32,28 60,18 60,20 32,30" fill="rgba(0,0,0,0.2)" />
     </svg>
   );
-}
+});
 
-function LampSVG() {
+const LampSVG = memo(function LampSVG() {
   return (
     <svg width="32" height="72" viewBox="0 0 32 72" fill="none" style={{ imageRendering: 'pixelated' }}>
       <polygon points="4,60 16,66 16,70 4,64" fill="#1E293B" />
@@ -197,9 +199,9 @@ function LampSVG() {
       <ellipse cx="16" cy="70" rx="8" ry="2" fill="black" fillOpacity="0.15" />
     </svg>
   );
-}
+});
 
-function RugSVG({ color = '#7C3AED' }: { color: string }) {
+const RugSVG = memo(function RugSVG({ color = '#7C3AED' }: { color: string }) {
   const dark = shadeHex(color, -40);
   const light = shadeHex(color, 20);
   return (
@@ -210,9 +212,9 @@ function RugSVG({ color = '#7C3AED' }: { color: string }) {
       <polygon points="48,17 62,23 48,29 34,23" fill="white" fillOpacity="0.1" />
     </svg>
   );
-}
+});
 
-function BookshelfSVG() {
+const BookshelfSVG = memo(function BookshelfSVG() {
   return (
     <svg width="48" height="80" viewBox="0 0 48 80" fill="none" style={{ imageRendering: 'pixelated' }}>
       <polygon points="2,36 24,48 24,74 2,62" fill="#1E293B" />
@@ -231,9 +233,9 @@ function BookshelfSVG() {
       <ellipse cx="24" cy="76" rx="12" ry="3" fill="black" fillOpacity="0.15" />
     </svg>
   );
-}
+});
 
-function TrashSVG() {
+const TrashSVG = memo(function TrashSVG() {
   return (
     <svg width="24" height="32" viewBox="0 0 24 32" fill="none" style={{ imageRendering: 'pixelated' }}>
       <polygon points="2,16 12,20 12,28 2,24" fill="#374151" />
@@ -244,9 +246,9 @@ function TrashSVG() {
       <ellipse cx="12" cy="30" rx="6" ry="2" fill="black" fillOpacity="0.12" />
     </svg>
   );
-}
+});
 
-function ComputerSVG({ flip }: { flip: boolean }) {
+const ComputerSVG = memo(function ComputerSVG({ flip }: { flip: boolean }) {
   return (
     <svg width="48" height="56" viewBox="0 0 48 56" fill="none" style={{ transform: flip ? 'scaleX(-1)' : undefined, imageRendering: 'pixelated' }}>
       <polygon points="4,22 24,32 24,44 4,34" fill="#1E293B" />
@@ -264,9 +266,9 @@ function ComputerSVG({ flip }: { flip: boolean }) {
       <ellipse cx="24" cy="54" rx="10" ry="2.5" fill="black" fillOpacity="0.18" />
     </svg>
   );
-}
+});
 
-function CouchSVG({ color = '#1D4ED8', flip }: { color: string; flip: boolean }) {
+const CouchSVG = memo(function CouchSVG({ color = '#1D4ED8', flip }: { color: string; flip: boolean }) {
   const dark = shadeHex(color, -55);
   const light = shadeHex(color, 30);
   const mid = shadeHex(color, -25);
@@ -287,9 +289,9 @@ function CouchSVG({ color = '#1D4ED8', flip }: { color: string; flip: boolean })
       <ellipse cx="40" cy="70" rx="22" ry="4" fill="black" fillOpacity="0.18" />
     </svg>
   );
-}
+});
 
-function CoffeeTableSVG({ color = '#334155' }: { color: string }) {
+const CoffeeTableSVG = memo(function CoffeeTableSVG({ color = '#334155' }: { color: string }) {
   const dark = shadeHex(color, -30);
   const light = shadeHex(color, 25);
   return (
@@ -307,9 +309,9 @@ function CoffeeTableSVG({ color = '#334155' }: { color: string }) {
       <ellipse cx="32" cy="36" rx="14" ry="3" fill="black" fillOpacity="0.15" />
     </svg>
   );
-}
+});
 
-function CabinetSVG({ color = '#334155' }: { color: string }) {
+const CabinetSVG = memo(function CabinetSVG({ color = '#334155' }: { color: string }) {
   const dark = shadeHex(color, -40);
   const light = shadeHex(color, 20);
   return (
@@ -327,9 +329,9 @@ function CabinetSVG({ color = '#334155' }: { color: string }) {
       <ellipse cx="20" cy="68" rx="10" ry="3" fill="black" fillOpacity="0.15" />
     </svg>
   );
-}
+});
 
-function MugSVG({ color = '#F59E0B' }: { color: string }) {
+const MugSVG = memo(function MugSVG({ color = '#F59E0B' }: { color: string }) {
   const dark = shadeHex(color, -40);
   return (
     <svg width="20" height="24" viewBox="0 0 20 24" fill="none" style={{ imageRendering: 'pixelated' }}>
@@ -342,11 +344,9 @@ function MugSVG({ color = '#F59E0B' }: { color: string }) {
       <ellipse cx="10" cy="21" rx="5" ry="1.5" fill="black" fillOpacity="0.15" />
     </svg>
   );
-}
+});
 
-// ─── NOVOS SVGs ───────────────────────────────────────────────────────────────
-
-function GlassWallSVG({ flip }: { flip: boolean }) {
+const GlassWallSVG = memo(function GlassWallSVG({ flip }: { flip: boolean }) {
   return (
     <svg width="64" height="96" viewBox="0 0 64 96" fill="none" style={{ transform: flip ? 'scaleX(-1)' : undefined, imageRendering: 'pixelated' }}>
       <polygon points="2,48 8,50 8,90 2,88" fill="#334155" />
@@ -361,9 +361,9 @@ function GlassWallSVG({ flip }: { flip: boolean }) {
       <ellipse cx="32" cy="93" rx="18" ry="3" fill="black" fillOpacity="0.12" />
     </svg>
   );
-}
+});
 
-function SignSVG({ label = 'SCOUT 360' }: { label: string }) {
+const SignSVG = memo(function SignSVG({ label = 'SCOUT 360' }: { label: string }) {
   return (
     <svg width="72" height="56" viewBox="0 0 72 56" fill="none" style={{ imageRendering: 'pixelated' }}>
       <line x1="20" y1="46" x2="18" y2="54" stroke="#1E293B" strokeWidth="2.5" strokeLinecap="round" />
@@ -372,25 +372,14 @@ function SignSVG({ label = 'SCOUT 360' }: { label: string }) {
       <polygon points="70,20 36,36 36,44 70,28" fill="#1E40AF" />
       <polygon points="36,12 70,20 36,36 2,28" fill="#2563EB" />
       <polygon points="36,12 70,20 70,22 36,14" fill="#60A5FA" fillOpacity="0.4" />
-      <text
-        x="36" y="28"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill="white"
-        fontSize="7"
-        fontFamily="monospace"
-        fontWeight="bold"
-        letterSpacing="0.5"
-        opacity="0.95"
-        transform="skewX(-8) translate(0, -2)"
-      >{label}</text>
+      <text x="36" y="28" textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="7" fontFamily="monospace" fontWeight="bold" letterSpacing="0.5" opacity="0.95" transform="skewX(-8) translate(0, -2)">{label}</text>
       <polygon points="36,12 52,16 46,20 30,16" fill="white" fillOpacity="0.1" />
       <ellipse cx="36" cy="54" rx="16" ry="3" fill="black" fillOpacity="0.15" />
     </svg>
   );
-}
+});
 
-function MonitorDualSVG({ flip }: { flip: boolean }) {
+const MonitorDualSVG = memo(function MonitorDualSVG({ flip }: { flip: boolean }) {
   return (
     <svg width="64" height="56" viewBox="0 0 64 56" fill="none" style={{ transform: flip ? 'scaleX(-1)' : undefined, imageRendering: 'pixelated' }}>
       <polygon points="2,24 18,30 18,42 2,36" fill="#1E293B" />
@@ -418,9 +407,9 @@ function MonitorDualSVG({ flip }: { flip: boolean }) {
       <ellipse cx="32" cy="52" rx="12" ry="2.5" fill="black" fillOpacity="0.18" />
     </svg>
   );
-}
+});
 
-function FridgeSVG() {
+const FridgeSVG = memo(function FridgeSVG() {
   return (
     <svg width="40" height="88" viewBox="0 0 40 88" fill="none" style={{ imageRendering: 'pixelated' }}>
       <polygon points="2,36 20,46 20,84 2,74" fill="#475569" />
@@ -437,9 +426,9 @@ function FridgeSVG() {
       <ellipse cx="20" cy="84" rx="12" ry="3" fill="black" fillOpacity="0.18" />
     </svg>
   );
-}
+});
 
-function CoffeeMachineSVG() {
+const CoffeeMachineSVG = memo(function CoffeeMachineSVG() {
   return (
     <svg width="36" height="64" viewBox="0 0 36 64" fill="none" style={{ imageRendering: 'pixelated' }}>
       <polygon points="2,46 18,54 18,60 2,52" fill="#1E293B" />
@@ -460,9 +449,9 @@ function CoffeeMachineSVG() {
       <ellipse cx="18" cy="60" rx="10" ry="3" fill="black" fillOpacity="0.18" />
     </svg>
   );
-}
+});
 
-function MicrowaveSVG() {
+const MicrowaveSVG = memo(function MicrowaveSVG() {
   return (
     <svg width="40" height="48" viewBox="0 0 40 48" fill="none" style={{ imageRendering: 'pixelated' }}>
       <polygon points="2,24 20,32 20,44 2,36" fill="#374151" />
@@ -480,9 +469,9 @@ function MicrowaveSVG() {
       <ellipse cx="20" cy="44" rx="12" ry="3" fill="black" fillOpacity="0.15" />
     </svg>
   );
-}
+});
 
-function PoolTableSVG() {
+const PoolTableSVG = memo(function PoolTableSVG() {
   return (
     <svg width="96" height="80" viewBox="0 0 96 80" fill="none" style={{ imageRendering: 'pixelated' }}>
       <line x1="10" y1="50" x2="8" y2="70" stroke="#3D2B1F" strokeWidth="3" strokeLinecap="round" />
@@ -505,9 +494,9 @@ function PoolTableSVG() {
       <ellipse cx="48" cy="72" rx="24" ry="5" fill="black" fillOpacity="0.18" />
     </svg>
   );
-}
+});
 
-function AcUnitSVG() {
+const AcUnitSVG = memo(function AcUnitSVG() {
   return (
     <svg width="48" height="40" viewBox="0 0 48 40" fill="none" style={{ imageRendering: 'pixelated' }}>
       <polygon points="2,20 24,28 24,36 2,28" fill="#334155" />
@@ -524,9 +513,9 @@ function AcUnitSVG() {
       <polygon points="24,8 46,16 44,17 22,9" fill="white" fillOpacity="0.12" />
     </svg>
   );
-}
+});
 
-function LockerSVG() {
+const LockerSVG = memo(function LockerSVG() {
   return (
     <svg width="40" height="80" viewBox="0 0 40 80" fill="none" style={{ imageRendering: 'pixelated' }}>
       <polygon points="2,34 20,44 20,76 2,66" fill="#1E3A5F" />
@@ -546,9 +535,9 @@ function LockerSVG() {
       <ellipse cx="20" cy="76" rx="12" ry="3" fill="black" fillOpacity="0.18" />
     </svg>
   );
-}
+});
 
-function TvScreenSVG({ label = '' }: { label: string }) {
+const TvScreenSVG = memo(function TvScreenSVG({ label = '' }: { label: string }) {
   return (
     <svg width="56" height="72" viewBox="0 0 56 72" fill="none" style={{ imageRendering: 'pixelated' }}>
       <line x1="20" y1="56" x2="18" y2="68" stroke="#374151" strokeWidth="2.5" strokeLinecap="round" />
@@ -567,104 +556,79 @@ function TvScreenSVG({ label = '' }: { label: string }) {
       <polyline points="8,43 13,41 18,42 23,40" stroke="#FCD34D" strokeWidth="1" fill="none" opacity="0.8" />
       <polygon points="28,16 40,20 34,24 22,20" fill="white" fillOpacity="0.07" />
       <polygon points="28,14 54,24 52,25 26,15" fill="white" fillOpacity="0.08" />
-      {label ? (
-        <text x="28" y="54" textAnchor="middle" dominantBaseline="middle" fill="#93C5FD" fontSize="5" fontFamily="monospace" opacity="0.8" transform="skewX(-10)">{label}</text>
-      ) : null}
+      {label ? (<text x="28" y="54" textAnchor="middle" dominantBaseline="middle" fill="#93C5FD" fontSize="5" fontFamily="monospace" opacity="0.8" transform="skewX(-10)">{label}</text>) : null}
       <ellipse cx="28" cy="70" rx="14" ry="3" fill="black" fillOpacity="0.15" />
     </svg>
   );
-}
+});
 
 // ─── Componente principal ─────────────────────────────────────────────────────
+// FRENTE 1+2+3: memo() no FurniSprite + pos via CSS translate (não recria SVG)
+// O SVG é estático — só o wrapper muda de posição.
+// will-change: transform promove cada móvel para layer GPU própria.
 
-export default function FurniSprite({ type, pos, color = '#64748B', direction = 2, tileX, tileY, zBonus = 2, label = '' }: FurniSpriteProps) {
-  const [usePng, setUsePng] = useState(false);
-
-  // FIX A: zIndex sincronizado com fórmula do RoomView: (x+y)*200 + 20 + bonus*20
+const FurniSprite = memo(function FurniSprite({
+  type, pos, color = '#64748B', direction = 2, tileX, tileY, zBonus = 2, label = ''
+}: FurniSpriteProps) {
   const zIndex = (tileX + tileY) * 200 + 20 + zBonus * 20;
-
   const size = SIZE[type] ?? { w: 64, h: 64 };
   const { w, h } = size;
   const flip = direction === 0 || direction === 6;
 
-  const style: React.CSSProperties = {
+  // FRENTE 2: pos aplicada via CSS transform no wrapper.
+  // O SVG filho nunca recebe novas props durante drag — só o transform muda.
+  // FRENTE 3: will-change: transform → layer GPU independente por móvel.
+  const wrapperStyle: React.CSSProperties = {
     position: 'absolute',
     left: pos.x - w / 2,
     top: pos.y - h,
     zIndex,
     pointerEvents: 'none',
+    willChange: 'transform',
   };
 
-  const FURNI_MAP: Record<string, string> = {
-    desk:       'hc_exe_wrkdesk',
-    chair:      'hc_exe_chair',
-    table:      'hc_exe_table',
-    sofa:       'hc_exe_sofa',
-    whiteboard: 'hc_exe_whiteboard',
-    plant:      'hh_fur_plant_cactus',
-  };
-
-  const pngName = FURNI_MAP[type];
-
-  if (pngName && usePng) {
-    return (
-      <img
-        src={`/furni/${pngName}.png`}
-        alt={type}
-        width={w}
-        height={h}
-        style={{
-          ...style,
-          imageRendering: 'pixelated',
-          transform: flip ? 'scaleX(-1)' : undefined,
-          filter: color && type === 'desk'
-            ? `sepia(1) saturate(3) hue-rotate(${hueFromHex(color)}deg) brightness(0.9)`
-            : undefined,
-        }}
-        onError={() => setUsePng(false)}
-      />
-    );
-  }
-
-  const svgStyle = { ...style };
-  switch (type) {
-    case 'desk':           return <div style={svgStyle}><DeskSVG color={color} flip={flip} /></div>;
-    case 'chair':          return <div style={svgStyle}><ChairSVG color={color} flip={flip} /></div>;
-    case 'table':          return <div style={svgStyle}><TableSVG /></div>;
-    case 'sofa':           return <div style={svgStyle}><SofaSVG color={color} flip={flip} /></div>;
-    case 'whiteboard':     return <div style={svgStyle}><WhiteboardSVG /></div>;
-    case 'plant':          return <div style={svgStyle}><PlantSVG /></div>;
-    case 'divider':        return <div style={svgStyle}><DividerSVG /></div>;
-    case 'lamp':           return <div style={svgStyle}><LampSVG /></div>;
-    case 'rug':            return <div style={svgStyle}><RugSVG color={color} /></div>;
-    case 'bookshelf':      return <div style={svgStyle}><BookshelfSVG /></div>;
-    case 'trash':          return <div style={svgStyle}><TrashSVG /></div>;
-    case 'computer':       return <div style={svgStyle}><ComputerSVG flip={flip} /></div>;
-    case 'couch':          return <div style={svgStyle}><CouchSVG color={color} flip={flip} /></div>;
-    case 'coffee_table':   return <div style={svgStyle}><CoffeeTableSVG color={color} /></div>;
-    case 'cabinet':        return <div style={svgStyle}><CabinetSVG color={color} /></div>;
-    case 'mug':            return <div style={svgStyle}><MugSVG color={color} /></div>;
-    case 'glass_wall':     return <div style={svgStyle}><GlassWallSVG flip={flip} /></div>;
-    case 'sign':           return <div style={svgStyle}><SignSVG label={label || 'SCOUT 360'} /></div>;
-    case 'monitor_dual':   return <div style={svgStyle}><MonitorDualSVG flip={flip} /></div>;
-    case 'fridge':         return <div style={svgStyle}><FridgeSVG /></div>;
-    case 'coffee_machine': return <div style={svgStyle}><CoffeeMachineSVG /></div>;
-    case 'microwave':      return <div style={svgStyle}><MicrowaveSVG /></div>;
-    case 'pool_table':     return <div style={svgStyle}><PoolTableSVG /></div>;
-    case 'ac_unit':        return <div style={svgStyle}><AcUnitSVG /></div>;
-    case 'locker':         return <div style={svgStyle}><LockerSVG /></div>;
-    case 'tv_screen':      return <div style={svgStyle}><TvScreenSVG label={label} /></div>;
-    default:
-      return (
-        <div style={svgStyle}>
+  const svgNode = (() => {
+    switch (type) {
+      case 'desk':           return <DeskSVG color={color} flip={flip} />;
+      case 'chair':          return <ChairSVG color={color} flip={flip} />;
+      case 'table':          return <TableSVG />;
+      case 'sofa':           return <SofaSVG color={color} flip={flip} />;
+      case 'whiteboard':     return <WhiteboardSVG />;
+      case 'plant':          return <PlantSVG />;
+      case 'divider':        return <DividerSVG />;
+      case 'lamp':           return <LampSVG />;
+      case 'rug':            return <RugSVG color={color} />;
+      case 'bookshelf':      return <BookshelfSVG />;
+      case 'trash':          return <TrashSVG />;
+      case 'computer':       return <ComputerSVG flip={flip} />;
+      case 'couch':          return <CouchSVG color={color} flip={flip} />;
+      case 'coffee_table':   return <CoffeeTableSVG color={color} />;
+      case 'cabinet':        return <CabinetSVG color={color} />;
+      case 'mug':            return <MugSVG color={color} />;
+      case 'glass_wall':     return <GlassWallSVG flip={flip} />;
+      case 'sign':           return <SignSVG label={label || 'SCOUT 360'} />;
+      case 'monitor_dual':   return <MonitorDualSVG flip={flip} />;
+      case 'fridge':         return <FridgeSVG />;
+      case 'coffee_machine': return <CoffeeMachineSVG />;
+      case 'microwave':      return <MicrowaveSVG />;
+      case 'pool_table':     return <PoolTableSVG />;
+      case 'ac_unit':        return <AcUnitSVG />;
+      case 'locker':         return <LockerSVG />;
+      case 'tv_screen':      return <TvScreenSVG label={label} />;
+      default:
+        return (
           <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none">
             <polygon points={`${w*0.5},4 ${w-4},${h*0.5} ${w*0.5},${h-4} 4,${h*0.5}`} fill="#475569" />
             <text x={w/2} y={h/2} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="10" fontFamily="monospace">{String(type)[0].toUpperCase()}</text>
           </svg>
-        </div>
-      );
-  }
-}
+        );
+    }
+  })();
+
+  return <div style={wrapperStyle}>{svgNode}</div>;
+});
+
+export default FurniSprite;
 
 function hueFromHex(hex: string): number {
   try {
