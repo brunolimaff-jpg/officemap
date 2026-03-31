@@ -8,6 +8,7 @@ import ChatLogWindow from './ChatLogWindow';
 import { specialists, specialistDeskPositions, meetingPositions } from '@/data/specialists';
 import { officeMap } from '@/data/map';
 import { useChatHistory } from '@/hooks/useChatHistory';
+import { bfs, directionBetween, isWalkable } from '@/lib/isoEngine';
 import type { AvatarStatus } from '@/types';
 
 export interface ChatMessage {
@@ -36,61 +37,7 @@ const SPECIALIST_COLORS: Record<string, string> = {
   grove: '#64748B', '1': '#4A90E2',
 };
 
-const WALKABLE = new Set([1, 2, 3, 6, 7]);
-const STEP_MS  = 160; // ms por tile — ~6 tiles/s, parece caminhada natural
-
-// ─── BFS: retorna lista de tiles do caminho (excluindo origem, incluindo destino) ───
-function bfs(
-  map: number[][],
-  sx: number, sy: number,
-  tx: number, ty: number,
-): Array<{ x: number; y: number }> {
-  if (sx === tx && sy === ty) return [];
-  const rows = map.length;
-  const cols = map[0]?.length ?? 0;
-  const key  = (x: number, y: number) => `${x},${y}`;
-  const visited = new Set<string>([key(sx, sy)]);
-  const queue: Array<{ x: number; y: number; path: Array<{ x: number; y: number }> }> = [
-    { x: sx, y: sy, path: [] },
-  ];
-  // 4 direções ortogonais + 4 diagonais (8 direções)
-  const dirs = [
-    { dx:  1, dy:  0 }, { dx: -1, dy:  0 },
-    { dx:  0, dy:  1 }, { dx:  0, dy: -1 },
-    { dx:  1, dy:  1 }, { dx:  1, dy: -1 },
-    { dx: -1, dy:  1 }, { dx: -1, dy: -1 },
-  ];
-  while (queue.length > 0) {
-    const { x, y, path } = queue.shift()!;
-    for (const { dx, dy } of dirs) {
-      const nx = x + dx;
-      const ny = y + dy;
-      if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
-      if (!WALKABLE.has(map[ny][nx])) continue;
-      if (visited.has(key(nx, ny))) continue;
-      const newPath = [...path, { x: nx, y: ny }];
-      if (nx === tx && ny === ty) return newPath;
-      visited.add(key(nx, ny));
-      queue.push({ x: nx, y: ny, path: newPath });
-    }
-  }
-  return []; // sem caminho
-}
-
-// ─── Direção Habbo (0-7) entre dois tiles adjacentes ───
-function directionBetween(fx: number, fy: number, tx: number, ty: number): number {
-  const dx = tx - fx;
-  const dy = ty - fy;
-  if (dx ===  1 && dy ===  0) return 2;
-  if (dx === -1 && dy ===  0) return 6;
-  if (dx ===  0 && dy ===  1) return 4;
-  if (dx ===  0 && dy === -1) return 0;
-  if (dx ===  1 && dy ===  1) return 3;
-  if (dx ===  1 && dy === -1) return 1;
-  if (dx === -1 && dy ===  1) return 5;
-  if (dx === -1 && dy === -1) return 7;
-  return 4;
-}
+const STEP_MS = 160;
 
 const INITIAL_USERS: User[] = [
   {
@@ -113,7 +60,7 @@ const INITIAL_USERS: User[] = [
   }),
 ];
 
-// ─── RoomView isolado com memo ──────────────────────────────────────────────
+// ─── RoomView memorizado — só re-renderiza quando usuários/mapa mudam ─────────
 const MemoRoomView = memo(RoomView, (prev, next) => {
   if (prev.map !== next.map) return false;
   if (prev.onTileClick !== next.onTileClick) return false;
@@ -131,20 +78,19 @@ const MemoRoomView = memo(RoomView, (prev, next) => {
 });
 
 export default function HabboClient() {
-  const [isHistoryOpen,    setIsHistoryOpen]    = useState(false);
-  const [isConvocationOpen,setIsConvocationOpen]= useState(false);
-  const [isChatLogOpen,    setIsChatLogOpen]    = useState(false);
-  const [messages,         setMessages]         = useState<ChatMessage[]>([]);
-  const [users,            setUsers]            = useState<User[]>(INITIAL_USERS);
+  const [isHistoryOpen,     setIsHistoryOpen]     = useState(false);
+  const [isConvocationOpen, setIsConvocationOpen] = useState(false);
+  const [isChatLogOpen,     setIsChatLogOpen]     = useState(false);
+  const [messages,          setMessages]          = useState<ChatMessage[]>([]);
+  const [users,             setUsers]             = useState<User[]>(INITIAL_USERS);
 
-  const { sessions, currentSessionId, saveSession, updateCurrentSession, loadSession, startNewSession } = useChatHistory();
+  const { sessions, currentSessionId, saveSession, updateCurrentSession, loadSession, startNewSession } =
+    useChatHistory();
   const cameraOffsetRef = useRef({ x: 0, y: 0 });
 
-  // Fila de passos pendentes para Bruno
-  const walkQueueRef  = useRef<Array<{ x: number; y: number }>>([]);
-  const walkTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const walkQueueRef = useRef<Array<{ x: number; y: number }>>([]);
+  const walkTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Para o timer de caminhada e limpa a fila
   const stopWalking = useCallback(() => {
     if (walkTimerRef.current) {
       clearInterval(walkTimerRef.current);
@@ -153,10 +99,9 @@ export default function HabboClient() {
     walkQueueRef.current = [];
   }, []);
 
-  // Limpa timer ao desmontar
   useEffect(() => () => stopWalking(), [stopWalking]);
 
-  // ─── Helpers de status ───────────────────────────────────────────────────
+  // ─── Status helpers ───────────────────────────────────────────────────────
   const setAvatarStatus = useCallback((userId: string, status: AvatarStatus) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, avatarStatus: status } : u));
   }, []);
@@ -166,42 +111,30 @@ export default function HabboClient() {
   }, []);
 
   const presentUsers = users.map(u => ({
-    id: u.id,
-    name: u.name,
-    color: SPECIALIST_COLORS[u.id] ?? '#64748B',
+    id: u.id, name: u.name, color: SPECIALIST_COLORS[u.id] ?? '#64748B',
   }));
 
-  // ─── Movimento passo a passo ────────────────────────────────────────────────
+  // ─── Movimento passo a passo ──────────────────────────────────────────────
   const handleMoveUser = useCallback((tx: number, ty: number) => {
-    if (!WALKABLE.has(officeMap[ty]?.[tx])) return;
+    if (!isWalkable(officeMap, tx, ty)) return;
 
-    // Pega posição atual de Bruno
     setUsers(prev => {
       const bruno = prev.find(u => u.id === '1');
       if (!bruno) return prev;
 
-      // Cancela caminhada anterior
       stopWalking();
 
-      // Calcula caminho BFS
       const path = bfs(officeMap, bruno.x, bruno.y, tx, ty);
-      if (path.length === 0) return prev; // já está no destino ou sem caminho
+      if (path.length === 0) return prev;
 
-      // Carrega fila
       walkQueueRef.current = path;
 
-      // Inicia timer de passos
       walkTimerRef.current = setInterval(() => {
         const next = walkQueueRef.current.shift();
         if (!next) {
-          // Chegou ao destino
           if (walkTimerRef.current) clearInterval(walkTimerRef.current);
           walkTimerRef.current = null;
-          setUsers(u =>
-            u.map(usr =>
-              usr.id === '1' ? { ...usr, avatarStatus: 'idle' } : usr
-            )
-          );
+          setUsers(u => u.map(usr => usr.id === '1' ? { ...usr, avatarStatus: 'idle' } : usr));
           return;
         }
         setUsers(u =>
@@ -209,8 +142,7 @@ export default function HabboClient() {
             if (usr.id !== '1') return usr;
             return {
               ...usr,
-              x: next.x,
-              y: next.y,
+              x: next.x, y: next.y,
               direction: directionBetween(usr.x, usr.y, next.x, next.y),
               avatarStatus: 'walking',
             };
@@ -218,7 +150,6 @@ export default function HabboClient() {
         );
       }, STEP_MS);
 
-      // Primeiro passo imediato: vira na direção certa
       const first = path[0];
       return prev.map(u =>
         u.id === '1'
@@ -228,14 +159,9 @@ export default function HabboClient() {
     });
   }, [stopWalking]);
 
-  // ─── Mensagem ────────────────────────────────────────────────────────
+  // ─── Mensagem ─────────────────────────────────────────────────────────────
   const handleSendMessage = useCallback((text: string) => {
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      userId: '1',
-      text,
-      timestamp: Date.now(),
-    };
+    const newMessage: ChatMessage = { id: Date.now().toString(), userId: '1', text, timestamp: Date.now() };
     const activeSpecialists = users.filter(u => u.id !== '1' && u.avatarStatus === 'summoned');
     const targets = activeSpecialists.length > 0 ? activeSpecialists : [users[1]].filter(Boolean);
     targets.forEach(u => setAvatarStatus(u.id, 'speaking'));
@@ -248,45 +174,41 @@ export default function HabboClient() {
       );
     }, delay);
     setMessages(prev => {
-      const newMessages = [...prev, newMessage];
-      if (!currentSessionId) saveSession(newMessages, ['Bruno']);
-      else updateCurrentSession(newMessages);
-      return newMessages;
+      const msgs = [...prev, newMessage];
+      if (!currentSessionId) saveSession(msgs, ['Bruno']);
+      else updateCurrentSession(msgs);
+      return msgs;
     });
   }, [currentSessionId, saveSession, updateCurrentSession, users, setAvatarStatus]);
 
-  // ─── Sessões ───────────────────────────────────────────────────────────
+  // ─── Sessões ──────────────────────────────────────────────────────────────
   const handleLoadSession = useCallback((id: string) => {
     setMessages(loadSession(id));
     setIsHistoryOpen(false);
   }, [loadSession]);
 
   const handleNewSession = useCallback(() => {
-    startNewSession();
-    setMessages([]);
-    setIsHistoryOpen(false);
-    resetSpecialistsToIdle();
+    startNewSession(); setMessages([]); setIsHistoryOpen(false); resetSpecialistsToIdle();
   }, [startNewSession, resetSpecialistsToIdle]);
 
-  // ─── Convocação ─────────────────────────────────────────────────────────
+  // ─── Convocação ───────────────────────────────────────────────────────────
   const handleSummon = useCallback((selectedIds: string[]) => {
     stopWalking();
     setUsers(prev => {
-      const withSpecialists = prev.map(u => {
-        const index = selectedIds.indexOf(u.id);
-        if (index !== -1) {
-          const pos = meetingPositions[index % meetingPositions.length];
+      const withSpec = prev.map(u => {
+        const idx = selectedIds.indexOf(u.id);
+        if (idx !== -1) {
+          const pos = meetingPositions[idx % meetingPositions.length];
           return { ...u, x: pos.x, y: pos.y, direction: pos.dir, avatarStatus: 'summoned' as AvatarStatus };
         }
         return u.id !== '1' ? { ...u, avatarStatus: 'idle' as AvatarStatus } : u;
       });
-      return withSpecialists.map(u =>
+      return withSpec.map(u =>
         u.id === '1' ? { ...u, x: 14, y: 10, direction: 0, avatarStatus: 'idle' as AvatarStatus } : u
       );
     });
     setMessages(prev => [...prev, {
-      id: Date.now().toString(),
-      userId: 'system',
+      id: Date.now().toString(), userId: 'system',
       text: `🏢 ${selectedIds.length} especialista(s) convocado(s) para a Sala de Reuniões.`,
       timestamp: Date.now(),
     }]);
@@ -294,7 +216,7 @@ export default function HabboClient() {
   }, [stopWalking]);
 
   return (
-    <div className="w-full h-screen overflow-hidden bg-black relative font-sans select-none">
+    <div className="w-full h-screen overflow-hidden bg-[#0a0f1e] relative font-sans select-none">
       <div
         className="absolute inset-0 pointer-events-none z-40"
         style={{ boxShadow: 'inset 0 0 0 4px #111, inset 0 0 0 6px #222, inset 0 0 24px rgba(0,0,0,0.7)' }}
@@ -310,17 +232,10 @@ export default function HabboClient() {
         />
       )}
       {isConvocationOpen && (
-        <ConvocationPanel
-          onClose={() => setIsConvocationOpen(false)}
-          onSummon={handleSummon}
-        />
+        <ConvocationPanel onClose={() => setIsConvocationOpen(false)} onSummon={handleSummon} />
       )}
       {isChatLogOpen && (
-        <ChatLogWindow
-          onClose={() => setIsChatLogOpen(false)}
-          messages={messages}
-          users={users}
-        />
+        <ChatLogWindow onClose={() => setIsChatLogOpen(false)} messages={messages} users={users} />
       )}
       <BottomBar
         onSendMessage={handleSendMessage}

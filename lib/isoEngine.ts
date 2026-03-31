@@ -1,100 +1,69 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// ISO ENGINE — fonte única de toda geometria isométrica do Board Room
-// Usado por IsoCanvas (render), RoomView (posição avatares) e HabboClient (BFS)
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+// ISO ENGINE — Single source of truth para geometria isométrica
+// Padrão Habbo: losango 64×32px, profundidade 3D 8px
+// ═══════════════════════════════════════════════════════════════════════════
 
-// ─── Dimensões do tile (padrão Habbo) ────────────────────────────────────────
-export const TILE_W  = 64;   // largura do losango em px
-export const TILE_H  = 32;   // altura do losango em px
-export const TILE_D  = 8;    // profundidade 3D lateral em px
-export const WALL_H  = 64;   // altura de parede (tiles 8,9,10)
-export const HALF_W  = TILE_W / 2;
-export const HALF_H  = TILE_H / 2;
+export const TILE_W  = 64;   // largura do losango
+export const TILE_H  = 32;   // altura do losango
+export const TILE_D  = 8;    // espessura 3D lateral
+export const MAP_COLS = 32;
+export const MAP_ROWS = 25;
 
-// ─── Projeção cartesiana → isométrica (px, relativo ao canvas origin) ────────
-// origin = ponto do tile (0,0) no canvas — ajustado para centralizar o mapa
-export function tileToScreen(
-  tx: number,
-  ty: number,
-  originX: number,
-  originY: number,
-): { sx: number; sy: number } {
+// Origem do canvas em pixels — centraliza o mapa
+// O tile (0,0) fica no topo do diamante
+export const ORIGIN_X = (MAP_COLS * TILE_W) / 2;   // 1024
+export const ORIGIN_Y = 80;                          // margem topo
+
+// ─── Projeção: tile (x,y) → pixel (px, py) do centro-topo do losango ────────
+export function tileToScreen(x: number, y: number): { px: number; py: number } {
   return {
-    sx: originX + (tx - ty) * HALF_W,
-    sy: originY + (tx + ty) * HALF_H,
+    px: ORIGIN_X + (x - y) * (TILE_W / 2),
+    py: ORIGIN_Y + (x + y) * (TILE_H / 2),
   };
 }
 
-// ─── Projeção inversa: pixel canvas → tile (x, y) ────────────────────────────
-export function screenToTile(
-  px: number,
-  py: number,
-  originX: number,
-  originY: number,
-): { tx: number; ty: number } {
-  const relX = px - originX;
-  const relY = py - originY;
-  // resolve sistema:  relX = (tx-ty)*HW,  relY = (tx+ty)*HH
-  const sum  = relY / HALF_H;
-  const diff = relX / HALF_W;
+// ─── Inversa: pixel (px,py) → tile (x,y) ────────────────────────────────────
+export function screenToTile(px: number, py: number): { x: number; y: number } {
+  const dx = px - ORIGIN_X;
+  const dy = py - ORIGIN_Y;
   return {
-    tx: Math.round((sum + diff) / 2),
-    ty: Math.round((sum - diff) / 2),
+    x: Math.round((dx / (TILE_W / 2) + dy / (TILE_H / 2)) / 2),
+    y: Math.round((dy / (TILE_H / 2) - dx / (TILE_W / 2)) / 2),
   };
 }
 
-// ─── Origem do canvas para centralizar o mapa ─────────────────────────────────
-// cols e rows são as dimensões do officeMap
-export function computeOrigin(
-  canvasW: number,
-  canvasH: number,
-  cols: number,
-  rows: number,
-): { originX: number; originY: number } {
-  // O tile (0,0) fica no pico do diamante superior
-  // Para centralizar horizontalmente: metade do canvas menos metade do span total
-  const spanX = (cols + rows) * HALF_W;
-  const spanY = (cols + rows) * HALF_H + WALL_H;
-  return {
-    originX: Math.round((canvasW - spanX) / 2) + rows * HALF_W,
-    originY: Math.round((canvasH - spanY) / 2) + TILE_D + 16,
-  };
+// ─── Z-order: valor crescente conforme distância da câmera ───────────────────
+export function zOrder(x: number, y: number): number {
+  return (x + y) * 100;
 }
 
-// ─── Z-index de um tile (garante renderização painter's algorithm) ─────────────
-export function tileZIndex(tx: number, ty: number): number {
-  return (tx + ty) * 100;
-}
+// ─── Dimensão total do canvas em pixels ──────────────────────────────────────
+export const CANVAS_W = MAP_COLS * TILE_W + 200;           // 2248
+export const CANVAS_H = (MAP_ROWS + MAP_COLS) * (TILE_H / 2) + ORIGIN_Y + 120; // ~1036
 
-// ─── Paleta de tiles ──────────────────────────────────────────────────────────
-export interface TileStyle {
-  top:   string;   // face superior
-  left:  string;   // face esquerda (lateral)
-  right: string;   // face direita (lateral)
-  height: number;  // altura 3D (TILE_D * multiplicador)
-  walkable: boolean;
-}
-
-const T = (top: string, left: string, right: string, h = TILE_D, walkable = true): TileStyle =>
-  ({ top, left, right, height: h, walkable });
-
-export const TILE_STYLES: Record<number, TileStyle> = {
+// ─── Paleta de cores por tipo de tile ────────────────────────────────────────
+export const TILE_COLORS: Record<number, {
+  top: string;
+  left: string;
+  right: string;
+  h: number;   // altura 3D em px
+}> = {
   // 0 = void — não renderiza
-  1: T('#3B5170', '#1E2D42', '#243452', TILE_D,    true),   // piso open space
-  2: T('#2E3F58', '#182233', '#1C2A40', TILE_D,    true),   // corredor
-  3: T('#1A2E4A', '#0D1A2E', '#112236', TILE_D,    true),   // meeting room
-  4: T('#4A5568', '#2D3748', '#374151', TILE_D * 5, false),  // meia-parede
-  5: T('#4A5568', '#2D3748', '#374151', TILE_D * 2, false),  // divider
-  6: T('#4A3728', '#2D2118', '#352618', TILE_D,    true),   // lounge (madeira)
-  7: T('#5A6472', '#38424C', '#404E58', TILE_D,    true),   // copa (concreto)
-  8: T('#1A202C', '#0D1117', '#111827', TILE_D * 9, false),  // parede externa
-  9: T('#1E3A5F', '#0F1E35', '#132540', TILE_D * 9, false),  // parede janelas
-  10: T('#111827', '#0A0F1A', '#0D1320', TILE_D * 11, false), // parede fundo
+  1: { top: '#3B5EA6', left: '#2A4580', right: '#1E3566', h: 4  },  // piso open space
+  2: { top: '#4A6FA5', left: '#385A8A', right: '#2C4A72', h: 4  },  // corredor
+  3: { top: '#1E3A6E', left: '#162D56', right: '#0E2040', h: 4  },  // boardroom
+  4: { top: '#8B9EB5', left: '#6B7E95', right: '#4F6075', h: 48 },  // meia-parede
+  5: { top: '#6B7E95', left: '#4F6075', right: '#3A4F62', h: 16 },  // divider baixo
+  6: { top: '#6B4E2A', left: '#503B20', right: '#3A2B17', h: 4  },  // lounge madeira
+  7: { top: '#8A9BAA', left: '#6B7E8F', right: '#526070', h: 4  },  // copa concreto
+  8: { top: '#4A5568', left: '#2D3748', right: '#1A202C', h: 80 },  // parede externa
+  9: { top: '#4A90D9', left: '#2D6FAA', right: '#1A4F80', h: 80 },  // parede janelas
+  10:{ top: '#3A4A5A', left: '#252F3A', right: '#161E26', h: 96 },  // parede fundo
 };
 
-export const WALKABLE_TILES = new Set([1, 2, 3, 6, 7]);
+// ─── BFS 8 direções ──────────────────────────────────────────────────────────
+const WALKABLE_TILES = new Set([1, 2, 3, 6, 7]);
 
-// ─── BFS 8 direções ───────────────────────────────────────────────────────────
 export function bfs(
   map: number[][],
   sx: number, sy: number,
@@ -103,8 +72,8 @@ export function bfs(
   if (sx === tx && sy === ty) return [];
   const rows = map.length;
   const cols = map[0]?.length ?? 0;
-  const key  = (x: number, y: number) => y * 1000 + x;
-  const visited = new Set<number>([key(sx, sy)]);
+  const key  = (x: number, y: number) => `${x},${y}`;
+  const visited = new Set<string>([key(sx, sy)]);
   const queue: Array<{ x: number; y: number; path: Array<{ x: number; y: number }> }> = [
     { x: sx, y: sy, path: [] },
   ];
@@ -120,7 +89,7 @@ export function bfs(
       const nx = x + dx;
       const ny = y + dy;
       if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
-      if (!WALKABLE_TILES.has(map[ny][nx])) continue;
+      if (!WALKABLE_TILES.has(map[ny]?.[nx])) continue;
       if (visited.has(key(nx, ny))) continue;
       const newPath = [...path, { x: nx, y: ny }];
       if (nx === tx && ny === ty) return newPath;
@@ -131,7 +100,11 @@ export function bfs(
   return [];
 }
 
-// ─── Direção Habbo entre dois tiles adjacentes ────────────────────────────────
+export function isWalkable(map: number[][], x: number, y: number): boolean {
+  return WALKABLE_TILES.has(map[y]?.[x]);
+}
+
+// ─── Direção Habbo (0-7) entre dois tiles adjacentes ─────────────────────────
 export function directionBetween(fx: number, fy: number, tx: number, ty: number): number {
   const dx = tx - fx;
   const dy = ty - fy;
