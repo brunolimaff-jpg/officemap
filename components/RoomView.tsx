@@ -48,7 +48,6 @@ function StatusBadge({ status }: { status: AvatarStatus }) {
   );
 }
 
-// Avatares com fallback SVG se o Habbo Imager falhar
 function HabboAvatar({
   user, avatarH, habboDir, gesture,
 }: {
@@ -58,20 +57,13 @@ function HabboAvatar({
   gesture: string;
 }) {
   const [failed, setFailed] = useState(false);
-
   const proxySrc =
     `/api/avatar?figure=${encodeURIComponent(user.figure)}` +
     `&direction=${habboDir}&head_direction=${habboDir}${gesture}&size=m`;
 
   if (failed) {
-    return (
-      <AvatarSprite
-        color={SPECIALIST_COLORS[user.id] ?? '#64748B'}
-        role={undefined}
-      />
-    );
+    return <AvatarSprite color={SPECIALIST_COLORS[user.id] ?? '#64748B'} role={undefined} />;
   }
-
   return (
     <img
       src={proxySrc}
@@ -82,7 +74,6 @@ function HabboAvatar({
   );
 }
 
-// Móveis pré-calculados fora do componente
 const furniWithPos = furniture.map(f => {
   const { px, py } = tileToScreen(f.x, f.y);
   return { ...f, pos: { x: px, y: py + TILE_H } };
@@ -110,20 +101,20 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     (user: User) => {
       const { px, py } = tileToScreen(user.x, user.y);
       return {
-        left:   px * scale,
-        top:    (py + TILE_H) * scale,
+        left:   px,
+        top:    py + TILE_H,
         zIndex: zOrder(user.x, user.y) + 200,
         transition: user.avatarStatus === 'walking'
           ? 'left 140ms linear, top 140ms linear'
           : 'left 60ms ease-out, top 60ms ease-out',
       };
     },
-    [scale]
+    []
   );
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#0a0f1e]">
-      {/* Bandeira topo */}
+      {/* Banner topo — overlay fixo, não interfere no canvas */}
       <div
         className="absolute top-0 left-0 right-0 z-50 flex items-center justify-center pointer-events-none"
         style={{ height: 32 }}
@@ -143,25 +134,31 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
         </div>
       </div>
 
-      {/* Container canvas + sprites + avatares */}
-      <div
-        ref={containerRef}
-        className="absolute inset-0 overflow-hidden"
-        style={{ paddingTop: 32 }}
-      >
-        {/* Camada 1 — tiles */}
-        <IsoCanvas map={map} onTileClick={onTileClick} scale={scale} />
-
-        {/* Camada 2 — móveis */}
+      {/* Container de medição — preenche tela inteira */}
+      <div ref={containerRef} className="absolute inset-0">
+        {/*
+          Única camada escalada: canvas ISO + móveis + avatares juntos.
+          transform-origin top-left garante alinhamento correto em qualquer scale.
+          width/height explícitos evitam que o div colapse quando scale < 1.
+        */}
         <div
           className="absolute top-0 left-0 pointer-events-none"
           style={{
-            width:  CANVAS_W * scale,
-            height: CANVAS_H * scale,
-            transform: `scale(${scale})`,
+            width:           CANVAS_W,
+            height:          CANVAS_H,
+            transform:       `scale(${scale})`,
             transformOrigin: 'top left',
           }}
         >
+          {/* Camada 1 — tiles (canvas) */}
+          <IsoCanvas
+            map={map}
+            onTileClick={onTileClick}
+            scale={scale}
+            proximityTiles={[]}
+          />
+
+          {/* Camada 2 — móveis */}
           {furniWithPos.map(f => (
             <FurniSprite
               key={f.id}
@@ -174,43 +171,61 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
               label={f.label}
             />
           ))}
+
+          {/* Camada 3 — avatares */}
+          {users.map((user) => {
+            const st       = avatarStyle(user);
+            const habboDir = user.direction % 8;
+            const gesture  = getHabboGestureParams(user.avatarStatus);
+            const avatarH  = 78;
+
+            return (
+              <div
+                key={user.id}
+                className="absolute pointer-events-none flex flex-col items-center"
+                style={{
+                  left:      st.left,
+                  top:       st.top,
+                  zIndex:    st.zIndex,
+                  transform: 'translate(-50%, -100%)',
+                  transition: st.transition,
+                }}
+              >
+                <StatusBadge status={user.avatarStatus} />
+                <div
+                  className="mb-0.5 px-1.5 py-px font-pixel text-[8px] font-bold text-white whitespace-nowrap rounded-sm border border-blue-300/40"
+                  style={{ background: 'rgba(10,30,70,0.85)' }}
+                >
+                  {user.name}
+                </div>
+                <HabboAvatar
+                  user={user}
+                  avatarH={avatarH}
+                  habboDir={habboDir}
+                  gesture={gesture}
+                />
+              </div>
+            );
+          })}
         </div>
 
-        {/* Camada 3 — avatares com fallback SVG */}
-        {users.map((user) => {
-          const st       = avatarStyle(user);
-          const habboDir = user.direction % 8;
-          const gesture  = getHabboGestureParams(user.avatarStatus);
-          const avatarH  = Math.round(78 * scale);
-
-          return (
-            <div
-              key={user.id}
-              className="absolute pointer-events-none flex flex-col items-center"
-              style={{
-                left:      st.left,
-                top:       st.top,
-                zIndex:    st.zIndex,
-                transform: 'translate(-50%, -100%)',
-                transition: st.transition,
-              }}
-            >
-              <StatusBadge status={user.avatarStatus} />
-              <div
-                className="mb-0.5 px-1.5 py-px font-pixel text-[8px] font-bold text-white whitespace-nowrap rounded-sm border border-blue-300/40"
-                style={{ background: 'rgba(10,30,70,0.85)', fontSize: Math.max(7, 8 * scale) }}
-              >
-                {user.name}
-              </div>
-              <HabboAvatar
-                user={user}
-                avatarH={avatarH}
-                habboDir={habboDir}
-                gesture={gesture}
-              />
-            </div>
-          );
-        })}
+        {/* Overlay de clique — pointer-events ativo, cobre a área escalada */}
+        <div
+          className="absolute top-0 left-0 cursor-crosshair"
+          style={{
+            width:  CANVAS_W * scale,
+            height: CANVAS_H * scale,
+          }}
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            // Converter coords viewport → coords canvas nativas
+            const { screenToTile, isWalkable } = require('@/lib/isoEngine');
+            const rawX = (e.clientX - rect.left)  / scale;
+            const rawY = (e.clientY - rect.top)   / scale;
+            const { x, y } = screenToTile(rawX, rawY);
+            if (isWalkable(map, x, y)) onTileClick(x, y);
+          }}
+        />
       </div>
     </div>
   );

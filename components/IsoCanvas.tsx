@@ -13,7 +13,6 @@ interface IsoCanvasProps {
   proximityTiles?: Array<{ x: number; y: number }>;
 }
 
-// ─── Tile de piso (losango + faces finas) ───────────────────────────────────
 function drawTile(
   ctx: CanvasRenderingContext2D,
   px: number, py: number,
@@ -25,7 +24,6 @@ function drawTile(
   const { top, left, right, h, border = 'rgba(0,0,0,0.10)' } = colors;
   const depth = Math.min(h, TILE_D);
 
-  // Face esquerda
   ctx.beginPath();
   ctx.moveTo(px - hw, py + hh);
   ctx.lineTo(px,      py + TILE_H);
@@ -35,7 +33,6 @@ function drawTile(
   ctx.fillStyle = left;
   ctx.fill();
 
-  // Face direita
   ctx.beginPath();
   ctx.moveTo(px,      py + TILE_H);
   ctx.lineTo(px + hw, py + hh);
@@ -45,7 +42,6 @@ function drawTile(
   ctx.fillStyle = right;
   ctx.fill();
 
-  // Topo (losango)
   ctx.beginPath();
   ctx.moveTo(px,      py);
   ctx.lineTo(px + hw, py + hh);
@@ -66,20 +62,17 @@ function drawTile(
   ctx.stroke();
 }
 
-// ─── Parede isômétrica alta (tiles 8 / 9 / 10) ────────────────────────────
-// Habbo-style: face frontal esquerda grande + topo fino + janelas opcionais
 function drawWall(
   ctx: CanvasRenderingContext2D,
   px: number, py: number,
   colors: { top: string; left: string; right: string; h: number; border?: string },
   withWindow: boolean,
 ) {
-  const hw   = TILE_W / 2;     // 32
-  const hh   = TILE_H / 2;     // 16
-  const h    = colors.h;
+  const hw = TILE_W / 2;
+  const hh = TILE_H / 2;
+  const h  = colors.h;
   const { top, left, right, border = 'rgba(0,0,0,0.15)' } = colors;
 
-  // ─ Face esquerda (parede frontal visivel da esquerda) ─────────────────
   ctx.beginPath();
   ctx.moveTo(px - hw, py + hh);
   ctx.lineTo(px,      py + TILE_H);
@@ -92,7 +85,6 @@ function drawWall(
   ctx.lineWidth   = 0.5;
   ctx.stroke();
 
-  // ─ Face direita (parede frontal visível da direita) ─────────────────
   ctx.beginPath();
   ctx.moveTo(px,      py + TILE_H);
   ctx.lineTo(px + hw, py + hh);
@@ -105,7 +97,6 @@ function drawWall(
   ctx.lineWidth   = 0.5;
   ctx.stroke();
 
-  // ─ Topo (losango fino do topo da parede) ──────────────────────────
   ctx.beginPath();
   ctx.moveTo(px,      py - h);
   ctx.lineTo(px + hw, py + hh - h);
@@ -118,9 +109,7 @@ function drawWall(
   ctx.lineWidth   = 0.5;
   ctx.stroke();
 
-  // ─ Janelas (tile 9) ──────────────────────────────────────────────
-if (withWindow) {
-    // Janela na face esquerda
+  if (withWindow) {
     const wL = { x1: px - hw + 6, y1: py + hh + h * 0.20,
                  x2: px - 4,      y2: py + hh + h * 0.20,
                  x3: px - 4,      y3: py + hh + h * 0.70,
@@ -134,7 +123,6 @@ if (withWindow) {
     ctx.strokeStyle = 'rgba(147,197,253,0.55)';
     ctx.lineWidth   = 0.8;
     ctx.stroke();
-    // Cruz da janela esq
     const midXL = (wL.x1 + wL.x2) / 2;
     const midYL = (wL.y1 + wL.y4) / 2;
     ctx.beginPath();
@@ -144,7 +132,6 @@ if (withWindow) {
     ctx.lineWidth   = 0.6;
     ctx.stroke();
 
-    // Janela na face direita
     const wR = { x1: px + 4,      y1: py + hh + h * 0.20,
                  x2: px + hw - 6,  y2: py + hh + h * 0.20,
                  x3: px + hw - 6,  y3: py + hh + h * 0.70,
@@ -158,7 +145,6 @@ if (withWindow) {
     ctx.strokeStyle = 'rgba(147,197,253,0.45)';
     ctx.lineWidth   = 0.8;
     ctx.stroke();
-    // Cruz da janela dir
     const midXR = (wR.x1 + wR.x2) / 2;
     const midYR = (wR.y1 + wR.y4) / 2;
     ctx.beginPath();
@@ -168,7 +154,6 @@ if (withWindow) {
     ctx.lineWidth   = 0.6;
     ctx.stroke();
 
-    // Glow suave atrás da janela
     const glow = ctx.createLinearGradient(px - hw, py + hh + h * 0.20, px + hw, py + hh + h * 0.70);
     glow.addColorStop(0, 'rgba(59,130,246,0.07)');
     glow.addColorStop(0.5, 'rgba(147,197,253,0.10)');
@@ -184,7 +169,6 @@ if (withWindow) {
   }
 }
 
-// Quais tiles são paredes altas
 const WALL_TILES = new Set([8, 9, 10]);
 
 export default function IsoCanvas({ map, onTileClick, scale, proximityTiles = [] }: IsoCanvasProps) {
@@ -224,12 +208,16 @@ export default function IsoCanvas({ map, onTileClick, scale, proximityTiles = []
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
-      const rawX = (e.clientX - rect.left)  / scale;
-      const rawY = (e.clientY - rect.top)   / scale;
+      // clicks já chegam no espaço do canvas nativo (sem dividir por scale)
+      // pois o canvas está dentro do div escalado — as coords do getBoundingClientRect
+      // já refletem o scale visual, mas clientX/Y são viewport coords.
+      // Precisamos converter para coords canvas nativas:
+      const rawX = (e.clientX - rect.left) * (CANVAS_W / rect.width);
+      const rawY = (e.clientY - rect.top)  * (CANVAS_H / rect.height);
       const { x, y } = screenToTile(rawX, rawY);
       if (isWalkable(map, x, y)) onTileClick(x, y);
     },
-    [map, onTileClick, scale]
+    [map, onTileClick]
   );
 
   return (
@@ -239,11 +227,7 @@ export default function IsoCanvas({ map, onTileClick, scale, proximityTiles = []
       height={CANVAS_H}
       onClick={handleClick}
       className="absolute top-0 left-0 cursor-crosshair"
-      style={{
-        transform: `scale(${scale})`,
-        transformOrigin: 'top left',
-        imageRendering: 'pixelated',
-      }}
+      style={{ width: CANVAS_W, height: CANVAS_H }}
     />
   );
 }

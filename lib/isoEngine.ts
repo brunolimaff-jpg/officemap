@@ -9,9 +9,10 @@ export const TILE_D  = 8;    // espessura 3D lateral
 export const MAP_COLS = 32;
 export const MAP_ROWS = 25;
 
-// Origem do canvas em pixels — centraliza o mapa
+// ORIGIN_Y elevado para 180 — garante que paredes h:96 na linha 1
+// nunca saiam acima de y=0 (margem = 180 - 96 = 84px)
 export const ORIGIN_X = (MAP_COLS * TILE_W) / 2;   // 1024
-export const ORIGIN_Y = 80;                          // margem topo
+export const ORIGIN_Y = 180;
 
 // ─── Projeção: tile (x,y) → pixel (px, py) do centro-topo do losango ────────
 export function tileToScreen(x: number, y: number): { px: number; py: number } {
@@ -38,29 +39,26 @@ export function zOrder(x: number, y: number): number {
 
 // ─── Dimensão total do canvas em pixels ──────────────────────────────────────
 export const CANVAS_W = MAP_COLS * TILE_W + 200;           // 2248
-export const CANVAS_H = (MAP_ROWS + MAP_COLS) * (TILE_H / 2) + ORIGIN_Y + 120;
+export const CANVAS_H = (MAP_ROWS + MAP_COLS) * (TILE_H / 2) + ORIGIN_Y + 200;
 
 // ─── Paleta Habbo-style — azul marinho profundo, bordas suaves ───────────────
-// Sprint 1: cores alinhadas ao padrão Habbo (hotel view escuro azulado)
-// Borda de tile: rgba(0,0,0,0.10) — mais suave que o anterior 0.18
 export const TILE_COLORS: Record<number, {
   top: string;
   left: string;
   right: string;
   h: number;
-  border?: string;   // borda customizada por tipo
+  border?: string;
 }> = {
-  // 0 = void — não renderiza
-  1: { top: '#1a2e52', left: '#142244', right: '#0e1a35', h: 4,  border: 'rgba(74,158,255,0.12)' }, // piso open space — azul marinho Habbo
-  2: { top: '#1e3460', left: '#172850', right: '#10203e', h: 4,  border: 'rgba(74,158,255,0.18)' }, // corredor — ligeiramente mais brilhante
-  3: { top: '#0f1e3e', left: '#0a1530', right: '#060e20', h: 4,  border: 'rgba(30,100,200,0.20)' }, // boardroom — petróleo escuro
-  4: { top: '#6b7e95', left: '#4a5a70', right: '#344258', h: 48, border: 'rgba(0,0,0,0.15)' },      // meia-parede
-  5: { top: '#556070', left: '#3d4d5e', right: '#2c3a4a', h: 16, border: 'rgba(0,0,0,0.12)' },      // divider baixo
-  6: { top: '#3d2a14', left: '#2c1e0e', right: '#1e1409', h: 4,  border: 'rgba(180,100,30,0.20)' }, // lounge madeira — marrom escuro
-  7: { top: '#2a3040', left: '#1e2535', right: '#141a28', h: 4,  border: 'rgba(74,130,200,0.15)' }, // copa — concreto azulado escuro
-  8: { top: '#2d3748', left: '#1a2535', right: '#0f1825', h: 80, border: 'rgba(0,0,0,0.20)' },      // parede externa
-  9: { top: '#1a3a6e', left: '#122c56', right: '#0b1e3e', h: 80, border: 'rgba(74,158,255,0.25)' }, // parede com janelas
-  10:{ top: '#1a2535', left: '#0f1825', right: '#080f18', h: 96, border: 'rgba(0,0,0,0.25)' },      // parede de fundo
+  1: { top: '#1a2e52', left: '#142244', right: '#0e1a35', h: 4,  border: 'rgba(74,158,255,0.12)' },
+  2: { top: '#1e3460', left: '#172850', right: '#10203e', h: 4,  border: 'rgba(74,158,255,0.18)' },
+  3: { top: '#0f1e3e', left: '#0a1530', right: '#060e20', h: 4,  border: 'rgba(30,100,200,0.20)' },
+  4: { top: '#6b7e95', left: '#4a5a70', right: '#344258', h: 48, border: 'rgba(0,0,0,0.15)' },
+  5: { top: '#556070', left: '#3d4d5e', right: '#2c3a4a', h: 16, border: 'rgba(0,0,0,0.12)' },
+  6: { top: '#3d2a14', left: '#2c1e0e', right: '#1e1409', h: 4,  border: 'rgba(180,100,30,0.20)' },
+  7: { top: '#2a3040', left: '#1e2535', right: '#141a28', h: 4,  border: 'rgba(74,130,200,0.15)' },
+  8: { top: '#2d3748', left: '#1a2535', right: '#0f1825', h: 80, border: 'rgba(0,0,0,0.20)' },
+  9: { top: '#1a3a6e', left: '#122c56', right: '#0b1e3e', h: 80, border: 'rgba(74,158,255,0.25)' },
+  10:{ top: '#1a2535', left: '#0f1825', right: '#080f18', h: 96, border: 'rgba(0,0,0,0.25)' },
 };
 
 // ─── Tiles onde avatar pode caminhar ─────────────────────────────────────────
