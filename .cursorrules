@@ -1,0 +1,29 @@
+# Officemap AI Developer Guidelines
+
+This repository (`officemap`) relies on senior engineering and AI agent skills curated from the following repositories:
+- `alirezarezvani/claude-skills`
+- `sickn33/antigravity-awesome-skills`
+- `VoltAgent/awesome-agent-skills`
+The full skills repositories are available for reference locally in `.github/skills-reference/`.
+
+## Core Directives
+
+1. **Think Before Coding (Planning)**: Always plan and reason about the architecture and components before generating code. Explore alternative approaches.
+2. **Read Code Deeply (Context)**: Search the workspace and use grep/search before implementing new features to reuse existing logic and avoid duplication.
+3. **Write Clean Code**: Apply SOLID principles, write small functions, keep components pure, and avoid side-effects. Follow the official React and Next.js guidelines.
+4. **Security & Performance**: Audit the code for common vulnerabilities (e.g., OWASP Top 10). Optimize for speed, bundle size, and rendering performance (Core Web Vitals).
+5. **Testing & QA**: Write or ask to write tests for critical business logic. If debugging, use systematic troubleshooting: verify hypotheses, isolate the problem, fix it atomically.
+
+## Stack Requirements
+- Next.js 15 (App Router)
+- React 19 (Server Components default)
+- TypeScript (Strict mode)
+- Tailwind CSS 4
+
+## Code Review Standard
+Act as a "Staff Engineer" evaluating code:
+- Check for edge cases, performance regressions, and maintainability.
+- Provide constructive feedback if asked to review.
+- Provide atomic, clean commits or fixes.
+
+Refer to `.cursor/rules/nextjs-react.mdc` for detailed framework instructions.
