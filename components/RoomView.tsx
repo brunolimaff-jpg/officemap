@@ -1,10 +1,9 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import IsoCanvas from './IsoCanvas';
-import FurniSprite from './FurniSprite';
 import HabboAvatar from './HabboAvatar';
+import TileBackground from './TileBackground';
 import { CANVAS_W, CANVAS_H, tileToScreen } from '@/lib/isoEngine';
-import type { Furniture } from '@/types';
 import type { User } from '@/components/HabboClient';
 
 interface RoomViewProps {
@@ -54,6 +53,10 @@ export default function RoomView({
           height: CANVAS_H,
         }}
       >
+        {/* Camada 0: tiles reais da spritesheet */}
+        <TileBackground width={CANVAS_W} height={CANVAS_H} />
+
+        {/* Camada 1: malha isométrica clicável */}
         <IsoCanvas
           map={map}
           onTileClick={onTileClick}
@@ -61,6 +64,7 @@ export default function RoomView({
           proximityTiles={proximityTiles}
         />
 
+        {/* Camada 2: avatares */}
         {users.map((user) => {
           const { px, py } = tileToScreen(user.x, user.y);
           return (
