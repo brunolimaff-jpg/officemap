@@ -8,7 +8,36 @@ interface RoomViewProps {
   onTileClick: (x: number, y: number) => void;
 }
 
-// Mapeia AvatarStatus → parâmetros Habbo API
+// ─── Calibração isométrica ─────────────────────────────────────────────────────
+// Derivada por regressão linear sobre 6 avatares com posições conhecidas
+// left% = OX + (x - y) * SX
+// top%  = OY + (x + y) * SY
+const OX = 56.8;   // origem horizontal (%)
+const SX = 1.893;  // escala horizontal por tile
+const OY = 31.4;   // origem vertical (%)
+const SY = 0.887;  // escala vertical por tile
+
+function projectToPercent(x: number, y: number) {
+  const left = OX + (x - y) * SX;
+  const top  = OY + (x + y) * SY;
+  return {
+    left: Math.max(2, Math.min(98, left)),
+    top:  Math.max(4, Math.min(96, top)),
+    zIndex: Math.round((x + y) * 10) + 20,
+  };
+}
+
+// Fórmula inversa para converter clique (%) → tile (x, y)
+function screenPercentToTile(leftPct: number, topPct: number): { x: number; y: number } {
+  const diff = (leftPct - OX) / SX;  // x - y
+  const sum  = (topPct  - OY) / SY;  // x + y
+  return {
+    x: Math.round((sum + diff) / 2),
+    y: Math.round((sum - diff) / 2),
+  };
+}
+
+// ─── Mapeia AvatarStatus → parâmetros Habbo API ───────────────────────────────
 function getHabboGestureParams(status: AvatarStatus): string {
   switch (status) {
     case 'idle':     return '&action=sit&gesture=eyb';
@@ -19,7 +48,7 @@ function getHabboGestureParams(status: AvatarStatus): string {
   }
 }
 
-// Badge de status — aparece só para speaking e summoned
+// ─── Badge de status ────────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: AvatarStatus }) {
   if (status === 'walking' || status === 'idle') return null;
   const config: Record<string, { label: string; color: string }> = {
@@ -47,24 +76,9 @@ function StatusBadge({ status }: { status: AvatarStatus }) {
   );
 }
 
-// ─── Projeção isométrica ────────────────────────────────────────────────────
-// Fórmula direta:  left = 52 + (x - y) * 1.85   top = 20 + (x + y) * 1.18
-// Fórmula inversa: resolve o sistema de duas equações para obter x e y de tile
-function screenPercentToTile(leftPct: number, topPct: number): { x: number; y: number } {
-  // left = 52 + (x - y) * 1.85  →  x - y = (left - 52) / 1.85
-  // top  = 20 + (x + y) * 1.18  →  x + y = (top  - 20) / 1.18
-  const diff = (leftPct - 52) / 1.85;
-  const sum  = (topPct  - 20) / 1.18;
-  return {
-    x: Math.round((sum + diff) / 2),
-    y: Math.round((sum - diff) / 2),
-  };
-}
-
 export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Converte clique do mouse em coordenadas de tile e delega ao handler
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = containerRef.current?.getBoundingClientRect();
@@ -72,7 +86,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
       const leftPct = ((e.clientX - rect.left) / rect.width)  * 100;
       const topPct  = ((e.clientY - rect.top)  / rect.height) * 100;
       const { x, y } = screenPercentToTile(leftPct, topPct);
-      // Limita ao bounds do mapa antes de repassar
       const rows = map.length;
       const cols = map[0]?.length ?? 0;
       if (x >= 0 && x < cols && y >= 0 && y < rows) {
@@ -81,16 +94,6 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
     },
     [map, onTileClick]
   );
-
-  const projectToPercent = (x: number, y: number) => {
-    const left = 52 + (x - y) * 1.85;
-    const top  = 20 + (x + y) * 1.18;
-    return {
-      left: Math.max(3, Math.min(97, left)),
-      top:  Math.max(6, Math.min(95, top)),
-      zIndex: Math.round((x + y) * 10) + 20,
-    };
-  };
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-black">
@@ -126,17 +129,15 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
             className="absolute inset-0 h-full w-full object-contain pointer-events-none"
           />
 
-          {/* Overlay clicável — captura cliques e converte em tiles */}
-          <div
-            className="absolute inset-0 z-10"
-            onClick={handleOverlayClick}
-          />
+          {/* Overlay clicável */}
+          <div className="absolute inset-0 z-10" onClick={handleOverlayClick} />
 
-          {/* Avatares — acima do overlay */}
+          {/* Avatares */}
           {users.map((user) => {
             const p             = projectToPercent(user.x, user.y);
             const habboDir      = user.direction % 8;
             const gestureParams = getHabboGestureParams(user.avatarStatus);
+            const isWalking     = user.avatarStatus === 'walking';
             const avatarSrc =
               `https://www.habbo.com/habbo-imaging/avatarimage?figure=${user.figure}` +
               `&direction=${habboDir}&head_direction=${habboDir}${gestureParams}&size=m`;
@@ -149,7 +150,11 @@ export default function RoomView({ users, map, onTileClick }: RoomViewProps) {
                   left: `${p.left}%`,
                   top:  `${p.top}%`,
                   transform: 'translate(-50%, -100%)',
-                  zIndex: p.zIndex + 10, // acima do overlay (z-10)
+                  zIndex: p.zIndex + 10,
+                  // Transition suaviza o deslizamento entre tiles durante caminhada
+                  transition: isWalking
+                    ? 'left 140ms linear, top 140ms linear'
+                    : 'left 80ms ease-out, top 80ms ease-out',
                 }}
               >
                 <StatusBadge status={user.avatarStatus} />
